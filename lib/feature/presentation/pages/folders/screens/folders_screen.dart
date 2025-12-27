@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
+import 'package:voice_notes/core/packages/app_router/routes.dart';
 import 'package:voice_notes/core/theme/app_colors.dart';
 import 'package:voice_notes/core/theme/app_typography.dart';
 import 'package:voice_notes/feature/domain/folder.dart';
 import 'package:voice_notes/feature/presentation/pages/folders/widgets/folder_card.dart';
 import 'package:voice_notes/feature/presentation/pages/folders/widgets/quick_record_card.dart';
-import 'package:voice_notes/feature/presentation/widgets/bottom_navigation_bar/app_bottom_nav.dart';
 import 'package:voice_notes/feature/presentation/widgets/bottom_sheet/create_folder_sheet.dart';
 import 'package:voice_notes/feature/presentation/widgets/buttons/app_fab.dart';
 
@@ -122,10 +123,6 @@ class _FoldersScreenState extends State<FoldersScreen> {
           ],
         ),
       ),
-      bottomNavigationBar: AppBottomNav(
-        currentIndex: 0,
-        onTap: _onNavTap,
-      ),
     );
   }
 
@@ -144,7 +141,7 @@ class _FoldersScreenState extends State<FoldersScreen> {
   }
 
   void _onSettingsTap() {
-    // TODO: Navigate to settings
+    context.go(AppRoutes.settings);
   }
 
   void _onQuickRecord() {
@@ -163,12 +160,6 @@ class _FoldersScreenState extends State<FoldersScreen> {
     final result = await CreateFolderSheet.show(context: context);
     if (result != null) {
       // TODO: Add folder via state management
-    }
-  }
-
-  void _onNavTap(int index) {
-    if (index == 1) {
-      // TODO: Navigate to settings
     }
   }
 }

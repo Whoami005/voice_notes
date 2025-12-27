@@ -96,22 +96,13 @@ class _SettingsScreenState extends State<SettingsScreen>
       appBar: AppBar(
         backgroundColor: themeColors.bgPrimary,
         surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: themeColors.textPrimary),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
+        automaticallyImplyLeading: false,
         title: Text(
           'Настройки',
           style: AppTypography.h2.copyWith(color: themeColors.textPrimary),
         ),
         bottom: TabBar(
           controller: _tabController,
-          labelColor: themeColors.accentPrimary,
-          unselectedLabelColor: themeColors.textSecondary,
-          indicatorColor: themeColors.accentPrimary,
-          indicatorSize: TabBarIndicatorSize.label,
-          labelStyle: AppTypography.button,
-          unselectedLabelStyle: AppTypography.button,
           tabs: const [
             Tab(text: 'Основные'),
             Tab(text: 'Модели'),
