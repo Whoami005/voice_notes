@@ -89,25 +89,25 @@ Key components: FolderCard, NoteBubble (chat-style), RecordingInput (idle/record
 
 # Flutter Widgets
 
-## Архитектура
-- Большие виджеты → декомпозиция на отдельные StatelessWidget/StatefulWidget классы
-- Методы, возвращающие Widget — антипаттерн (нет оптимизаций rebuild). Допустимы только когда: влияние на производительность минимально И повышают читаемость
-- Каждый виджет — одна ответственность
+## Architecture
+- Large widgets → decompose into separate StatelessWidget/StatefulWidget classes
+- Methods returning Widget — anti-pattern (no rebuild optimizations). Allowed only when: minimal performance impact AND improves readability
+- Each widget — single responsibility
 
-## Качество кода
-- Параметры через конструктор с именованными аргументами
-- Значения по умолчанию где уместно
-- const конструкторы везде где возможно
-- Приватные виджеты с `_` префиксом в том же файле
+## Code Quality
+- Parameters via constructor with named arguments
+- Default values where appropriate
+- const constructors wherever possible
+- Private widgets with `_` prefix in the same file
 
-## Тема
-- Цвета, шрифты — только из темы. Старайся не использовать хардкод значений (только в редких случаях)
-- Получать тему один раз в начале build:
+## Theme
+- Colors, fonts, sizes — only from theme. Avoid hardcoded values (only in rare cases)
+- Get theme once at the start of build:
 ```dart
 @override
 Widget build(BuildContext context) {
+  // or final theme = context.theme; if access beyond textTheme is needed
   final textTheme = context.textTheme;
-  // или final theme = context.theme; если необходим доступ не только к textTheme
   final themeColors = context.themeColors;
 
   return Text(
@@ -118,35 +118,35 @@ Widget build(BuildContext context) {
   );
 }
 ```
-- Не вызывать context.theme / context.textTheme / Theme.of(context) многократно в одном build
+- Do not call context.theme / context.textTheme / Theme.of(context) multiple times in one build
 
-## Комментарии
-- Не документировать очевидное
-- Комментарий нужен когда: неочевидная логика, workaround, важный контекст
-- Формат: краткий, по существу
+## Comments
+- Do not document the obvious
+- Comment needed when: non-obvious logic, workaround, important context
+- Format: brief, to the point
 ```dart
-// Отступ компенсирует SafeArea на iOS
+// Padding compensates SafeArea on iOS
 final bottomPadding = MediaQuery.of(context).padding.bottom;
 
-// TODO: заменить на Stream когда API будет готов
+// TODO: replace with Stream when API is ready
 ```
-- Без шаблонных /// для каждого поля/метода
+- No boilerplate /// for every field/method
 
-## Адаптивность (базовая)
-Цель: отсутствие overflow на малых экранах
+## Responsiveness (basic)
+Goal: no overflow on small screens
 
-- Row с текстом/динамикой → Expanded/Flexible
-- Длинный текст → overflow: TextOverflow.ellipsis, maxLines
-- Списки в Column → SingleChildScrollView или ListView
-- Изображения/иконки фиксированного размера в ограниченном пространстве → FittedBox
-- Избегать жёстких width/height для контейнеров с контентом
+- Row with text/dynamic content → Expanded/Flexible
+- Long text → overflow: TextOverflow.ellipsis, maxLines
+- Lists in Column → SingleChildScrollView or ListView
+- Fixed-size images/icons in constrained space → FittedBox
+- Avoid hardcoded width/height for containers with content
 
-## Структура виджета
+## Widget Structure
 ```dart
 class MyWidget extends StatelessWidget {
   final String title;
   final VoidCallback? onTap;
-  
+
   const MyWidget({
     super.key,
     required this.title,
