@@ -51,7 +51,7 @@ class SearchBarWithFilters extends StatelessWidget {
               return Padding(
                 padding: const EdgeInsets.only(right: AppSizes.p8),
                 child: _FilterChip(
-                  label: _getFilterLabel(filter),
+                  label: filter.title,
                   isActive: isActive,
                   onTap: () => onFilterChanged(filter),
                 ),
@@ -61,15 +61,6 @@ class SearchBarWithFilters extends StatelessWidget {
         ),
       ],
     );
-  }
-
-  String _getFilterLabel(SearchFilter filter) {
-    return switch (filter) {
-      SearchFilter.all => 'Все',
-      SearchFilter.text => 'Текст',
-      SearchFilter.tags => 'Теги',
-      SearchFilter.date => 'Дата',
-    };
   }
 }
 

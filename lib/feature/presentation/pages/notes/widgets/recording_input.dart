@@ -27,8 +27,9 @@ class RecordingInput extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return switch (state) {
-      RecordingState.idle => _IdleState(
-        onStartRecording: onStartRecording,
+      RecordingState.idle =>
+          _IdleState(
+            onStartRecording: onStartRecording,
         onUploadFile: onUploadFile,
       ),
       RecordingState.recording => _RecordingState(
