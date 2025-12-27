@@ -1,0 +1,325 @@
+import 'package:flutter/material.dart';
+import 'package:voice_notes/core/constants/app_sizes.dart';
+import 'package:voice_notes/core/constants/app_spacer.dart';
+import 'package:voice_notes/core/extensions/context_extensions.dart';
+import 'package:voice_notes/core/theme/app_colors.dart';
+import 'package:voice_notes/feature/presentation/widgets/bottom_sheet/app_bottom_sheet.dart';
+
+class CreateFolderResult {
+  final String name;
+  final String? description;
+  final Color color;
+  final IconData icon;
+
+  const CreateFolderResult({
+    required this.name,
+    required this.color,
+    required this.icon,
+    this.description,
+  });
+}
+
+class CreateFolderSheet extends StatefulWidget {
+  final String? initialName;
+  final String? initialDescription;
+  final Color? initialColor;
+  final IconData? initialIcon;
+
+  const CreateFolderSheet({
+    super.key,
+    this.initialName,
+    this.initialDescription,
+    this.initialColor,
+    this.initialIcon,
+  });
+
+  static Future<CreateFolderResult?> show({
+    required BuildContext context,
+    String? initialName,
+    String? initialDescription,
+    Color? initialColor,
+    IconData? initialIcon,
+  }) {
+    return AppBottomSheet.show<CreateFolderResult>(
+      context: context,
+      child: CreateFolderSheet(
+        initialName: initialName,
+        initialDescription: initialDescription,
+        initialColor: initialColor,
+        initialIcon: initialIcon,
+      ),
+    );
+  }
+
+  @override
+  State<CreateFolderSheet> createState() => _CreateFolderSheetState();
+}
+
+class _CreateFolderSheetState extends State<CreateFolderSheet> {
+  static const List<IconData> _folderIcons = [
+    Icons.folder,
+    Icons.work,
+    Icons.book,
+    Icons.star,
+    Icons.favorite,
+    Icons.music_note,
+    Icons.camera_alt,
+    Icons.code,
+  ];
+
+  late final TextEditingController _nameController;
+  late final TextEditingController _descriptionController;
+  late Color _selectedColor;
+  late IconData _selectedIcon;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.initialName);
+    _descriptionController = TextEditingController(
+      text: widget.initialDescription,
+    );
+    _selectedColor = widget.initialColor ?? AppColors.folderColors.first;
+    _selectedIcon = widget.initialIcon ?? _folderIcons.first;
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _descriptionController.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final name = _nameController.text.trim();
+    if (name.isEmpty) return;
+
+    Navigator.of(context).pop(
+      CreateFolderResult(
+        name: name,
+        description: _descriptionController.text.trim().isEmpty
+            ? null
+            : _descriptionController.text.trim(),
+        color: _selectedColor,
+        icon: _selectedIcon,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = context.textTheme;
+    final isEditing = widget.initialName != null;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          isEditing ? 'Редактировать папку' : 'Новая папка',
+          style: textTheme.headlineMedium,
+        ),
+        AppSpacer.p20,
+        _PreviewCard(
+          name: _nameController.text.isEmpty
+              ? 'Название'
+              : _nameController.text,
+          color: _selectedColor,
+          icon: _selectedIcon,
+        ),
+        AppSpacer.p20,
+        TextField(
+          controller: _nameController,
+          onChanged: (_) => setState(() {}),
+          decoration: const InputDecoration(hintText: 'Название папки'),
+          textCapitalization: TextCapitalization.sentences,
+        ),
+        AppSpacer.p12,
+        TextField(
+          controller: _descriptionController,
+          decoration: const InputDecoration(hintText: 'Описание (опционально)'),
+          textCapitalization: TextCapitalization.sentences,
+          maxLines: 2,
+          minLines: 1,
+        ),
+        AppSpacer.p20,
+        Text(
+          'Цвет',
+          style: textTheme.labelMedium,
+        ),
+        AppSpacer.p12,
+        _ColorPicker(
+          colors: AppColors.folderColors,
+          selected: _selectedColor,
+          onSelect: (color) => setState(() => _selectedColor = color),
+        ),
+        AppSpacer.p20,
+        Text(
+          'Иконка',
+          style: textTheme.labelMedium,
+        ),
+        AppSpacer.p12,
+        _IconPicker(
+          icons: _folderIcons,
+          selected: _selectedIcon,
+          selectedColor: _selectedColor,
+          onSelect: (icon) => setState(() => _selectedIcon = icon),
+        ),
+        AppSpacer.p24,
+        ElevatedButton(
+          onPressed: _nameController.text.trim().isEmpty ? null : _submit,
+          child: Text(isEditing ? 'Сохранить' : 'Создать'),
+        ),
+      ],
+    );
+  }
+}
+
+class _PreviewCard extends StatelessWidget {
+  final String name;
+  final Color color;
+  final IconData icon;
+
+  const _PreviewCard({
+    required this.name,
+    required this.color,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = context.textTheme;
+    final themeColors = context.themeColors;
+
+    return Container(
+      padding: const EdgeInsets.all(AppSizes.cardPadding),
+      decoration: BoxDecoration(
+        color: themeColors.bgTertiary,
+        borderRadius: BorderRadius.circular(AppSizes.cardRadius),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: AppSizes.avatarLarge,
+            height: AppSizes.avatarLarge,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(icon, color: color, size: AppSizes.iconLarge),
+          ),
+          AppSpacer.p14,
+          Expanded(
+            child: Text(
+              name,
+              style: textTheme.titleMedium,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ColorPicker extends StatelessWidget {
+  final List<Color> colors;
+  final Color selected;
+  final ValueChanged<Color> onSelect;
+
+  const _ColorPicker({
+    required this.colors,
+    required this.selected,
+    required this.onSelect,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final themeColors = context.themeColors;
+
+    return Wrap(
+      spacing: AppSizes.p12,
+      runSpacing: AppSizes.p12,
+      children: List.generate(colors.length, (index) {
+        final color = colors[index];
+
+        final isSelected = color == selected;
+
+        return GestureDetector(
+          onTap: () => onSelect(color),
+          child: Container(
+            width: AppSizes.avatarMedium,
+            height: AppSizes.avatarMedium,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+              border: isSelected
+                  ? Border.all(color: themeColors.textPrimary, width: 3)
+                  : null,
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: color.withValues(alpha: 0.4),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ]
+                  : null,
+            ),
+          ),
+        );
+      }),
+    );
+  }
+}
+
+class _IconPicker extends StatelessWidget {
+  final List<IconData> icons;
+  final IconData selected;
+  final Color selectedColor;
+  final ValueChanged<IconData> onSelect;
+
+  const _IconPicker({
+    required this.icons,
+    required this.selected,
+    required this.selectedColor,
+    required this.onSelect,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final themeColors = context.themeColors;
+
+    return Wrap(
+      spacing: AppSizes.p10,
+      runSpacing: AppSizes.p10,
+      children: List.generate(icons.length, (index) {
+        final icon = icons[index];
+        final isSelected = icon == selected;
+
+        return GestureDetector(
+          onTap: () => onSelect(icon),
+          child: Container(
+            width: AppSizes.avatarLarge,
+            height: AppSizes.avatarLarge,
+            decoration: BoxDecoration(
+              color: isSelected
+                  ? selectedColor.withValues(alpha: 0.15)
+                  : themeColors.bgTertiary,
+              borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+              border: isSelected
+                  ? Border.all(color: selectedColor, width: 2)
+                  : null,
+            ),
+            child: Icon(
+              icon,
+              color: isSelected ? selectedColor : themeColors.textSecondary,
+              size: AppSizes.iconLarge,
+            ),
+          ),
+        );
+      }),
+    );
+  }
+}
