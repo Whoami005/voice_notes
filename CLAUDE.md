@@ -120,6 +120,34 @@ Widget build(BuildContext context) {
 ```
 - Do not call context.theme / context.textTheme / Theme.of(context) multiple times in one build
 
+## Loops & Iterations
+- Avoid .map() — slower, often less readable, requires .toList()
+- Use only when it clearly improves readability over alternatives
+- In logic: prefer for-in
+```dart
+// ✗ Avoid
+final names = users.map((u) => u.name).toList();
+
+// ✓ Prefer
+final names = [for (final user in users) user];
+```
+- In UI: prefer collection-for or List.generate
+```dart
+// ✗ Avoid
+Column(children: items.map((item) => ItemTile(item)).toList())
+
+// ✓ Prefer: collection-for (simple cases, default choice)
+Column(children: [for (final item in items) ItemTile(item)])
+
+// ✓ Prefer: List.generate (In UI: use List.generate when index needed, extra logic involved, or improves readability)
+Column(
+  children: List.generate(
+    items.length,
+    (index) => ItemTile(items[index], index: index),
+  ),
+)
+```
+
 ## Comments
 - Do not document the obvious
 - Comment needed when: non-obvious logic, workaround, important context
