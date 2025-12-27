@@ -36,6 +36,9 @@ dependencies:
   cupertino_icons: ^1.0.8
   flutter_bloc: ^9.1.1
   go_router: ^17.0.1
+  equatable: ^2.0.7
+  meta: ^1.17.0
+  dio: ^5.9.0
 
 dev_dependencies:
   flutter_test:
