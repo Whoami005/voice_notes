@@ -11,6 +11,8 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final appRouter = AppRouter.createRouter();
+
     return MaterialApp.router(
       title: 'Voice Notes',
       theme: AppTheme.light,

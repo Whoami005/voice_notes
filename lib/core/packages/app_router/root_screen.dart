@@ -3,10 +3,10 @@ import 'package:go_router/go_router.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/feature/presentation/widgets/bottom_navigation_bar/app_bottom_nav.dart';
 
-class RootScaffold extends StatelessWidget {
+class RootScreen extends StatelessWidget {
   final StatefulNavigationShell navigationShell;
 
-  const RootScaffold({
+  const RootScreen({
     required this.navigationShell,
     super.key,
   });
