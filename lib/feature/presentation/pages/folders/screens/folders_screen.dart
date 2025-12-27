@@ -149,7 +149,7 @@ class _FoldersScreenState extends State<FoldersScreen> {
   }
 
   void _onFolderTap(Folder folder) {
-    // TODO: Navigate to folder detail
+    context.go('/folders/${folder.id}');
   }
 
   void _onFolderLongPress(Folder folder) {

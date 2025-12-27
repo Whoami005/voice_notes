@@ -3,6 +3,8 @@ import 'package:go_router/go_router.dart';
 import 'package:voice_notes/core/packages/app_router/root_screen.dart';
 import 'package:voice_notes/core/packages/app_router/routes.dart';
 import 'package:voice_notes/feature/presentation/pages/folders/screens/folders_screen.dart';
+import 'package:voice_notes/feature/presentation/pages/notes/screens/folder_detail_screen.dart';
+import 'package:voice_notes/feature/presentation/pages/notes/screens/note_detail_screen.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/screens/settings_screen.dart';
 
 ///  AppRouter - класс для управления навигацией в приложении
@@ -36,6 +38,30 @@ class AppRouter {
                 GoRoute(
                   path: AppRoutes.folders,
                   builder: (context, state) => const FoldersScreen(),
+                  routes: [
+                    GoRoute(
+                      path: ':id',
+                      builder: (context, state) {
+                        final folderId = state.pathParameters['id']!;
+
+                        return FolderDetailScreen(folderId: folderId);
+                      },
+                      routes: [
+                        GoRoute(
+                          path: 'note/:noteId',
+                          builder: (context, state) {
+                            final folderId = state.pathParameters['id']!;
+                            final noteId = state.pathParameters['noteId']!;
+
+                            return NoteDetailScreen(
+                              folderId: folderId,
+                              noteId: noteId,
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ],
             ),

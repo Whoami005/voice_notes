@@ -70,7 +70,7 @@ class SettingsRow extends StatelessWidget {
                       ],
                     ),
                   ),
-                  if (trailing != null) trailing!,
+                  ?trailing,
                 ],
               ),
             ),
@@ -109,7 +109,7 @@ class SettingsToggle extends StatelessWidget {
       child: Switch.adaptive(
         value: value,
         onChanged: onChanged,
-        activeColor: themeColors.accentPrimary,
+        activeThumbColor: themeColors.accentPrimary,
         activeTrackColor: themeColors.accentPrimary.withValues(alpha: 0.5),
       ),
     );

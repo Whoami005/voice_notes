@@ -1,0 +1,133 @@
+import 'package:flutter/material.dart';
+import 'package:voice_notes/core/constants/app_sizes.dart';
+import 'package:voice_notes/core/constants/app_spacer.dart';
+import 'package:voice_notes/core/extensions/context_extensions.dart';
+import 'package:voice_notes/feature/domain/note.dart';
+import 'package:voice_notes/feature/presentation/widgets/chips/tag_chip.dart';
+
+class NoteBubble extends StatelessWidget {
+  final Note note;
+  final VoidCallback? onTap;
+  final VoidCallback? onCopy;
+  final VoidCallback? onShare;
+
+  const NoteBubble({
+    required this.note,
+    this.onTap,
+    this.onCopy,
+    this.onShare,
+    super.key,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = context.textTheme;
+    final themeColors = context.themeColors;
+    final screenWidth = context.screenSize.width;
+
+    return Align(
+      alignment: Alignment.centerRight,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          constraints: BoxConstraints(maxWidth: screenWidth * 0.85),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSizes.p16,
+            vertical: AppSizes.p14,
+          ),
+          decoration: BoxDecoration(
+            color: themeColors.bgSecondary,
+            borderRadius: BorderRadius.circular(AppSizes.bubbleRadius),
+            border: Border.all(color: themeColors.borderPrimary),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                note.text,
+                style: textTheme.bodyMedium?.copyWith(
+                  color: themeColors.textPrimary,
+                  height: 1.5,
+                ),
+              ),
+              if (note.tags.isNotEmpty) ...[
+                AppSpacer.p8,
+                Wrap(
+                  spacing: AppSizes.p6,
+                  runSpacing: AppSizes.p6,
+                  children: List.generate(
+                    note.tags.length,
+                    (index) => TagChip(label: note.tags[index]),
+                  ),
+                ),
+              ],
+              AppSpacer.p8,
+              _MetaInfo(note: note),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MetaInfo extends StatelessWidget {
+  final Note note;
+
+  const _MetaInfo({required this.note});
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = context.textTheme;
+    final themeColors = context.themeColors;
+    final metaStyle = textTheme.labelSmall?.copyWith(
+      color: themeColors.textTertiary,
+    );
+
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(_formatTime(note.createdAt), style: metaStyle),
+        _Dot(color: themeColors.textTertiary),
+        Text(_formatDuration(note.duration), style: metaStyle),
+        _Dot(color: themeColors.textTertiary),
+        Text(note.language, style: metaStyle),
+      ],
+    );
+  }
+
+  String _formatTime(DateTime dateTime) {
+    final hour = dateTime.hour.toString().padLeft(2, '0');
+    final minute = dateTime.minute.toString().padLeft(2, '0');
+
+    return '$hour:$minute';
+  }
+
+  String _formatDuration(Duration duration) {
+    final minutes = duration.inMinutes;
+    final seconds = (duration.inSeconds % 60).toString().padLeft(2, '0');
+
+    return '$minutes:$seconds';
+  }
+}
+
+class _Dot extends StatelessWidget {
+  final Color color;
+
+  const _Dot({required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: AppSizes.p6),
+      child: Container(
+        width: 3,
+        height: 3,
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle,
+        ),
+      ),
+    );
+  }
+}

@@ -293,17 +293,14 @@ class _GeneralTab extends StatelessWidget {
             ],
           ),
           AppSpacer.p20,
-          SettingsSection(
+          const SettingsSection(
             title: 'Уведомления',
             children: [
               SettingsRow(
                 icon: Icons.notifications_outlined,
                 title: 'Уведомления',
                 subtitle: 'Скоро',
-                trailing: SettingsToggle(
-                  value: false,
-                  onChanged: null,
-                ),
+                trailing: SettingsToggle(value: false),
                 isEnabled: false,
                 showDivider: false,
               ),
