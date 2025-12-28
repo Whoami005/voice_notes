@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:voice_notes/core/packages/app_router/root_screen.dart';
+import 'package:voice_notes/core/packages/app_router/route_builder.dart';
 import 'package:voice_notes/core/packages/app_router/routes.dart';
 import 'package:voice_notes/feature/presentation/pages/folders/screens/folders_screen.dart';
 import 'package:voice_notes/feature/presentation/pages/notes/screens/folder_detail_screen.dart';
@@ -37,14 +38,18 @@ class AppRouter {
               routes: [
                 GoRoute(
                   path: AppRoutes.folders,
-                  builder: (context, state) => const FoldersScreen(),
+                  builder: (context, state) =>
+                      wrapRoute(context, const FoldersScreen()),
                   routes: [
                     GoRoute(
                       path: ':id',
                       builder: (context, state) {
                         final folderId = state.pathParameters['id']!;
 
-                        return FolderDetailScreen(folderId: folderId);
+                        return wrapRoute(
+                          context,
+                          FolderDetailScreen(folderId: folderId),
+                        );
                       },
                       routes: [
                         GoRoute(
@@ -53,9 +58,12 @@ class AppRouter {
                             final folderId = state.pathParameters['id']!;
                             final noteId = state.pathParameters['noteId']!;
 
-                            return NoteDetailScreen(
-                              folderId: folderId,
-                              noteId: noteId,
+                            return wrapRoute(
+                              context,
+                              NoteDetailScreen(
+                                folderId: folderId,
+                                noteId: noteId,
+                              ),
                             );
                           },
                         ),
@@ -70,7 +78,8 @@ class AppRouter {
               routes: [
                 GoRoute(
                   path: AppRoutes.settings,
-                  builder: (context, state) => const SettingsScreen(),
+                  builder: (context, state) =>
+                      wrapRoute(context, const SettingsScreen()),
                 ),
               ],
             ),
