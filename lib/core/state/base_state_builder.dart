@@ -14,7 +14,7 @@ class BaseStateBuilder<C extends BlocBase<BaseState<S>>, S>
   final C? bloc;
 
   /// Обязательный колбэк для успешного состояния
-  final Widget Function(BuildContext context, Success<S> state) onSuccess;
+  final Widget Function(BuildContext context, SuccessState<S> state) onSuccess;
 
   /// Колбэк для ошибки (по умолчанию StateErrorView)
   final Widget Function(BuildContext context, AppFailure failure)? onError;
@@ -44,11 +44,12 @@ class BaseStateBuilder<C extends BlocBase<BaseState<S>>, S>
       bloc: bloc,
       buildWhen: buildWhen ?? _defaultBuildWhen,
       builder: (context, state) => switch (state) {
-        Initial() => onInitial?.call(context) ?? const SizedBox.shrink(),
-        Loading() => onLoading?.call(context) ?? const StateLoadingView(),
-        Error(:final failure) =>
-          onError?.call(context, failure) ?? _buildDefaultError(context, failure),
-        Success() => onSuccess(context, state),
+        InitialState() => onInitial?.call(context) ?? const SizedBox.shrink(),
+        LoadingState() => onLoading?.call(context) ?? const StateLoadingView(),
+        ErrorState(:final failure) =>
+          onError?.call(context, failure) ??
+              _buildDefaultError(context, failure),
+        SuccessState() => onSuccess(context, state),
       },
     );
   }

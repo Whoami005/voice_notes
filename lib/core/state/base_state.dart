@@ -12,43 +12,43 @@ import 'package:voice_notes/core/error/app_failure.dart';
 sealed class BaseState<T> extends Equatable {
   const BaseState();
 
-  const factory BaseState.initial() = Initial<T>;
+  const factory BaseState.initial() = InitialState<T>;
 
-  const factory BaseState.loading() = Loading<T>;
+  const factory BaseState.loading() = LoadingState<T>;
 
-  const factory BaseState.success(T data) = Success<T>;
+  const factory BaseState.success(T data) = SuccessState<T>;
 
-  const factory BaseState.error(AppFailure failure) = Error<T>;
+  const factory BaseState.error(AppFailure failure) = ErrorState<T>;
 
   @override
   List<Object?> get props => [];
 }
 
 /// Начальное состояние (до первой загрузки)
-final class Initial<T> extends BaseState<T> {
-  const Initial();
+final class InitialState<T> extends BaseState<T> {
+  const InitialState();
 }
 
 /// Состояние загрузки
-final class Loading<T> extends BaseState<T> {
-  const Loading();
+final class LoadingState<T> extends BaseState<T> {
+  const LoadingState();
 }
 
 /// Успешная загрузка данных
-final class Success<T> extends BaseState<T> {
+final class SuccessState<T> extends BaseState<T> {
   final T data;
 
-  const Success(this.data);
+  const SuccessState(this.data);
 
   @override
   List<Object?> get props => [data];
 }
 
 /// Ошибка с AppFailure
-final class Error<T> extends BaseState<T> {
+final class ErrorState<T> extends BaseState<T> {
   final AppFailure failure;
 
-  const Error(this.failure);
+  const ErrorState(this.failure);
 
   /// Сообщение ошибки для UI
   String get message => failure.message;
@@ -59,17 +59,17 @@ final class Error<T> extends BaseState<T> {
 
 /// Хелперы для удобной работы с состояниями
 extension BaseStateX<T> on BaseState<T> {
-  bool get isInitial => this is Initial<T>;
+  bool get isInitial => this is InitialState<T>;
 
-  bool get isLoading => this is Loading<T>;
+  bool get isLoading => this is LoadingState<T>;
 
-  bool get isSuccess => this is Success<T>;
+  bool get isSuccess => this is SuccessState<T>;
 
-  bool get isError => this is Error<T>;
+  bool get isError => this is ErrorState<T>;
 
   /// Данные или null
   T? get dataOrNull => switch (this) {
-    Success(:final data) => data,
+    SuccessState(:final data) => data,
     _ => null,
   };
 
@@ -79,13 +79,13 @@ extension BaseStateX<T> on BaseState<T> {
   /// - в методах кубита после успешной загрузки
   /// - в UI внутри Success-ветки
   T get requireData => switch (this) {
-    Success(:final data) => data,
+    SuccessState(:final data) => data,
     _ => throw StateError('Expected Success state, got $runtimeType'),
   };
 
   /// Ошибка или null
   AppFailure? get failureOrNull => switch (this) {
-    Error(:final failure) => failure,
+    ErrorState(:final failure) => failure,
     _ => null,
   };
 
@@ -96,10 +96,10 @@ extension BaseStateX<T> on BaseState<T> {
     required R Function(T data) success,
     required R Function(AppFailure failure) error,
   }) => switch (this) {
-    Initial() => initial(),
-    Loading() => loading(),
-    Success(:final data) => success(data),
-    Error(:final failure) => error(failure),
+    InitialState() => initial(),
+    LoadingState() => loading(),
+    SuccessState(:final data) => success(data),
+    ErrorState(:final failure) => error(failure),
   };
 
   /// Pattern matching с fallback
@@ -110,9 +110,9 @@ extension BaseStateX<T> on BaseState<T> {
     R Function(T data)? success,
     R Function(AppFailure failure)? error,
   }) => switch (this) {
-    Initial() => initial?.call() ?? orElse(),
-    Loading() => loading?.call() ?? orElse(),
-    Success(:final data) => success?.call(data) ?? orElse(),
-    Error(:final failure) => error?.call(failure) ?? orElse(),
+    InitialState() => initial?.call() ?? orElse(),
+    LoadingState() => loading?.call() ?? orElse(),
+    SuccessState(:final data) => success?.call(data) ?? orElse(),
+    ErrorState(:final failure) => error?.call(failure) ?? orElse(),
   };
 }
