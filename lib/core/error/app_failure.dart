@@ -118,5 +118,8 @@ final class CustomFailure extends AppFailure {
 }
 
 final class UnknownFailure extends AppFailure {
+  @override
+  String get message => kDebugMode ? super.message : 'Что-то пошло не так';
+
   const UnknownFailure([super.message = 'Что-то пошло не так']);
 }
