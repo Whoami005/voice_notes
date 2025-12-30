@@ -48,8 +48,8 @@ dependencies:
   path_provider: 2.1.5
   path: 1.9.1
   flutter_gen: 5.12.0
-  uuid: ^4.5.2
-  sherpa_onnx: ^1.12.20
+  uuid: 4.5.2
+  sherpa_onnx: 1.12.20
 
 dev_dependencies:
   flutter_test:

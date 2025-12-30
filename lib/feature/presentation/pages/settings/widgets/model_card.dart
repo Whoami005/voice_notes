@@ -42,9 +42,7 @@ class ModelCard extends StatelessWidget {
             children: [
               _ModelIcon(engine: model.engine),
               AppSpacer.p12,
-              Expanded(
-                child: _ModelInfo(model: model),
-              ),
+              Expanded(child: _ModelInfo(model: model)),
               if (model.isSelected) const _ActiveBadge(),
             ],
           ),
@@ -114,9 +112,7 @@ class _ModelInfo extends StatelessWidget {
       children: [
         Text(
           model.name,
-          style: AppTypography.h3.copyWith(
-            color: themeColors.textPrimary,
-          ),
+          style: AppTypography.h3.copyWith(color: themeColors.textPrimary),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -131,7 +127,7 @@ class _ModelInfo extends StatelessWidget {
         ),
         AppSpacer.p2,
         Text(
-          model.languages,
+          model.languageLabel,
           style: AppTypography.caption.copyWith(
             color: themeColors.textTertiary,
           ),

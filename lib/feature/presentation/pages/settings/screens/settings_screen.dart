@@ -28,53 +28,6 @@ class _SettingsScreenState extends State<SettingsScreen>
   String _theme = 'Системная';
   String _appLanguage = 'Русский';
 
-  // Mock models data
-  final List<AsrModelEntity> _models = const [
-    AsrModelEntity(
-      id: '1',
-      name: 'Whisper Small',
-      engine: 'OpenAI Whisper',
-      size: '466 MB',
-      languages: '99 языков',
-      description:
-          'Быстрая модель с хорошим качеством. '
-          'Рекомендуется для большинства задач.',
-      isDownloaded: true,
-      isSelected: true,
-    ),
-    AsrModelEntity(
-      id: '2',
-      name: 'Whisper Medium',
-      engine: 'OpenAI Whisper',
-      size: '1.5 GB',
-      languages: '99 языков',
-      description:
-          'Более точная модель для сложных аудиозаписей '
-          'с шумом или акцентом.',
-      isDownloaded: true,
-    ),
-    AsrModelEntity(
-      id: '3',
-      name: 'Whisper Large',
-      engine: 'OpenAI Whisper',
-      size: '2.9 GB',
-      languages: '99 языков',
-      description:
-          'Максимальная точность для профессионального '
-          'использования.',
-    ),
-    AsrModelEntity(
-      id: '4',
-      name: 'Parakeet',
-      engine: 'NVIDIA NeMo',
-      size: '89 MB',
-      languages: 'Русский, English',
-      description:
-          'Компактная модель для русского и английского языков. '
-          'Быстрая работа на устройстве.',
-    ),
-  ];
-
   @override
   void initState() {
     super.initState();
@@ -131,7 +84,7 @@ class _SettingsScreenState extends State<SettingsScreen>
             onClearCacheTap: _onClearCacheTap,
           ),
           _ModelsTab(
-            models: _models,
+            models: AsrModelEntity.availableModels,
             onUseModel: _onUseModel,
             onDownloadModel: _onDownloadModel,
             onDeleteModel: _onDeleteModel,

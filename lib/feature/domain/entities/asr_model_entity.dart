@@ -1,10 +1,22 @@
+/// Тип модели ASR для конфигурации sherpa-onnx
+enum AsrModelType {
+  /// Whisper модели (encoder + decoder + tokens)
+  whisper,
+
+  /// Parakeet TDT модели (encoder + decoder + joiner + tokens)
+  parakeetTdt,
+}
+
 class AsrModelEntity {
   final String id;
   final String name;
   final String engine;
   final String size;
-  final String languages;
+  final String languageLabel;
+  final List<String> supportedLanguages;
   final String description;
+  final String modelDirName;
+  final AsrModelType modelType;
   final bool isDownloaded;
   final bool isSelected;
   final double? downloadProgress;
@@ -14,10 +26,210 @@ class AsrModelEntity {
     required this.name,
     required this.engine,
     required this.size,
-    required this.languages,
+    required this.languageLabel,
+    required this.supportedLanguages,
     required this.description,
+    required this.modelDirName,
+    required this.modelType,
     this.isDownloaded = false,
     this.isSelected = false,
     this.downloadProgress,
   });
+
+  /// URL для скачивания модели с GitHub
+  String get downloadUrl =>
+      'https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/$modelDirName.tar.bz2';
+
+  /// Список доступных моделей для скачивания
+  static const List<AsrModelEntity> availableModels = [
+    // Whisper Tiny.en (~117MB int8)
+    AsrModelEntity(
+      id: 'whisper-tiny-en',
+      name: 'Whisper Tiny',
+      engine: 'OpenAI Whisper',
+      size: '117 MB',
+      languageLabel: 'English',
+      supportedLanguages: ['English'],
+      description: 'Самая быстрая модель. Только английский язык.',
+      modelDirName: 'sherpa-onnx-whisper-tiny.en',
+      modelType: AsrModelType.whisper,
+    ),
+
+    // Whisper Small (~466MB)
+    AsrModelEntity(
+      id: 'whisper-small',
+      name: 'Whisper Small',
+      engine: 'OpenAI Whisper',
+      size: '466 MB',
+      languageLabel: '99 языков',
+      supportedLanguages: _whisperLanguages,
+      description:
+          'Быстрая модель с хорошим качеством. '
+          'Рекомендуется для большинства задач.',
+      modelDirName: 'sherpa-onnx-whisper-small',
+      modelType: AsrModelType.whisper,
+    ),
+
+    // Whisper Medium (~1.5GB)
+    AsrModelEntity(
+      id: 'whisper-medium',
+      name: 'Whisper Medium',
+      engine: 'OpenAI Whisper',
+      size: '1.5 GB',
+      languageLabel: '99 языков',
+      supportedLanguages: _whisperLanguages,
+      description:
+          'Более точная модель для сложных аудиозаписей '
+          'с шумом или акцентом.',
+      modelDirName: 'sherpa-onnx-whisper-medium',
+      modelType: AsrModelType.whisper,
+    ),
+
+    // Parakeet TDT v3 (~640MB int8)
+    AsrModelEntity(
+      id: 'parakeet-tdt-v3',
+      name: 'Parakeet V3',
+      engine: 'NVIDIA NeMo',
+      size: '640 MB',
+      languageLabel: '25 европейских языков',
+      supportedLanguages: _parakeetLanguages,
+      description:
+          'Компактная модель для европейских языков. '
+          'Быстрая работа на устройстве.',
+      modelDirName: 'sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8',
+      modelType: AsrModelType.parakeetTdt,
+    ),
+  ];
+
+  /// 25 европейских языков поддерживаемых Parakeet V3
+  static const List<String> _parakeetLanguages = [
+    'Bulgarian',
+    'Croatian',
+    'Czech',
+    'Danish',
+    'Dutch',
+    'English',
+    'Finnish',
+    'French',
+    'German',
+    'Greek',
+    'Hungarian',
+    'Italian',
+    'Latvian',
+    'Lithuanian',
+    'Norwegian',
+    'Polish',
+    'Portuguese',
+    'Romanian',
+    'Russian',
+    'Slovak',
+    'Slovenian',
+    'Spanish',
+    'Swedish',
+    'Turkish',
+    'Ukrainian',
+  ];
+
+  /// 99 языков поддерживаемых Whisper
+  static const List<String> _whisperLanguages = [
+    'Afrikaans',
+    'Albanian',
+    'Amharic',
+    'Arabic',
+    'Armenian',
+    'Assamese',
+    'Azerbaijani',
+    'Bashkir',
+    'Basque',
+    'Belarusian',
+    'Bengali',
+    'Bosnian',
+    'Breton',
+    'Bulgarian',
+    'Burmese',
+    'Catalan',
+    'Chinese',
+    'Croatian',
+    'Czech',
+    'Danish',
+    'Dutch',
+    'English',
+    'Estonian',
+    'Faroese',
+    'Finnish',
+    'French',
+    'Galician',
+    'Georgian',
+    'German',
+    'Greek',
+    'Gujarati',
+    'Haitian Creole',
+    'Hausa',
+    'Hawaiian',
+    'Hebrew',
+    'Hindi',
+    'Hungarian',
+    'Icelandic',
+    'Indonesian',
+    'Italian',
+    'Japanese',
+    'Javanese',
+    'Kannada',
+    'Kazakh',
+    'Khmer',
+    'Korean',
+    'Lao',
+    'Latin',
+    'Latvian',
+    'Lingala',
+    'Lithuanian',
+    'Luxembourgish',
+    'Macedonian',
+    'Malagasy',
+    'Malay',
+    'Malayalam',
+    'Maltese',
+    'Maori',
+    'Marathi',
+    'Mongolian',
+    'Nepali',
+    'Norwegian',
+    'Nynorsk',
+    'Occitan',
+    'Pashto',
+    'Persian',
+    'Polish',
+    'Portuguese',
+    'Punjabi',
+    'Romanian',
+    'Russian',
+    'Sanskrit',
+    'Serbian',
+    'Shona',
+    'Sindhi',
+    'Sinhala',
+    'Slovak',
+    'Slovenian',
+    'Somali',
+    'Spanish',
+    'Sundanese',
+    'Swahili',
+    'Swedish',
+    'Tagalog',
+    'Tajik',
+    'Tamil',
+    'Tatar',
+    'Telugu',
+    'Thai',
+    'Tibetan',
+    'Turkish',
+    'Turkmen',
+    'Ukrainian',
+    'Urdu',
+    'Uzbek',
+    'Vietnamese',
+    'Welsh',
+    'Yiddish',
+    'Yoruba',
+  ];
 }
