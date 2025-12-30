@@ -18,6 +18,9 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # of the product and file versions while build-number is used as the build suffix.
 version: 1.0.0+1
 
+# flutter build apk -t lib/main_dev.dart --flavor dev
+# dart run build_runner build --delete-conflicting-outputs
+
 environment:
   sdk: ^3.10.1
 
@@ -41,7 +44,12 @@ dependencies:
   dio: 5.9.0
   objectbox: 5.1.0
   objectbox_sync_flutter_libs: 5.1.0
-  async: ^2.13.0
+  async: 2.13.0
+  path_provider: 2.1.5
+  path: 1.9.1
+  flutter_gen: 5.12.0
+  uuid: ^4.5.2
+  sherpa_onnx: ^1.12.20
 
 dev_dependencies:
   flutter_test:
@@ -52,10 +60,11 @@ dev_dependencies:
   # activated in the `analysis_options.yaml` file located at the root of your
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
-  flutter_lints: ^6.0.0
-  very_good_analysis: ^10.0.0
+  flutter_lints: 6.0.0
+  very_good_analysis: 10.0.0
   build_runner: 2.10.4
   objectbox_generator: 5.1.0
+  flutter_gen_runner: 5.12.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -98,3 +107,11 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+
+objectbox:
+  # Writes objectbox-model.json and objectbox.g.dart to lib/custom (and test/custom).
+  output_dir: core/packages/db/object_box
+  # Or optionally specify the lib and test output folder separately.
+  # output_dir:
+  #   lib: custom
+  #   test: other
