@@ -13,7 +13,12 @@ class TagEntity {
     this.color,
   });
 
-  TagEntity copyWith({String? uid, String? name, Color? color, DateTime? createdAt}) {
+  TagEntity copyWith({
+    String? uid,
+    String? name,
+    Color? color,
+    DateTime? createdAt,
+  }) {
     return TagEntity(
       uid: uid ?? this.uid,
       name: name ?? this.name,

@@ -37,13 +37,14 @@ abstract final class NoteMapper {
 
   /// Обновляет существующую entity значениями из domain модели.
   static void updateEntity(NoteObject entity, NoteEntity note) {
-    entity.text = note.text;
-    entity.updatedAt = note.updatedAt;
-    entity.durationMs = note.duration.inMilliseconds;
-    entity.modelName = note.modelName;
-    entity.language = note.language;
-    entity.wordCount = note.wordCount;
-    entity.hasAudio = note.hasAudio;
+    entity
+      ..text = note.text
+      ..updatedAt = note.updatedAt
+      ..durationMs = note.duration.inMilliseconds
+      ..modelName = note.modelName
+      ..language = note.language
+      ..wordCount = note.wordCount
+      ..hasAudio = note.hasAudio;
   }
 
   static List<NoteEntity> toDomainList(List<NoteObject> entities) {

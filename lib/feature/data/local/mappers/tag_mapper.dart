@@ -16,7 +16,7 @@ abstract final class TagMapper {
   static TagObject toEntity(TagEntity t) {
     return TagObject(
       name: t.name.toLowerCase().trim(),
-      colorValue: t.color?.value,
+      colorValue: t.color?.toARGB32(),
       createdAt: t.createdAt,
     );
   }
