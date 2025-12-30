@@ -3,10 +3,10 @@ import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/theme/app_typography.dart';
-import 'package:voice_notes/feature/domain/asr_model.dart';
+import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
 
 class ModelCard extends StatelessWidget {
-  final AsrModel model;
+  final AsrModelEntity model;
   final VoidCallback? onUse;
   final VoidCallback? onDownload;
   final VoidCallback? onDelete;
@@ -101,7 +101,7 @@ class _ModelIcon extends StatelessWidget {
 }
 
 class _ModelInfo extends StatelessWidget {
-  final AsrModel model;
+  final AsrModelEntity model;
 
   const _ModelInfo({required this.model});
 
@@ -216,7 +216,7 @@ class _DownloadProgress extends StatelessWidget {
 }
 
 class _ActionButtons extends StatelessWidget {
-  final AsrModel model;
+  final AsrModelEntity model;
   final VoidCallback? onUse;
   final VoidCallback? onDownload;
   final VoidCallback? onDelete;

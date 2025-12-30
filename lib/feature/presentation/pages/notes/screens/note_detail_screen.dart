@@ -5,7 +5,8 @@ import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/theme/app_typography.dart';
-import 'package:voice_notes/feature/domain/note.dart';
+import 'package:voice_notes/feature/domain/entities/note_entity.dart';
+import 'package:voice_notes/feature/domain/entities/tag_entity.dart';
 import 'package:voice_notes/feature/presentation/widgets/chips/tag_chip.dart';
 import 'package:voice_notes/feature/presentation/widgets/dialogs/confirm_dialog.dart';
 
@@ -27,8 +28,8 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
   bool _isEditing = false;
   late TextEditingController _textController;
   late TextEditingController _tagController;
-  late Note _note;
-  late List<String> _tags;
+  late NoteEntity _note;
+  late List<TagEntity> _tags;
 
   @override
   void initState() {
@@ -39,18 +40,24 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
   }
 
   void _initMockData() {
+    final now = DateTime.now();
+
     // Mock note data based on ID
-    _note = Note(
+    _note = NoteEntity(
       id: widget.noteId,
       text:
           'Обсудили план на следующий спринт. Нужно добавить новый '
           'функционал для авторизации и интеграцию с внешним API.',
-      createdAt: DateTime.now().subtract(const Duration(hours: 1)),
+      createdAt: now.subtract(const Duration(hours: 1)),
+      updatedAt: now.subtract(const Duration(hours: 1)),
       duration: const Duration(seconds: 45),
       modelName: 'Whisper Small',
       language: 'Русский',
       wordCount: 18,
-      tags: ['работа', 'спринт'],
+      tags: [
+        TagEntity(uid: '1', name: 'работа', createdAt: now),
+        TagEntity(uid: '2', name: 'спринт', createdAt: now),
+      ],
     );
     _tags = List.from(_note.tags);
   }
@@ -148,16 +155,22 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
   }
 
   void _onAddTag() {
-    final tag = _tagController.text.trim();
-    if (tag.isNotEmpty && !_tags.contains(tag)) {
+    final tagName = _tagController.text.trim().toLowerCase();
+    if (tagName.isNotEmpty && !_tags.any((t) => t.name == tagName)) {
       setState(() {
-        _tags.add(tag);
+        _tags.add(
+          TagEntity(
+            uid: DateTime.now().millisecondsSinceEpoch.toString(),
+            name: tagName,
+            createdAt: DateTime.now(),
+          ),
+        );
         _tagController.clear();
       });
     }
   }
 
-  void _onRemoveTag(String tag) {
+  void _onRemoveTag(TagEntity tag) {
     setState(() => _tags.remove(tag));
   }
 
@@ -277,11 +290,11 @@ class _TextSection extends StatelessWidget {
 }
 
 class _TagsSection extends StatelessWidget {
-  final List<String> tags;
+  final List<TagEntity> tags;
   final bool isEditing;
   final TextEditingController tagController;
   final VoidCallback onAddTag;
-  final ValueChanged<String> onRemoveTag;
+  final ValueChanged<TagEntity> onRemoveTag;
 
   const _TagsSection({
     required this.tags,
@@ -301,12 +314,13 @@ class _TagsSection extends StatelessWidget {
         Wrap(
           spacing: AppSizes.p8,
           runSpacing: AppSizes.p8,
-          children: tags.map((tag) {
-            return TagChip(
-              label: tag,
-              onDelete: isEditing ? () => onRemoveTag(tag) : null,
-            );
-          }).toList(),
+          children: [
+            for (final tag in tags)
+              TagChip(
+                label: tag.name,
+                onDelete: isEditing ? () => onRemoveTag(tag) : null,
+              ),
+          ],
         ),
         if (isEditing) ...[
           AppSpacer.p12,
@@ -340,7 +354,7 @@ class _TagsSection extends StatelessWidget {
 }
 
 class _InfoSection extends StatelessWidget {
-  final Note note;
+  final NoteEntity note;
 
   const _InfoSection({required this.note});
 

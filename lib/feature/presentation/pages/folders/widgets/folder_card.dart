@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
-import 'package:voice_notes/feature/domain/folder.dart';
+import 'package:voice_notes/feature/domain/entities/folder_entity.dart';
 
 class FolderCard extends StatelessWidget {
-  final Folder folder;
+  final FolderEntity folder;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
 
@@ -32,7 +32,7 @@ class FolderCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            _IconContainer(color: folder.color, icon: folder.icon),
+            _IconContainer(color: folder.color, icon: folder.iconData),
             AppSpacer.p14,
             Expanded(
               child: _TextContent(folder: folder),
@@ -70,7 +70,7 @@ class _IconContainer extends StatelessWidget {
 }
 
 class _TextContent extends StatelessWidget {
-  final Folder folder;
+  final FolderEntity folder;
 
   const _TextContent({required this.folder});
 
@@ -104,7 +104,7 @@ class _TextContent extends StatelessWidget {
   String _buildSubtitle() {
     final count = folder.notesCount;
     final noteWord = _pluralize(count, 'заметка', 'заметки', 'заметок');
-    final timeAgo = _formatTimeAgo(folder.lastUpdated);
+    final timeAgo = _formatTimeAgo(folder.updatedAt);
     return '$count $noteWord • $timeAgo';
   }
 

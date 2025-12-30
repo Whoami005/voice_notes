@@ -3,7 +3,7 @@ import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/theme/app_typography.dart';
-import 'package:voice_notes/feature/domain/asr_model.dart';
+import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/widgets/model_card.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/widgets/settings_row.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/widgets/settings_section.dart';
@@ -29,8 +29,8 @@ class _SettingsScreenState extends State<SettingsScreen>
   String _appLanguage = 'Русский';
 
   // Mock models data
-  final List<AsrModel> _models = const [
-    AsrModel(
+  final List<AsrModelEntity> _models = const [
+    AsrModelEntity(
       id: '1',
       name: 'Whisper Small',
       engine: 'OpenAI Whisper',
@@ -42,7 +42,7 @@ class _SettingsScreenState extends State<SettingsScreen>
       isDownloaded: true,
       isSelected: true,
     ),
-    AsrModel(
+    AsrModelEntity(
       id: '2',
       name: 'Whisper Medium',
       engine: 'OpenAI Whisper',
@@ -53,7 +53,7 @@ class _SettingsScreenState extends State<SettingsScreen>
           'с шумом или акцентом.',
       isDownloaded: true,
     ),
-    AsrModel(
+    AsrModelEntity(
       id: '3',
       name: 'Whisper Large',
       engine: 'OpenAI Whisper',
@@ -63,7 +63,7 @@ class _SettingsScreenState extends State<SettingsScreen>
           'Максимальная точность для профессионального '
           'использования.',
     ),
-    AsrModel(
+    AsrModelEntity(
       id: '4',
       name: 'Parakeet',
       engine: 'NVIDIA NeMo',
@@ -165,15 +165,15 @@ class _SettingsScreenState extends State<SettingsScreen>
     // TODO: Show confirm dialog
   }
 
-  void _onUseModel(AsrModel model) {
+  void _onUseModel(AsrModelEntity model) {
     // TODO: Set active model
   }
 
-  void _onDownloadModel(AsrModel model) {
+  void _onDownloadModel(AsrModelEntity model) {
     // TODO: Download model
   }
 
-  void _onDeleteModel(AsrModel model) {
+  void _onDeleteModel(AsrModelEntity model) {
     // TODO: Delete model
   }
 }
@@ -334,10 +334,10 @@ class _GeneralTab extends StatelessWidget {
 }
 
 class _ModelsTab extends StatelessWidget {
-  final List<AsrModel> models;
-  final ValueChanged<AsrModel> onUseModel;
-  final ValueChanged<AsrModel> onDownloadModel;
-  final ValueChanged<AsrModel> onDeleteModel;
+  final List<AsrModelEntity> models;
+  final ValueChanged<AsrModelEntity> onUseModel;
+  final ValueChanged<AsrModelEntity> onDownloadModel;
+  final ValueChanged<AsrModelEntity> onDeleteModel;
 
   const _ModelsTab({
     required this.models,

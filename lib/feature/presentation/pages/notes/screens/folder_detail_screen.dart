@@ -4,9 +4,11 @@ import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/theme/app_colors.dart';
-import 'package:voice_notes/feature/domain/folder.dart';
-import 'package:voice_notes/feature/domain/note.dart';
-import 'package:voice_notes/feature/domain/recording_state.dart';
+import 'package:voice_notes/feature/domain/entities/folder_entity.dart';
+import 'package:voice_notes/feature/domain/entities/icon_ref_entity.dart';
+import 'package:voice_notes/feature/domain/entities/note_entity.dart';
+import 'package:voice_notes/feature/domain/entities/tag_entity.dart';
+import 'package:voice_notes/feature/domain/enums/recording_state.dart';
 import 'package:voice_notes/feature/presentation/pages/notes/widgets/date_separator.dart';
 import 'package:voice_notes/feature/presentation/pages/notes/widgets/note_bubble.dart';
 import 'package:voice_notes/feature/presentation/pages/notes/widgets/recording_input.dart';
@@ -31,7 +33,7 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
   Duration _recordingDuration = Duration.zero;
 
   // Mock folder data
-  late final Folder _folder;
+  late final FolderEntity _folder;
 
   // Mock notes data grouped by date
   final List<_DateGroup> _noteGroups = [];
@@ -43,64 +45,74 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
   }
 
   void _initMockData() {
+    final now = DateTime.now();
+    final yesterday = now.subtract(const Duration(days: 1));
+
     // Mock folder based on ID
-    _folder = Folder(
-      id: widget.folderId,
+    _folder = FolderEntity(
+      uid: widget.folderId,
       name: 'Работа',
       description: 'Рабочие заметки и митинги',
       color: AppColors.folderColors[2],
-      icon: Icons.work,
+      icon: MaterialIconRefEntity(Icons.work.codePoint),
       notesCount: 15,
-      lastUpdated: DateTime.now().subtract(const Duration(hours: 2)),
+      createdAt: now.subtract(const Duration(days: 30)),
+      updatedAt: now.subtract(const Duration(hours: 2)),
     );
-
-    final now = DateTime.now();
-    final yesterday = now.subtract(const Duration(days: 1));
 
     _noteGroups.addAll([
       _DateGroup(
         label: 'Сегодня',
         notes: [
-          Note(
+          NoteEntity(
             id: '1',
             text:
                 'Обсудили план на следующий спринт. Нужно добавить новый '
                 'функционал для авторизации и интеграцию с внешним API.',
             createdAt: now.subtract(const Duration(hours: 1)),
+            updatedAt: now.subtract(const Duration(hours: 1)),
             duration: const Duration(seconds: 45),
             modelName: 'Whisper Small',
             language: 'Русский',
             wordCount: 18,
-            tags: ['работа', 'спринт'],
+            tags: [
+              TagEntity(uid: '1', name: 'работа', createdAt: now),
+              TagEntity(uid: '2', name: 'спринт', createdAt: now),
+            ],
           ),
-          Note(
+          NoteEntity(
             id: '2',
             text:
                 'Записка о встрече с клиентом. Нужно подготовить '
                 'презентацию до пятницы.',
             createdAt: now.subtract(const Duration(hours: 3)),
+            updatedAt: now.subtract(const Duration(hours: 3)),
             duration: const Duration(seconds: 32),
             modelName: 'Whisper Small',
             language: 'Русский',
             wordCount: 11,
-            tags: ['клиент', 'презентация'],
+            tags: [
+              TagEntity(uid: '3', name: 'клиент', createdAt: now),
+              TagEntity(uid: '4', name: 'презентация', createdAt: now),
+            ],
           ),
         ],
       ),
       _DateGroup(
         label: 'Вчера',
         notes: [
-          Note(
+          NoteEntity(
             id: '3',
             text:
                 'Идея для нового проекта: приложение для трекинга привычек '
                 'с геймификацией.',
             createdAt: yesterday.subtract(const Duration(hours: 5)),
+            updatedAt: yesterday.subtract(const Duration(hours: 5)),
             duration: const Duration(seconds: 28),
             modelName: 'Whisper Small',
             language: 'Русский',
             wordCount: 10,
-            tags: ['идея'],
+            tags: [TagEntity(uid: '5', name: 'идея', createdAt: yesterday)],
           ),
         ],
       ),
@@ -131,7 +143,7 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
                 color: _folder.color.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(AppSizes.p8),
               ),
-              child: Icon(_folder.icon, color: _folder.color, size: 18),
+              child: Icon(_folder.iconData, color: _folder.color, size: 18),
             ),
             AppSpacer.p10,
             Flexible(
@@ -264,15 +276,15 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
     }
   }
 
-  void _onNoteTap(Note note) {
+  void _onNoteTap(NoteEntity note) {
     context.go('/folders/${widget.folderId}/note/${note.id}');
   }
 
-  void _onCopyNote(Note note) {
+  void _onCopyNote(NoteEntity note) {
     // TODO: Copy to clipboard
   }
 
-  void _onShareNote(Note note) {
+  void _onShareNote(NoteEntity note) {
     // TODO: Share note
   }
 
@@ -307,7 +319,7 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
 
 class _DateGroup {
   final String label;
-  final List<Note> notes;
+  final List<NoteEntity> notes;
 
   const _DateGroup({required this.label, required this.notes});
 }

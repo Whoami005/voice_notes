@@ -1,4 +1,4 @@
-class AsrModel {
+class AsrModelEntity {
   final String id;
   final String name;
   final String engine;
@@ -9,7 +9,7 @@ class AsrModel {
   final bool isSelected;
   final double? downloadProgress;
 
-  const AsrModel({
+  const AsrModelEntity({
     required this.id,
     required this.name,
     required this.engine,

@@ -21,7 +21,7 @@ import 'package:voice_notes/core/state/initializable.dart';
 ///   child: ListView(...),
 /// )
 /// ```
-class RefreshableWrapper<C extends Cubit> extends StatelessWidget {
+class RefreshableWrapper<C extends Cubit<dynamic>> extends StatelessWidget {
   final Widget child;
   final RefreshCallback? onRefresh;
 

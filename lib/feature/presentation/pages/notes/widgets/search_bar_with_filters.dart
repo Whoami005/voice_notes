@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
-import 'package:voice_notes/feature/domain/recording_state.dart';
+import 'package:voice_notes/feature/domain/enums/recording_state.dart';
 
 class SearchBarWithFilters extends StatelessWidget {
   final String query;

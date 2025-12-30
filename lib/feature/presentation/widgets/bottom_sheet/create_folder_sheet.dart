@@ -3,13 +3,14 @@ import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/theme/app_colors.dart';
+import 'package:voice_notes/feature/domain/entities/icon_ref_entity.dart';
 import 'package:voice_notes/feature/presentation/widgets/bottom_sheet/app_bottom_sheet.dart';
 
 class CreateFolderResult {
   final String name;
   final String? description;
   final Color color;
-  final IconData icon;
+  final IconRefEntity icon;
 
   const CreateFolderResult({
     required this.name,
@@ -23,7 +24,7 @@ class CreateFolderSheet extends StatefulWidget {
   final String? initialName;
   final String? initialDescription;
   final Color? initialColor;
-  final IconData? initialIcon;
+  final IconRefEntity? initialIcon;
 
   const CreateFolderSheet({
     super.key,
@@ -38,7 +39,7 @@ class CreateFolderSheet extends StatefulWidget {
     String? initialName,
     String? initialDescription,
     Color? initialColor,
-    IconData? initialIcon,
+    IconRefEntity? initialIcon,
   }) {
     return AppBottomSheet.show<CreateFolderResult>(
       context: context,
@@ -56,21 +57,21 @@ class CreateFolderSheet extends StatefulWidget {
 }
 
 class _CreateFolderSheetState extends State<CreateFolderSheet> {
-  static const List<IconData> _folderIcons = [
-    Icons.folder,
-    Icons.work,
-    Icons.book,
-    Icons.star,
-    Icons.favorite,
-    Icons.music_note,
-    Icons.camera_alt,
-    Icons.code,
+  static final List<IconRefEntity> _folderIcons = [
+    MaterialIconRefEntity(Icons.folder.codePoint),
+    MaterialIconRefEntity(Icons.work.codePoint),
+    MaterialIconRefEntity(Icons.book.codePoint),
+    MaterialIconRefEntity(Icons.star.codePoint),
+    MaterialIconRefEntity(Icons.favorite.codePoint),
+    MaterialIconRefEntity(Icons.music_note.codePoint),
+    MaterialIconRefEntity(Icons.camera_alt.codePoint),
+    MaterialIconRefEntity(Icons.code.codePoint),
   ];
 
   late final TextEditingController _nameController;
   late final TextEditingController _descriptionController;
   late Color _selectedColor;
-  late IconData _selectedIcon;
+  late IconRefEntity _selectedIcon;
 
   @override
   void initState() {
@@ -143,10 +144,7 @@ class _CreateFolderSheetState extends State<CreateFolderSheet> {
           minLines: 1,
         ),
         AppSpacer.p20,
-        Text(
-          'Цвет',
-          style: textTheme.labelMedium,
-        ),
+        Text('Цвет', style: textTheme.labelMedium),
         AppSpacer.p12,
         _ColorPicker(
           colors: AppColors.folderColors,
@@ -154,10 +152,7 @@ class _CreateFolderSheetState extends State<CreateFolderSheet> {
           onSelect: (color) => setState(() => _selectedColor = color),
         ),
         AppSpacer.p20,
-        Text(
-          'Иконка',
-          style: textTheme.labelMedium,
-        ),
+        Text('Иконка', style: textTheme.labelMedium),
         AppSpacer.p12,
         _IconPicker(
           icons: _folderIcons,
@@ -178,7 +173,7 @@ class _CreateFolderSheetState extends State<CreateFolderSheet> {
 class _PreviewCard extends StatelessWidget {
   final String name;
   final Color color;
-  final IconData icon;
+  final IconRefEntity icon;
 
   const _PreviewCard({
     required this.name,
@@ -206,7 +201,11 @@ class _PreviewCard extends StatelessWidget {
               color: color.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(icon, color: color, size: AppSizes.iconLarge),
+            child: Icon(
+              icon.toIconData() ?? Icons.folder,
+              color: color,
+              size: AppSizes.iconLarge,
+            ),
           ),
           AppSpacer.p14,
           Expanded(
@@ -275,10 +274,10 @@ class _ColorPicker extends StatelessWidget {
 }
 
 class _IconPicker extends StatelessWidget {
-  final List<IconData> icons;
-  final IconData selected;
+  final List<IconRefEntity> icons;
+  final IconRefEntity selected;
   final Color selectedColor;
-  final ValueChanged<IconData> onSelect;
+  final ValueChanged<IconRefEntity> onSelect;
 
   const _IconPicker({
     required this.icons,
@@ -313,7 +312,7 @@ class _IconPicker extends StatelessWidget {
                   : null,
             ),
             child: Icon(
-              icon,
+              icon.toIconData() ?? Icons.folder,
               color: isSelected ? selectedColor : themeColors.textSecondary,
               size: AppSizes.iconLarge,
             ),

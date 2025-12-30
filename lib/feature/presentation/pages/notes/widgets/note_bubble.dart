@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
-import 'package:voice_notes/feature/domain/note.dart';
+import 'package:voice_notes/feature/domain/entities/note_entity.dart';
 import 'package:voice_notes/feature/presentation/widgets/chips/tag_chip.dart';
 
 class NoteBubble extends StatelessWidget {
-  final Note note;
+  final NoteEntity note;
   final VoidCallback? onTap;
   final VoidCallback? onCopy;
   final VoidCallback? onShare;
@@ -57,7 +57,7 @@ class NoteBubble extends StatelessWidget {
                   runSpacing: AppSizes.p6,
                   children: List.generate(
                     note.tags.length,
-                    (index) => TagChip(label: note.tags[index]),
+                    (index) => TagChip(label: note.tags[index].name),
                   ),
                 ),
               ],
@@ -72,7 +72,7 @@ class NoteBubble extends StatelessWidget {
 }
 
 class _MetaInfo extends StatelessWidget {
-  final Note note;
+  final NoteEntity note;
 
   const _MetaInfo({required this.note});
 
