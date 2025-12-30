@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 /// Гибкий виджет плитки списка с полным контролем над размерами.
 class FlexibleListTile extends StatelessWidget {
   /// Виджет слева (аватар, иконка и т.д.)
-  /// Рекомендуется использовать [FlexibleLeading] для контроля размеров
   final Widget? leading;
 
   /// Основной заголовок
