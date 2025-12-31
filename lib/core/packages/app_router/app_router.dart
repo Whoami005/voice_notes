@@ -43,6 +43,7 @@ class AppRouter {
                   routes: [
                     GoRoute(
                       path: ':id',
+                      parentNavigatorKey: rootNavigatorKey,
                       builder: (context, state) {
                         final folderId = state.pathParameters['id']!;
 
@@ -54,6 +55,7 @@ class AppRouter {
                       routes: [
                         GoRoute(
                           path: 'note/:noteId',
+                          parentNavigatorKey: rootNavigatorKey,
                           builder: (context, state) {
                             final folderId = state.pathParameters['id']!;
                             final noteId = state.pathParameters['noteId']!;

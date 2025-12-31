@@ -231,17 +231,17 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
             child: BlocConsumer<RecordingCubit, RecordingState>(
               listener: _handleRecordingStateChange,
               builder: (context, state) {
+                final cubit = context.read<RecordingCubit>();
+
                 return RecordingInput(
                   state: state.uiState,
                   recordingDuration: state.durationOrNull ?? Duration.zero,
                   transcribingText: state is RecordingTranscribingState
                       ? state.partialText
                       : null,
-                  onStartRecording:
-                      context.read<RecordingCubit>().startRecording,
-                  onStopRecording: context.read<RecordingCubit>().stopRecording,
-                  onCancelRecording:
-                      context.read<RecordingCubit>().cancelRecording,
+                  onStartRecording: cubit.startRecording,
+                  onStopRecording: cubit.stopRecording,
+                  onCancelRecording: cubit.cancelRecording,
                   onUploadFile: _onUploadFile,
                 );
               },
@@ -263,9 +263,7 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
   void _showSuccessToast(BuildContext context, RecordingSuccessState state) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          'Заметка создана: ${state.text.length > 50 ? '${state.text.substring(0, 50)}...' : state.text}',
-        ),
+        content: Text('Заметка создана: ${state.text}'),
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
       ),
