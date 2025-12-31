@@ -42,6 +42,52 @@ class AsrModelEntity extends Equatable {
   String get downloadUrl =>
       'https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/$modelDirName.tar.bz2';
 
+  /// Поддерживает ли модель streaming распознавание
+  bool get supportsStreaming => modelType == AsrModelType.parakeetTdt;
+
+  /// Получить имена файлов модели для конфигурации sherpa-onnx
+  ///
+  /// Возвращает Map с ключами:
+  /// - 'encoder' - путь к encoder модели
+  /// - 'decoder' - путь к decoder модели
+  /// - 'joiner' - путь к joiner модели (только для Transducer)
+  /// - 'tokens' - путь к файлу токенов
+  Map<String, String> getModelFileNames() {
+    return switch (modelType) {
+      AsrModelType.whisper => {
+        'encoder': _whisperEncoderFileName,
+        'decoder': _whisperDecoderFileName,
+        'tokens': _whisperTokensFileName,
+      },
+      AsrModelType.parakeetTdt => {
+        'encoder': 'encoder.int8.onnx',
+        'decoder': 'decoder.int8.onnx',
+        'joiner': 'joiner.int8.onnx',
+        'tokens': 'tokens.txt',
+      },
+    };
+  }
+
+  /// Имя файла encoder для Whisper модели
+  String get _whisperEncoderFileName {
+    // sherpa-onnx-whisper-tiny.en -> tiny.en
+    // sherpa-onnx-whisper-small -> small
+    final modelName = modelDirName.replaceFirst('sherpa-onnx-whisper-', '');
+    return '$modelName-encoder.int8.onnx';
+  }
+
+  /// Имя файла decoder для Whisper модели
+  String get _whisperDecoderFileName {
+    final modelName = modelDirName.replaceFirst('sherpa-onnx-whisper-', '');
+    return '$modelName-decoder.int8.onnx';
+  }
+
+  /// Имя файла tokens для Whisper модели
+  String get _whisperTokensFileName {
+    final modelName = modelDirName.replaceFirst('sherpa-onnx-whisper-', '');
+    return '$modelName-tokens.txt';
+  }
+
   @override
   List<Object?> get props => [
     id,
