@@ -144,6 +144,7 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
     final textTheme = context.textTheme;
 
     return Scaffold(
+      extendBody: true,
       backgroundColor: themeColors.bgPrimary,
       appBar: AppBar(
         backgroundColor: themeColors.bgPrimary,
@@ -201,52 +202,50 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
           const SizedBox(width: 8),
         ],
       ),
-      body: Stack(
-        children: [
-          ListView(
-            padding: const EdgeInsets.only(
+      bottomNavigationBar: BlocConsumer<RecordingCubit, RecordingState>(
+        listener: _handleRecordingStateChange,
+        builder: (context, state) {
+          final cubit = context.read<RecordingCubit>();
+
+          return Padding(
+            padding: EdgeInsets.only(
               left: AppSizes.screenPadding,
               right: AppSizes.screenPadding,
-              top: AppSizes.p8,
-              bottom: 120,
+              bottom: context.padding.bottom + AppSizes.p16,
             ),
-            children: [
-              if (_isSearchVisible) ...[
-                SearchBarWithFilters(
-                  query: _searchQuery,
-                  onQueryChanged: (q) => setState(() => _searchQuery = q),
-                  activeFilter: _activeFilter,
-                  onFilterChanged: (f) => setState(() => _activeFilter = f),
-                  placeholder: 'Поиск в папке...',
-                ),
-                AppSpacer.p16,
-              ],
-              ..._buildNotesList(),
-            ],
-          ),
-          Positioned(
-            left: AppSizes.screenPadding,
-            right: AppSizes.screenPadding,
-            bottom: context.padding.bottom + AppSizes.p16,
-            child: BlocConsumer<RecordingCubit, RecordingState>(
-              listener: _handleRecordingStateChange,
-              builder: (context, state) {
-                final cubit = context.read<RecordingCubit>();
-
-                return RecordingInput(
-                  state: state.uiState,
-                  recordingDuration: state.durationOrNull ?? Duration.zero,
-                  transcribingText: state is RecordingTranscribingState
-                      ? state.partialText
-                      : null,
-                  onStartRecording: cubit.startRecording,
-                  onStopRecording: cubit.stopRecording,
-                  onCancelRecording: cubit.cancelRecording,
-                  onUploadFile: _onUploadFile,
-                );
-              },
+            child: RecordingInput(
+              state: state.uiState,
+              recordingDuration: state.durationOrNull ?? Duration.zero,
+              transcribingText: state is RecordingTranscribingState
+                  ? state.partialText
+                  : null,
+              onStartRecording: cubit.startRecording,
+              onStopRecording: cubit.stopRecording,
+              onCancelRecording: cubit.cancelRecording,
+              onUploadFile: _onUploadFile,
             ),
-          ),
+          );
+        },
+      ),
+      body: ListView(
+        padding: const EdgeInsets.only(
+          left: AppSizes.screenPadding,
+          right: AppSizes.screenPadding,
+          top: AppSizes.p8,
+          bottom: 120,
+        ),
+        children: [
+          if (_isSearchVisible) ...[
+            SearchBarWithFilters(
+              query: _searchQuery,
+              onQueryChanged: (q) => setState(() => _searchQuery = q),
+              activeFilter: _activeFilter,
+              onFilterChanged: (f) => setState(() => _activeFilter = f),
+              placeholder: 'Поиск в папке...',
+            ),
+            AppSpacer.p16,
+          ],
+          ..._buildNotesList(),
         ],
       ),
     );
