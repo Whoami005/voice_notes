@@ -155,3 +155,46 @@ final class StorageFailure extends AppFailure {
       availableBytes = null,
       super('Не удалось проверить свободное место');
 }
+
+/// Ошибка при записи аудио
+final class RecordingFailure extends AppFailure {
+  final RecordingFailureType type;
+
+  const RecordingFailure(super.message, this.type);
+
+  const RecordingFailure.permissionDenied()
+    : type = RecordingFailureType.permissionDenied,
+      super('Доступ к микрофону запрещён');
+
+  const RecordingFailure.alreadyRecording()
+    : type = RecordingFailureType.alreadyRecording,
+      super('Запись уже активна');
+
+  const RecordingFailure.notRecording()
+    : type = RecordingFailureType.notRecording,
+      super('Запись не активна');
+
+  const RecordingFailure.failed([String? details])
+    : type = RecordingFailureType.failed,
+      super(details ?? 'Ошибка записи');
+
+  const RecordingFailure.transcriptionFailed()
+    : type = RecordingFailureType.transcriptionFailed,
+      super('Ошибка распознавания речи');
+
+  const RecordingFailure.noModelSelected()
+    : type = RecordingFailureType.noModelSelected,
+      super('Не выбрана модель распознавания');
+
+  @override
+  List<Object?> get props => [message, type];
+}
+
+enum RecordingFailureType {
+  permissionDenied,
+  alreadyRecording,
+  notRecording,
+  failed,
+  transcriptionFailed,
+  noModelSelected,
+}

@@ -5,7 +5,7 @@ import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/feature/domain/enums/recording_state.dart';
 
 class RecordingInput extends StatelessWidget {
-  final RecordingState state;
+  final RecordingInputState state;
   final Duration recordingDuration;
   final String? transcribingText;
   final VoidCallback? onStartRecording;
@@ -27,17 +27,16 @@ class RecordingInput extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return switch (state) {
-      RecordingState.idle =>
-          _IdleState(
-            onStartRecording: onStartRecording,
+      RecordingInputState.idle => _IdleState(
+        onStartRecording: onStartRecording,
         onUploadFile: onUploadFile,
       ),
-      RecordingState.recording => _RecordingState(
+      RecordingInputState.recording => _RecordingState(
         duration: recordingDuration,
         onStopRecording: onStopRecording,
         onCancelRecording: onCancelRecording,
       ),
-      RecordingState.transcribing => _TranscribingState(
+      RecordingInputState.transcribing => _TranscribingState(
         text: transcribingText,
       ),
     };
@@ -271,10 +270,7 @@ class _RecordingIndicator extends StatelessWidget {
     return Container(
       width: 10,
       height: 10,
-      decoration: BoxDecoration(
-        color: color,
-        shape: BoxShape.circle,
-      ),
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
     );
   }
 }

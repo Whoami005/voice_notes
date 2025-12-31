@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:background_downloader/background_downloader.dart';
 import 'package:equatable/equatable.dart';
 import 'package:voice_notes/core/packages/downloader/download_status.dart';
+import 'package:voice_notes/core/packages/path/asr_model_paths.dart';
 import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
 
 /// Прогресс скачивания модели
@@ -117,12 +118,13 @@ class DownloadManager {
       return _modelIdToTaskId[model.id]!;
     }
 
-    const downloadDir = 'voice_notes/downloads';
+    final downloadDir = await AsrModelPaths.downloadsDir;
 
     final task = DownloadTask(
       url: model.downloadUrl,
       filename: '${model.modelDirName}.tar.bz2',
       directory: downloadDir,
+      baseDirectory: BaseDirectory.root,
       group: _downloadGroup,
       updates: Updates.statusAndProgress,
       allowPause: true,

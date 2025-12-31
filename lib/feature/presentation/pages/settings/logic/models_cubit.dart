@@ -221,8 +221,19 @@ class ModelsCubit extends BaseCubit<ModelsState> implements Refreshable {
       action: () async {
         await _repository.selectModel(modelId);
 
+        ///TODO
+        // Инициализируем ASR с выбранной моделью
+        // final modelPath = await _repository.getModelPath(modelId);
+        // if (modelPath != null) {
+        //   final model = state.data?.models.firstWhereOrNull(
+        //     (m) => m.id == modelId,
+        //   );
+        //   if (model != null) {
+        //     await SherpaAsrService.instance.switchModel(model, modelPath);
+        //   }
+        // }
+
         update((current) {
-          // Обновляем isSelected во всех моделях
           final updatedModels = <AsrModelEntity>[
             for (final model in current.models)
               model.copyWith(isSelected: model.id == modelId),

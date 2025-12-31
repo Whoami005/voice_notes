@@ -1,4 +1,5 @@
-enum RecordingState { idle, recording, transcribing }
+/// Состояние UI компонента RecordingInput
+enum RecordingInputState { idle, recording, transcribing }
 
 enum SearchFilter {
   all(title: 'Все'),

@@ -84,9 +84,7 @@ class SherpaAsrService implements AsrService {
   @override
   Future<void> switchModel(AsrModelEntity newModel, String newModelPath) async {
     // Останавливаем streaming если активен
-    if (_isStreaming) {
-      await cancelStreaming();
-    }
+    if (_isStreaming) await cancelStreaming();
 
     // Освобождаем текущие ресурсы
     _freeRecognizers();

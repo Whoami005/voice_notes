@@ -1,14 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
+import 'package:voice_notes/core/packages/app_router/app_route_wrapper.dart';
+import 'package:voice_notes/core/packages/asr/sherpa_asr_service.dart';
+import 'package:voice_notes/core/packages/audio/audio_recording_service.dart';
 import 'package:voice_notes/core/theme/app_colors.dart';
 import 'package:voice_notes/feature/domain/entities/folder_entity.dart';
 import 'package:voice_notes/feature/domain/entities/icon_ref_entity.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
 import 'package:voice_notes/feature/domain/entities/tag_entity.dart';
-import 'package:voice_notes/feature/domain/enums/recording_state.dart';
+import 'package:voice_notes/feature/domain/enums/recording_state.dart'
+    show SearchFilter;
+import 'package:voice_notes/feature/presentation/pages/notes/logic/recording_cubit.dart';
 import 'package:voice_notes/feature/presentation/pages/notes/widgets/date_separator.dart';
 import 'package:voice_notes/feature/presentation/pages/notes/widgets/note_bubble.dart';
 import 'package:voice_notes/feature/presentation/pages/notes/widgets/recording_input.dart';
@@ -16,10 +22,25 @@ import 'package:voice_notes/feature/presentation/pages/notes/widgets/search_bar_
 import 'package:voice_notes/feature/presentation/widgets/dialogs/confirm_dialog.dart';
 import 'package:voice_notes/feature/presentation/widgets/menus/dropdown_menu.dart';
 
-class FolderDetailScreen extends StatefulWidget {
+class FolderDetailScreen extends StatefulWidget implements AppRouteWrapper {
   final String folderId;
 
   const FolderDetailScreen({required this.folderId, super.key});
+
+  @override
+  Widget wrappedRoute(BuildContext context) {
+    return BlocProvider(
+      create: (context) => RecordingCubit(
+        recordingService: AudioRecordingService.instance,
+        asrService: SherpaAsrService.instance,
+        folderId: folderId,
+        onNoteCreated: (text) {
+          // TODO: Обновить список заметок когда будет NoteRepository
+        },
+      ),
+      child: this,
+    );
+  }
 
   @override
   State<FolderDetailScreen> createState() => _FolderDetailScreenState();
@@ -29,8 +50,6 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
   bool _isSearchVisible = false;
   String _searchQuery = '';
   SearchFilter _activeFilter = SearchFilter.all;
-  RecordingState _recordingState = RecordingState.idle;
-  Duration _recordingDuration = Duration.zero;
 
   // Mock folder data
   late final FolderEntity _folder;
@@ -209,16 +228,57 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
             left: AppSizes.screenPadding,
             right: AppSizes.screenPadding,
             bottom: context.padding.bottom + AppSizes.p16,
-            child: RecordingInput(
-              state: _recordingState,
-              recordingDuration: _recordingDuration,
-              onStartRecording: _onStartRecording,
-              onStopRecording: _onStopRecording,
-              onCancelRecording: _onCancelRecording,
-              onUploadFile: _onUploadFile,
+            child: BlocConsumer<RecordingCubit, RecordingState>(
+              listener: _handleRecordingStateChange,
+              builder: (context, state) {
+                return RecordingInput(
+                  state: state.uiState,
+                  recordingDuration: state.durationOrNull ?? Duration.zero,
+                  transcribingText: state is RecordingTranscribingState
+                      ? state.partialText
+                      : null,
+                  onStartRecording:
+                      context.read<RecordingCubit>().startRecording,
+                  onStopRecording: context.read<RecordingCubit>().stopRecording,
+                  onCancelRecording:
+                      context.read<RecordingCubit>().cancelRecording,
+                  onUploadFile: _onUploadFile,
+                );
+              },
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _handleRecordingStateChange(BuildContext context, RecordingState state) {
+    if (state is RecordingSuccessState) {
+      _showSuccessToast(context, state);
+    } else if (state is RecordingErrorState) {
+      _showErrorToast(context, state);
+    }
+  }
+
+  void _showSuccessToast(BuildContext context, RecordingSuccessState state) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Заметка создана: ${state.text.length > 50 ? '${state.text.substring(0, 50)}...' : state.text}',
+        ),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _showErrorToast(BuildContext context, RecordingErrorState state) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(state.message),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: context.themeColors.error,
+        duration: const Duration(seconds: 3),
       ),
     );
   }
@@ -286,30 +346,6 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
 
   void _onShareNote(NoteEntity note) {
     // TODO: Share note
-  }
-
-  void _onStartRecording() {
-    setState(() => _recordingState = RecordingState.recording);
-    // TODO: Start actual recording
-  }
-
-  void _onStopRecording() {
-    setState(() => _recordingState = RecordingState.transcribing);
-    // TODO: Stop recording and start transcription
-
-    // Simulate transcription complete after delay
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) {
-        setState(() => _recordingState = RecordingState.idle);
-      }
-    });
-  }
-
-  void _onCancelRecording() {
-    setState(() {
-      _recordingState = RecordingState.idle;
-      _recordingDuration = Duration.zero;
-    });
   }
 
   void _onUploadFile() {

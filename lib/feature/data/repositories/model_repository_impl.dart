@@ -5,7 +5,7 @@ import 'package:voice_notes/core/error/app_failure.dart';
 import 'package:voice_notes/core/packages/archive/archive_extractor.dart';
 import 'package:voice_notes/core/packages/downloader/download_manager.dart';
 import 'package:voice_notes/core/packages/downloader/download_status.dart';
-import 'package:voice_notes/core/packages/path/app_path_provider.dart';
+import 'package:voice_notes/core/packages/path/asr_model_paths.dart';
 import 'package:voice_notes/feature/data/local/data_sources/model_local_data_source.dart';
 import 'package:voice_notes/feature/data/local/models/downloaded_model_object.dart';
 import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
@@ -15,9 +15,6 @@ import 'package:voice_notes/feature/domain/repositories/model_repository.dart';
 class ModelRepositoryImpl implements ModelRepository {
   final ModelLocalDataSource _localDataSource;
   final DownloadManager _downloadManager;
-
-  /// Директория для хранения моделей
-  static const String _modelsSubdir = 'voice_notes/asr_models';
 
   /// Контроллер для стрима прогресса распаковки
   final _extractionController =
@@ -98,9 +95,8 @@ class ModelRepositoryImpl implements ModelRepository {
 
     try {
       // Получаем путь для распаковки
-      final docsDir = await AppPathProvider.getApplicationDocumentsPath;
-      final modelsDir = '$docsDir/$_modelsSubdir';
-      final modelPath = '$modelsDir/${model.modelDirName}';
+      final modelsDir = await AsrModelPaths.modelsDir;
+      final modelPath = await AsrModelPaths.modelPath(model.modelDirName);
 
       // Распаковываем архив
       await ArchiveExtractor.extractTarBz2(
