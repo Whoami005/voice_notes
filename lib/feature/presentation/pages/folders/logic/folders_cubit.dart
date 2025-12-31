@@ -18,7 +18,7 @@ class FoldersCubit extends BaseCubit<FoldersState> implements Refreshable {
 
   @override
   Future<void> refresh() async {
-    await guardUpdate((_) async {
+    await tryUpdate((_) async {
       // await Future.delayed(const Duration(seconds: 2));
 
       return const FoldersState();

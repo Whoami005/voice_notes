@@ -14,6 +14,7 @@ import 'package:objectbox/internal.dart'
 import 'package:objectbox/objectbox.dart' as obx;
 import 'package:objectbox_sync_flutter_libs/objectbox_sync_flutter_libs.dart';
 
+import '../../../../feature/data/local/models/downloaded_model_object.dart';
 import '../../../../feature/data/local/models/folder_object.dart';
 import '../../../../feature/data/local/models/note_object.dart';
 import '../../../../feature/data/local/models/tag_object.dart';
@@ -218,6 +219,60 @@ final _entities = <obx_int.ModelEntity>[
       ),
     ],
   ),
+  obx_int.ModelEntity(
+    id: const obx_int.IdUid(4, 2457836903512102065),
+    name: 'DownloadedModelObject',
+    lastPropertyId: const obx_int.IdUid(7, 7912907317269248697),
+    flags: 0,
+    properties: <obx_int.ModelProperty>[
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(1, 5391374542772357954),
+        name: 'id',
+        type: 6,
+        flags: 1,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(2, 8834632932664524478),
+        name: 'modelId',
+        type: 9,
+        flags: 2080,
+        indexId: const obx_int.IdUid(10, 2031545194667875832),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(3, 1587299991296660354),
+        name: 'modelDirName',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(4, 3174670406642316400),
+        name: 'localPath',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(5, 3388978975090142582),
+        name: 'isSelected',
+        type: 1,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(6, 9082213950108349762),
+        name: 'downloadedAt',
+        type: 12,
+        flags: 8,
+        indexId: const obx_int.IdUid(11, 682868758395135203),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(7, 7912907317269248697),
+        name: 'fileSizeBytes',
+        type: 6,
+        flags: 0,
+      ),
+    ],
+    relations: <obx_int.ModelRelation>[],
+    backlinks: <obx_int.ModelBacklink>[],
+  ),
 ];
 
 /// Shortcut for [obx.Store.new] that passes [getObjectBoxModel] and for Flutter
@@ -263,8 +318,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
     // Typically, this is done with `dart run build_runner build`.
     generatorVersion: obx_int.GeneratorVersion.v2025_12_16,
     entities: _entities,
-    lastEntityId: const obx_int.IdUid(3, 1306401873006046840),
-    lastIndexId: const obx_int.IdUid(9, 1044633193345419085),
+    lastEntityId: const obx_int.IdUid(4, 2457836903512102065),
+    lastIndexId: const obx_int.IdUid(11, 682868758395135203),
     lastRelationId: const obx_int.IdUid(1, 3237763071504065953),
     lastSequenceId: const obx_int.IdUid(0, 0),
     retiredEntityUids: const [],
@@ -313,12 +368,6 @@ obx_int.ModelDefinition getObjectBoxModel() {
       objectFromFB: (obx.Store store, ByteData fbData) {
         final buffer = fb.BufferContext(fbData);
         final rootOffset = buffer.derefObject(0);
-        final idParam = const fb.Int64Reader().vTableGet(
-          buffer,
-          rootOffset,
-          4,
-          0,
-        );
         final uidParam = const fb.StringReader(
           asciiOptimization: true,
         ).vTableGet(buffer, rootOffset, 6, '');
@@ -344,17 +393,23 @@ obx_int.ModelDefinition getObjectBoxModel() {
               .round(),
           isUtc: true,
         );
+        final idParam = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          4,
+          0,
+        );
         final descriptionParam = const fb.StringReader(
           asciiOptimization: true,
         ).vTableGetNullable(buffer, rootOffset, 10);
         final object = FolderObject(
-          id: idParam,
           uid: uidParam,
           name: nameParam,
           colorValue: colorValueParam,
           iconRef: iconRefParam,
           updatedAt: updatedAtParam,
           createdAt: createdAtParam,
+          id: idParam,
           description: descriptionParam,
         );
         obx_int.InternalToManyAccess.setRelInfo<FolderObject>(
@@ -402,12 +457,6 @@ obx_int.ModelDefinition getObjectBoxModel() {
       objectFromFB: (obx.Store store, ByteData fbData) {
         final buffer = fb.BufferContext(fbData);
         final rootOffset = buffer.derefObject(0);
-        final idParam = const fb.Int64Reader().vTableGet(
-          buffer,
-          rootOffset,
-          4,
-          0,
-        );
         final uidParam = const fb.StringReader(
           asciiOptimization: true,
         ).vTableGet(buffer, rootOffset, 6, '');
@@ -442,6 +491,12 @@ obx_int.ModelDefinition getObjectBoxModel() {
           20,
           0,
         );
+        final idParam = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          4,
+          0,
+        );
         final hasAudioParam = const fb.BoolReader().vTableGet(
           buffer,
           rootOffset,
@@ -449,7 +504,6 @@ obx_int.ModelDefinition getObjectBoxModel() {
           false,
         );
         final object = NoteObject(
-          id: idParam,
           uid: uidParam,
           text: textParam,
           createdAt: createdAtParam,
@@ -458,6 +512,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
           modelName: modelNameParam,
           language: languageParam,
           wordCount: wordCountParam,
+          id: idParam,
           hasAudio: hasAudioParam,
         );
         object.folder.targetId = const fb.Int64Reader().vTableGet(
@@ -498,12 +553,6 @@ obx_int.ModelDefinition getObjectBoxModel() {
       objectFromFB: (obx.Store store, ByteData fbData) {
         final buffer = fb.BufferContext(fbData);
         final rootOffset = buffer.derefObject(0);
-        final idParam = const fb.Int64Reader().vTableGet(
-          buffer,
-          rootOffset,
-          4,
-          0,
-        );
         final nameParam = const fb.StringReader(
           asciiOptimization: true,
         ).vTableGet(buffer, rootOffset, 6, '');
@@ -512,15 +561,21 @@ obx_int.ModelDefinition getObjectBoxModel() {
               .round(),
           isUtc: true,
         );
+        final idParam = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          4,
+          0,
+        );
         final colorValueParam = const fb.Int64Reader().vTableGetNullable(
           buffer,
           rootOffset,
           8,
         );
         final object = TagObject(
-          id: idParam,
           name: nameParam,
           createdAt: createdAtParam,
+          id: idParam,
           colorValue: colorValueParam,
         );
         obx_int.InternalToManyAccess.setRelInfo<TagObject>(
@@ -528,6 +583,77 @@ obx_int.ModelDefinition getObjectBoxModel() {
           store,
           obx_int.RelInfo<NoteObject>.toManyBacklink(1, object.id),
         );
+        return object;
+      },
+    ),
+    DownloadedModelObject: obx_int.EntityDefinition<DownloadedModelObject>(
+      model: _entities[3],
+      toOneRelations: (DownloadedModelObject object) => [],
+      toManyRelations: (DownloadedModelObject object) => {},
+      getId: (DownloadedModelObject object) => object.id,
+      setId: (DownloadedModelObject object, int id) {
+        object.id = id;
+      },
+      objectToFB: (DownloadedModelObject object, fb.Builder fbb) {
+        final modelIdOffset = fbb.writeString(object.modelId);
+        final modelDirNameOffset = fbb.writeString(object.modelDirName);
+        final localPathOffset = fbb.writeString(object.localPath);
+        fbb.startTable(8);
+        fbb.addInt64(0, object.id);
+        fbb.addOffset(1, modelIdOffset);
+        fbb.addOffset(2, modelDirNameOffset);
+        fbb.addOffset(3, localPathOffset);
+        fbb.addBool(4, object.isSelected);
+        fbb.addInt64(5, object.downloadedAt.microsecondsSinceEpoch * 1000);
+        fbb.addInt64(6, object.fileSizeBytes);
+        fbb.finish(fbb.endTable());
+        return object.id;
+      },
+      objectFromFB: (obx.Store store, ByteData fbData) {
+        final buffer = fb.BufferContext(fbData);
+        final rootOffset = buffer.derefObject(0);
+        final modelIdParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGet(buffer, rootOffset, 6, '');
+        final modelDirNameParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGet(buffer, rootOffset, 8, '');
+        final localPathParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGet(buffer, rootOffset, 10, '');
+        final downloadedAtParam = DateTime.fromMicrosecondsSinceEpoch(
+          (const fb.Int64Reader().vTableGet(buffer, rootOffset, 14, 0) / 1000)
+              .round(),
+          isUtc: true,
+        );
+        final idParam = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          4,
+          0,
+        );
+        final isSelectedParam = const fb.BoolReader().vTableGet(
+          buffer,
+          rootOffset,
+          12,
+          false,
+        );
+        final fileSizeBytesParam = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          16,
+          0,
+        );
+        final object = DownloadedModelObject(
+          modelId: modelIdParam,
+          modelDirName: modelDirNameParam,
+          localPath: localPathParam,
+          downloadedAt: downloadedAtParam,
+          id: idParam,
+          isSelected: isSelectedParam,
+          fileSizeBytes: fileSizeBytesParam,
+        );
+
         return object;
       },
     ),
@@ -667,5 +793,43 @@ class TagObject_ {
   /// See [TagObject.createdAt].
   static final createdAt = obx.QueryDateNanoProperty<TagObject>(
     _entities[2].properties[3],
+  );
+}
+
+/// [DownloadedModelObject] entity fields to define ObjectBox queries.
+class DownloadedModelObject_ {
+  /// See [DownloadedModelObject.id].
+  static final id = obx.QueryIntegerProperty<DownloadedModelObject>(
+    _entities[3].properties[0],
+  );
+
+  /// See [DownloadedModelObject.modelId].
+  static final modelId = obx.QueryStringProperty<DownloadedModelObject>(
+    _entities[3].properties[1],
+  );
+
+  /// See [DownloadedModelObject.modelDirName].
+  static final modelDirName = obx.QueryStringProperty<DownloadedModelObject>(
+    _entities[3].properties[2],
+  );
+
+  /// See [DownloadedModelObject.localPath].
+  static final localPath = obx.QueryStringProperty<DownloadedModelObject>(
+    _entities[3].properties[3],
+  );
+
+  /// See [DownloadedModelObject.isSelected].
+  static final isSelected = obx.QueryBooleanProperty<DownloadedModelObject>(
+    _entities[3].properties[4],
+  );
+
+  /// See [DownloadedModelObject.downloadedAt].
+  static final downloadedAt = obx.QueryDateNanoProperty<DownloadedModelObject>(
+    _entities[3].properties[5],
+  );
+
+  /// See [DownloadedModelObject.fileSizeBytes].
+  static final fileSizeBytes = obx.QueryIntegerProperty<DownloadedModelObject>(
+    _entities[3].properties[6],
   );
 }

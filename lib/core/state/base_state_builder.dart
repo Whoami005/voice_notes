@@ -14,7 +14,7 @@ class BaseStateBuilder<C extends BlocBase<BaseState<S>>, S>
   final C? bloc;
 
   /// Обязательный колбэк для успешного состояния
-  final Widget Function(BuildContext context, SuccessState<S> state) onSuccess;
+  final Widget Function(BuildContext context, S state) onSuccess;
 
   /// Колбэк для ошибки (по умолчанию StateErrorView)
   final Widget Function(BuildContext context, AppFailure failure)? onError;
@@ -28,6 +28,8 @@ class BaseStateBuilder<C extends BlocBase<BaseState<S>>, S>
   /// Контроль перестроения (по умолчанию: только при смене типа состояния)
   final bool Function(BaseState<S> previous, BaseState<S> current)? buildWhen;
 
+  final void Function(BuildContext, BaseState<S>)? listener;
+
   const BaseStateBuilder({
     required this.onSuccess,
     super.key,
@@ -36,26 +38,29 @@ class BaseStateBuilder<C extends BlocBase<BaseState<S>>, S>
     this.onLoading,
     this.onInitial,
     this.buildWhen,
+    this.listener,
   });
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<C, BaseState<S>>(
+    return BlocConsumer<C, BaseState<S>>(
       bloc: bloc,
       buildWhen: buildWhen ?? _defaultBuildWhen,
+      listener: listener ?? (_, _) {},
       builder: (context, state) => switch (state) {
         InitialState() => onInitial?.call(context) ?? const SizedBox.shrink(),
         LoadingState() => onLoading?.call(context) ?? const StateLoadingView(),
         ErrorState(:final failure) =>
           onError?.call(context, failure) ??
               _buildDefaultError(context, failure),
-        SuccessState() => onSuccess(context, state),
+        SuccessState() => onSuccess(context, state.data),
       },
     );
   }
 
   Widget _buildDefaultError(BuildContext context, AppFailure failure) {
     final cubit = bloc ?? context.read<C>();
+
     return StateErrorView(
       message: failure.message,
       onRetry: cubit is Initializable ? (cubit as Initializable).init : null,

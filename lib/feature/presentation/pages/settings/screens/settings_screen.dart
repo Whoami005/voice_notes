@@ -1,15 +1,39 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
+import 'package:voice_notes/core/packages/app_router/app_route_wrapper.dart';
+import 'package:voice_notes/core/packages/downloader/download_manager.dart';
+import 'package:voice_notes/core/packages/downloader/download_status.dart';
+import 'package:voice_notes/core/state/base_state.dart';
+import 'package:voice_notes/core/state/base_state_builder.dart';
 import 'package:voice_notes/core/theme/app_typography.dart';
+import 'package:voice_notes/feature/data/local/data_sources/model_local_data_source.dart';
+import 'package:voice_notes/feature/data/repositories/model_repository_impl.dart';
 import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
+import 'package:voice_notes/feature/presentation/pages/settings/logic/models_cubit.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/widgets/model_card.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/widgets/settings_row.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/widgets/settings_section.dart';
+import 'package:voice_notes/feature/presentation/widgets/dialogs/error_dialog.dart';
+import 'package:voice_notes/main.dart';
 
-class SettingsScreen extends StatefulWidget {
+class SettingsScreen extends StatefulWidget implements AppRouteWrapper {
   const SettingsScreen({super.key});
+
+  @override
+  Widget wrappedRoute(BuildContext context) {
+    return BlocProvider(
+      create: (context) => ModelsCubit(
+        repository: ModelRepositoryImpl(
+          localDataSource: ModelLocalDataSourceImpl(objectbox),
+          downloadManager: DownloadManager.instance,
+        ),
+      )..init(),
+      child: this,
+    );
+  }
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -83,12 +107,7 @@ class _SettingsScreenState extends State<SettingsScreen>
             onExportTap: _onExportTap,
             onClearCacheTap: _onClearCacheTap,
           ),
-          _ModelsTab(
-            models: AsrModelEntity.availableModels,
-            onUseModel: _onUseModel,
-            onDownloadModel: _onDownloadModel,
-            onDeleteModel: _onDeleteModel,
-          ),
+          const _ModelsTab(),
         ],
       ),
     );
@@ -115,23 +134,11 @@ class _SettingsScreenState extends State<SettingsScreen>
   }
 
   void _onClearCacheTap() {
-    // TODO: Show confirm dialog
-  }
-
-  void _onUseModel(AsrModelEntity model) {
-    // TODO: Set active model
-  }
-
-  void _onDownloadModel(AsrModelEntity model) {
-    // TODO: Download model
-  }
-
-  void _onDeleteModel(AsrModelEntity model) {
-    // TODO: Delete model
+    // TODO(settings): Show confirm dialog
   }
 }
 
-class _GeneralTab extends StatelessWidget {
+class _GeneralTab extends StatefulWidget {
   final bool autoSave;
   final bool vadEnabled;
   final bool autoTags;
@@ -169,7 +176,18 @@ class _GeneralTab extends StatelessWidget {
   });
 
   @override
+  State<_GeneralTab> createState() => _GeneralTabState();
+}
+
+class _GeneralTabState extends State<_GeneralTab>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
+
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(vertical: AppSizes.screenPadding),
       child: Column(
@@ -182,23 +200,23 @@ class _GeneralTab extends StatelessWidget {
                 title: 'Авто-сохранение',
                 subtitle: 'Сохранять записи автоматически',
                 trailing: SettingsToggle(
-                  value: autoSave,
-                  onChanged: onAutoSaveChanged,
+                  value: widget.autoSave,
+                  onChanged: widget.onAutoSaveChanged,
                 ),
               ),
               SettingsRow(
                 icon: Icons.tune,
                 title: 'Качество записи',
-                trailing: SettingsChevron(value: recordingQuality),
-                onTap: onRecordingQualityTap,
+                trailing: SettingsChevron(value: widget.recordingQuality),
+                onTap: widget.onRecordingQualityTap,
               ),
               SettingsRow(
                 icon: Icons.mic_off_outlined,
                 title: 'VAD',
                 subtitle: 'Авто-стоп при тишине',
                 trailing: SettingsToggle(
-                  value: vadEnabled,
-                  onChanged: onVadChanged,
+                  value: widget.vadEnabled,
+                  onChanged: widget.onVadChanged,
                 ),
                 showDivider: false,
               ),
@@ -211,16 +229,16 @@ class _GeneralTab extends StatelessWidget {
               SettingsRow(
                 icon: Icons.language,
                 title: 'Язык по умолчанию',
-                trailing: SettingsChevron(value: defaultLanguage),
-                onTap: onDefaultLanguageTap,
+                trailing: SettingsChevron(value: widget.defaultLanguage),
+                onTap: widget.onDefaultLanguageTap,
               ),
               SettingsRow(
                 icon: Icons.tag,
                 title: 'Авто-теги',
                 subtitle: 'Автоматически добавлять теги',
                 trailing: SettingsToggle(
-                  value: autoTags,
-                  onChanged: onAutoTagsChanged,
+                  value: widget.autoTags,
+                  onChanged: widget.onAutoTagsChanged,
                 ),
                 showDivider: false,
               ),
@@ -233,14 +251,14 @@ class _GeneralTab extends StatelessWidget {
               SettingsRow(
                 icon: Icons.dark_mode_outlined,
                 title: 'Тема',
-                trailing: SettingsChevron(value: theme),
-                onTap: onThemeTap,
+                trailing: SettingsChevron(value: widget.theme),
+                onTap: widget.onThemeTap,
               ),
               SettingsRow(
                 icon: Icons.translate,
                 title: 'Язык приложения',
-                trailing: SettingsChevron(value: appLanguage),
-                onTap: onAppLanguageTap,
+                trailing: SettingsChevron(value: widget.appLanguage),
+                onTap: widget.onAppLanguageTap,
                 showDivider: false,
               ),
             ],
@@ -267,14 +285,14 @@ class _GeneralTab extends StatelessWidget {
                 icon: Icons.upload_outlined,
                 title: 'Экспорт данных',
                 trailing: const SettingsChevron(),
-                onTap: onExportTap,
+                onTap: widget.onExportTap,
               ),
               SettingsRow(
                 icon: Icons.delete_sweep_outlined,
                 title: 'Очистка кэша',
                 subtitle: 'Освободить место на устройстве',
                 trailing: const SettingsChevron(),
-                onTap: onClearCacheTap,
+                onTap: widget.onClearCacheTap,
                 showDivider: false,
               ),
             ],
@@ -286,68 +304,178 @@ class _GeneralTab extends StatelessWidget {
   }
 }
 
-class _ModelsTab extends StatelessWidget {
-  final List<AsrModelEntity> models;
-  final ValueChanged<AsrModelEntity> onUseModel;
-  final ValueChanged<AsrModelEntity> onDownloadModel;
-  final ValueChanged<AsrModelEntity> onDeleteModel;
+class _ModelsTab extends StatefulWidget {
+  const _ModelsTab();
 
-  const _ModelsTab({
-    required this.models,
-    required this.onUseModel,
-    required this.onDownloadModel,
-    required this.onDeleteModel,
-  });
+  @override
+  State<_ModelsTab> createState() => _ModelsTabState();
+}
+
+class _ModelsTabState extends State<_ModelsTab>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   Widget build(BuildContext context) {
-    final themeColors = context.themeColors;
-    final activeModel = models.firstWhere(
-      (m) => m.isSelected,
-      orElse: () => models.first,
-    );
-    final otherModels = models.where((m) => !m.isSelected).toList();
+    super.build(context);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppSizes.screenPadding),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'АКТИВНАЯ МОДЕЛЬ',
-            style: AppTypography.overline.copyWith(
-              color: themeColors.textTertiary,
-            ),
-          ),
-          AppSpacer.p8,
-          ModelCard(
-            model: activeModel,
-            onUse: () => onUseModel(activeModel),
-            onDownload: () => onDownloadModel(activeModel),
-            onDelete: () => onDeleteModel(activeModel),
-          ),
-          AppSpacer.p24,
-          Text(
-            'ДОСТУПНЫЕ МОДЕЛИ',
-            style: AppTypography.overline.copyWith(
-              color: themeColors.textTertiary,
-            ),
-          ),
-          AppSpacer.p8,
-          ...otherModels.map(
-            (model) => Padding(
-              padding: const EdgeInsets.only(bottom: AppSizes.p12),
-              child: ModelCard(
-                model: model,
-                onUse: () => onUseModel(model),
-                onDownload: () => onDownloadModel(model),
-                onDelete: () => onDeleteModel(model),
+    return BaseStateBuilder<ModelsCubit, ModelsState>(
+      buildWhen: (_, _) => true,
+      listener: _handleStateChanges,
+      onSuccess: (context, state) {
+        final models = state.models;
+
+        if (models.isEmpty) return const Center(child: Text('Пусто'));
+
+        final themeColors = context.themeColors;
+        final activeModel = state.selectedModel;
+        final otherModels = models.where((model) => !model.isSelected);
+
+        return ListView(
+          padding: const EdgeInsets.all(AppSizes.screenPadding),
+          children: [
+            if (activeModel != null) ...[
+              Text(
+                'АКТИВНАЯ МОДЕЛЬ',
+                style: AppTypography.overline.copyWith(
+                  color: themeColors.textTertiary,
+                ),
+              ),
+              AppSpacer.p8,
+              _buildModelCard(context, state, activeModel),
+              AppSpacer.p24,
+            ],
+            Text(
+              'ДОСТУПНЫЕ МОДЕЛИ',
+              style: AppTypography.overline.copyWith(
+                color: themeColors.textTertiary,
               ),
             ),
+            AppSpacer.p8,
+            for (final model in otherModels)
+              Padding(
+                padding: const EdgeInsets.only(bottom: AppSizes.p12),
+                child: _buildModelCard(context, state, model),
+              ),
+            AppSpacer.p40,
+          ],
+        );
+      },
+    );
+  }
+
+  void _handleStateChanges(
+    BuildContext context,
+    BaseState<ModelsState> baseState,
+  ) {
+    if (baseState is! SuccessState<ModelsState>) return;
+    final state = baseState.data;
+
+    // Показываем ошибки скачивания
+    for (final entry in state.downloads.entries) {
+      final progress = entry.value;
+      if (progress.status == DownloadStatus.failed &&
+          progress.errorMessage != null) {
+        _showErrorDialog(context, progress.errorMessage!);
+        break;
+      }
+    }
+  }
+
+  void _showErrorDialog(BuildContext context, String message) {
+    showDialog<void>(
+      context: context,
+      builder: (context) => ErrorDialog(
+        title: 'Ошибка загрузки',
+        message: message,
+        icon: Icons.error_outline_rounded,
+      ),
+    );
+  }
+
+  Widget _buildModelCard(
+    BuildContext context,
+    ModelsState state,
+    AsrModelEntity model,
+  ) {
+    final cubit = context.read<ModelsCubit>();
+    final downloadProgress = state.getDownloadProgress(model.id);
+
+    return ModelCard(
+      model: model,
+      downloadProgress: downloadProgress,
+      onUse: model.isDownloaded && !model.isSelected
+          ? () => cubit.selectModel(model.id)
+          : null,
+      onDownload: !model.isDownloaded && !state.isDownloading(model.id)
+          ? () => _onDownloadModel(context, model)
+          : null,
+      onDelete: model.isDownloaded
+          ? () => _onDeleteModel(context, model)
+          : null,
+      onPause: state.isDownloading(model.id)
+          ? () => cubit.pauseDownload(model.id)
+          : null,
+      onResume: downloadProgress?.status == DownloadStatus.paused
+          ? () => cubit.resumeDownload(model.id)
+          : null,
+      onCancel: state.isDownloading(model.id)
+          ? () => cubit.cancelDownload(model.id)
+          : null,
+    );
+  }
+
+  Future<void> _onDownloadModel(
+    BuildContext context,
+    AsrModelEntity model,
+  ) async {
+    final cubit = context.read<ModelsCubit>();
+    final failure = await cubit.downloadModel(model);
+
+    if (failure != null && context.mounted) {
+      await ErrorDialog.showFromFailure(context, failure);
+    }
+  }
+
+  Future<void> _onDeleteModel(
+    BuildContext context,
+    AsrModelEntity model,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Удалить модель?'),
+        content: Text(
+          'Модель "${model.name}" будет удалена с устройства. '
+          'Вы сможете скачать её снова.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Отмена'),
           ),
-          AppSpacer.p40,
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Удалить'),
+          ),
         ],
       ),
     );
+
+    if (confirmed ?? false) {
+      if (context.mounted) {
+        await context.read<ModelsCubit>().deleteModel(model.id);
+      }
+    }
+  }
+
+  String _formatBytes(int bytes) {
+    if (bytes < 1024) return '$bytes B';
+    if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
+    if (bytes < 1024 * 1024 * 1024) {
+      return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+    }
+    return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(2)} GB';
   }
 }

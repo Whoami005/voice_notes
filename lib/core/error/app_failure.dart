@@ -123,3 +123,28 @@ final class UnknownFailure extends AppFailure {
 
   const UnknownFailure([super.message = 'Что-то пошло не так']);
 }
+
+/// Ошибка при скачивании модели
+final class DownloadFailure extends AppFailure {
+  const DownloadFailure(super.message);
+
+  const DownloadFailure.cancelled() : super('Скачивание отменено');
+
+  const DownloadFailure.extractionFailed()
+      : super('Не удалось распаковать модель');
+}
+
+/// Ошибка при проверке хранилища
+final class StorageFailure extends AppFailure {
+  final int? requiredBytes;
+  final int? availableBytes;
+
+  const StorageFailure(super.message, {this.requiredBytes, this.availableBytes});
+
+  const StorageFailure.insufficientSpace({
+    this.requiredBytes,
+    this.availableBytes,
+  }) : super('Недостаточно места на устройстве');
+
+  const StorageFailure.cannotCheck() : requiredBytes = null, availableBytes = null, super('Не удалось проверить свободное место');
+}

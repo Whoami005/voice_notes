@@ -10,6 +10,16 @@ abstract class BaseCubit<T> extends Cubit<BaseState<T>> {
     : super(initialState ?? const BaseState.initial());
 
   // ═══════════════════════════════════════════════════════════════════
+  // Data helpers
+  // ═══════════════════════════════════════════════════════════════════
+
+  /// Текущие данные или null
+  T? get dataOrNull => state.dataOrNull;
+
+  /// Текущие данные (throws если не Success)
+  T get requireData => state.requireData;
+
+  // ═══════════════════════════════════════════════════════════════════
   // Convenience emitters
   // ═══════════════════════════════════════════════════════════════════
 
@@ -22,61 +32,68 @@ abstract class BaseCubit<T> extends Cubit<BaseState<T>> {
   void emitError(AppFailure failure) => emit(BaseState.error(failure));
 
   // ═══════════════════════════════════════════════════════════════════
-  // Data helpers
+  // Data access with guaranteed non-null
   // ═══════════════════════════════════════════════════════════════════
 
-  /// Текущие данные или null
-  T? get dataOrNull => state.dataOrNull;
+  /// Выполнить действие с текущими данными (гарантированно не null).
+  /// Ничего не делает, если состояние не Success.
+  void withData(void Function(T data) action) {
+    final data = state.dataOrNull;
+    if (data != null) action(data);
+  }
 
-  /// Текущие данные (throws если не Success)
-  T get requireData => state.requireData;
-
-  /// Обновить данные в Success состоянии
-  void updateData(T Function(T current) updater) {
-    final current = state.dataOrNull;
-
-    if (current != null) emitSuccess(updater(current));
+  /// Async версия [withData].
+  Future<void> withDataAsync(Future<void> Function(T data) action) async {
+    final data = state.dataOrNull;
+    if (data != null) await action(data);
   }
 
   // ═══════════════════════════════════════════════════════════════════
-  // Error handling
+  // State transformation
   // ═══════════════════════════════════════════════════════════════════
 
   /// Выполнить действие с автоматическим управлением состояниями
   ///
   /// Loading → Success/Error
-  FutureOr<void> guard(FutureOr<T> Function() action) async {
+  Future<void> guard(FutureOr<T> Function() action) async {
     emitLoading();
     await safeExecute(
-      action: () async {
-        final result = await action();
-        emitSuccess(result);
-      },
+      action: () async => emitSuccess(await action()),
       onError: emitError,
     );
   }
 
-  /// Обновить данные с загрузкой из источника
-  ///
-  /// В отличие от guard, не показывает Loading
-  FutureOr<void> guardUpdate(FutureOr<T> Function(T current) action) async {
-    final current = state.dataOrNull;
-    if (current == null) return;
+  /// Трансформировать данные с обработкой ошибок.
+  /// При ошибке emitError, иначе emitSuccess.
+  Future<void> tryUpdate(FutureOr<T> Function(T current) updater) async {
+    final data = state.dataOrNull;
+    if (data == null) return;
 
     await safeExecute(
-      action: () async {
-        final result = await action(current);
-        emitSuccess(result);
-      },
+      action: () async => emitSuccess(await updater(data)),
       onError: emitError,
     );
+  }
+
+  /// Трансформировать данные и emit Success (sync).
+  /// Ничего не делает, если состояние не Success.
+  void update(T Function(T current) updater) {
+    final data = state.dataOrNull;
+    if (data != null) emitSuccess(updater(data));
+  }
+
+  /// Трансформировать данные и emit Success (async).
+  /// Ничего не делает, если состояние не Success.
+  Future<void> updateAsync(Future<T> Function(T current) updater) async {
+    final data = state.dataOrNull;
+    if (data != null) emitSuccess(await updater(data));
   }
 
   /// Выполнить действие без смены состояния
   ///
   /// Ошибки логируются через addError, но состояние не меняется.
   /// Используй для фоновых операций, где не нужно показывать ошибку в UI.
-  FutureOr<void> safeExecute({
+  Future<void> safeExecute({
     required FutureOr<void> Function() action,
     void Function(AppFailure failure)? onError,
   }) async {

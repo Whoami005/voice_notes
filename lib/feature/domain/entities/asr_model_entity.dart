@@ -1,3 +1,5 @@
+import 'package:equatable/equatable.dart';
+
 /// Тип модели ASR для конфигурации sherpa-onnx
 enum AsrModelType {
   /// Whisper модели (encoder + decoder + tokens)
@@ -7,7 +9,7 @@ enum AsrModelType {
   parakeetTdt,
 }
 
-class AsrModelEntity {
+class AsrModelEntity extends Equatable {
   final String id;
   final String name;
   final String engine;
@@ -39,6 +41,53 @@ class AsrModelEntity {
   /// URL для скачивания модели с GitHub
   String get downloadUrl =>
       'https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/$modelDirName.tar.bz2';
+
+  @override
+  List<Object?> get props => [
+    id,
+    name,
+    engine,
+    size,
+    languageLabel,
+    supportedLanguages,
+    description,
+    modelDirName,
+    modelType,
+    isDownloaded,
+    isSelected,
+    downloadProgress,
+  ];
+
+  /// Создать копию с изменёнными полями
+  AsrModelEntity copyWith({
+    String? id,
+    String? name,
+    String? engine,
+    String? size,
+    String? languageLabel,
+    List<String>? supportedLanguages,
+    String? description,
+    String? modelDirName,
+    AsrModelType? modelType,
+    bool? isDownloaded,
+    bool? isSelected,
+    double? downloadProgress,
+  }) {
+    return AsrModelEntity(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      engine: engine ?? this.engine,
+      size: size ?? this.size,
+      languageLabel: languageLabel ?? this.languageLabel,
+      supportedLanguages: supportedLanguages ?? this.supportedLanguages,
+      description: description ?? this.description,
+      modelDirName: modelDirName ?? this.modelDirName,
+      modelType: modelType ?? this.modelType,
+      isDownloaded: isDownloaded ?? this.isDownloaded,
+      isSelected: isSelected ?? this.isSelected,
+      downloadProgress: downloadProgress ?? this.downloadProgress,
+    );
+  }
 
   /// Список доступных моделей для скачивания
   static const List<AsrModelEntity> availableModels = [
