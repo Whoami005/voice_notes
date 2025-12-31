@@ -22,5 +22,21 @@ enum DownloadStatus {
   cancelled,
 
   /// Приостановлена
-  paused,
+  paused;
+
+  bool get isIdle => this == idle;
+
+  bool get isQueued => this == queued;
+
+  bool get isDownloading => this == downloading;
+
+  bool get isExtracting => this == extracting;
+
+  bool get isCompleted => this == completed;
+
+  bool get isFailed => this == failed;
+
+  bool get isCancelled => this == cancelled;
+
+  bool get isPaused => this == paused;
 }

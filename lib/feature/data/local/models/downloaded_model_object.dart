@@ -4,7 +4,7 @@ import 'package:objectbox/objectbox.dart';
 @Entity()
 class DownloadedModelObject {
   @Id()
-  int id;
+  int id = 0;
 
   /// Идентификатор модели (например 'whisper-small', 'parakeet-tdt-v3')
   @Unique()
@@ -32,7 +32,6 @@ class DownloadedModelObject {
     required this.modelDirName,
     required this.localPath,
     required this.downloadedAt,
-    this.id = 0,
     this.isSelected = false,
     this.fileSizeBytes = 0,
   });

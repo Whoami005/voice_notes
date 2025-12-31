@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:voice_notes/core/error/app_failure.dart';
 import 'package:voice_notes/core/packages/archive/archive_extractor.dart';
 import 'package:voice_notes/core/packages/downloader/download_manager.dart';
 import 'package:voice_notes/core/packages/downloader/download_status.dart';
@@ -74,7 +75,18 @@ class ModelRepositoryImpl implements ModelRepository {
     final archivePath = await _downloadManager.getDownloadedArchivePath(
       model.id,
     );
-    if (archivePath == null) return;
+
+    if (archivePath == null) {
+      _extractionController.add(
+        ModelDownloadProgress(
+          modelId: model.id,
+          status: DownloadStatus.failed,
+          errorMessage: 'Ошибка распаковки: путь до архива не найден',
+        ),
+      );
+
+      return;
+    }
 
     // Отправляем статус "распаковка"
     _extractionController.add(
@@ -131,7 +143,9 @@ class ModelRepositoryImpl implements ModelRepository {
           status: DownloadStatus.completed,
         ),
       );
-    } catch (e) {
+    } catch (e, s) {
+      AppFailure.from(e, s);
+
       // Отправляем статус "ошибка"
       _extractionController.add(
         ModelDownloadProgress(

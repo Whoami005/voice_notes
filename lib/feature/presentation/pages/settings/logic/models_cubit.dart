@@ -65,11 +65,8 @@ class ModelsCubit extends BaseCubit<ModelsState> implements Refreshable {
     _downloadSubscription?.cancel();
     _downloadSubscription = _repository.watchAllDownloads().listen(
       _handleDownloadProgress,
-      onError: (e, s) {
-        /* Ошибки обрабатываются в _handleDownloadProgress */
-        print('_handleDownloadProgress');
-        print((e, s));
-      },
+      onError: addError,
+      cancelOnError: false,
     );
   }
 
@@ -80,15 +77,14 @@ class ModelsCubit extends BaseCubit<ModelsState> implements Refreshable {
       final newDownloads = {...current.downloads, progress.modelId: progress};
 
       // Если скачивание завершено — обновляем список моделей
-      if (progress.status == DownloadStatus.completed) {
+      if (progress.status.isCompleted) {
         _refreshModelsAfterDownload(progress.modelId, newDownloads);
         return;
       }
 
       // Если ошибка или отмена — удаляем из активных загрузок через
       // некоторое время
-      if (progress.status == DownloadStatus.failed ||
-          progress.status == DownloadStatus.cancelled) {
+      if (progress.status.isFailed || progress.status.isCancelled) {
         emitSuccess(current.copyWith(downloads: newDownloads));
 
         // Удаляем из downloads через 3 секунды

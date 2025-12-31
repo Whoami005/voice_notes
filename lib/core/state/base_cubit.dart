@@ -116,6 +116,7 @@ abstract class BaseCubit<T> extends Cubit<BaseState<T>> {
       return await action();
     } catch (e, s) {
       addError(e, s);
+
       final failure = AppFailure.from(e, s);
       onError?.call(failure);
 

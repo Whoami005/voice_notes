@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
@@ -203,8 +205,7 @@ class _DownloadProgressWidget extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Expanded(child: _buildStatusText(themeColors)),
-            if (progress.status == DownloadStatus.downloading ||
-                progress.status == DownloadStatus.paused)
+            if (progress.status.isDownloading || progress.status.isPaused)
               _buildProgressPercent(themeColors),
           ],
         ),
@@ -241,7 +242,8 @@ class _DownloadProgressWidget extends StatelessWidget {
   }
 
   Widget _buildProgressPercent(AppColorsExtension themeColors) {
-    final percent = (progress.progress * 100).toInt();
+    final percent = math.max(0, (progress.progress * 100).toInt());
+
     return Text(
       '$percent%',
       style: AppTypography.caption.copyWith(color: themeColors.textSecondary),

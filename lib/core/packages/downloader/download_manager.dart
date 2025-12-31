@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:background_downloader/background_downloader.dart';
 import 'package:equatable/equatable.dart';
 import 'package:voice_notes/core/packages/downloader/download_status.dart';
-import 'package:voice_notes/core/packages/path/app_path_provider.dart';
 import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
 
 /// Прогресс скачивания модели
@@ -118,8 +117,7 @@ class DownloadManager {
       return _modelIdToTaskId[model.id]!;
     }
 
-    final docsDir = await AppPathProvider.getApplicationDocumentsPath;
-    final downloadDir = '$docsDir/voice_notes/downloads';
+    const downloadDir = 'voice_notes/downloads';
 
     final task = DownloadTask(
       url: model.downloadUrl,
@@ -202,27 +200,26 @@ class DownloadManager {
   }
 
   /// Получить путь к скачанному архиву
+  ///
+  /// Возвращает фактический путь к файлу если загрузка завершена успешно.
   Future<String?> getDownloadedArchivePath(String modelId) async {
     final taskId = _modelIdToTaskId[modelId];
     if (taskId == null) return null;
 
     final record = await FileDownloader().database.recordForId(taskId);
-    if (record?.status == TaskStatus.complete) {
-      final docsDir = await AppPathProvider.getApplicationDocumentsPath;
-      final task = await FileDownloader().taskForId(taskId);
-      if (task != null) {
-        return '$docsDir/voice_notes/downloads/${task.filename}';
-      }
+    if (record == null || record.status != TaskStatus.complete) {
+      return null;
     }
-    return null;
+
+    // Используем API библиотеки для получения фактического пути
+    return record.task.filePath();
   }
 
   /// Очистить завершенную задачу из трекинга
   void clearTask(String modelId) {
     final taskId = _modelIdToTaskId.remove(modelId);
-    if (taskId != null) {
-      _taskIdToModelId.remove(taskId);
-    }
+
+    if (taskId != null) _taskIdToModelId.remove(taskId);
   }
 
   void _handleUpdate(TaskUpdate update) {

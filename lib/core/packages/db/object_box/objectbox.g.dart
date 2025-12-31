@@ -626,12 +626,6 @@ obx_int.ModelDefinition getObjectBoxModel() {
               .round(),
           isUtc: true,
         );
-        final idParam = const fb.Int64Reader().vTableGet(
-          buffer,
-          rootOffset,
-          4,
-          0,
-        );
         final isSelectedParam = const fb.BoolReader().vTableGet(
           buffer,
           rootOffset,
@@ -649,10 +643,9 @@ obx_int.ModelDefinition getObjectBoxModel() {
           modelDirName: modelDirNameParam,
           localPath: localPathParam,
           downloadedAt: downloadedAtParam,
-          id: idParam,
           isSelected: isSelectedParam,
           fileSizeBytes: fileSizeBytesParam,
-        );
+        )..id = const fb.Int64Reader().vTableGet(buffer, rootOffset, 4, 0);
 
         return object;
       },
