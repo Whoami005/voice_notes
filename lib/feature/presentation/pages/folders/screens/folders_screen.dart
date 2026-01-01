@@ -23,10 +23,7 @@ class FoldersScreen extends StatefulWidget implements AppRouteWrapper {
 
   @override
   Widget wrappedRoute(BuildContext context) {
-    return BlocProvider(
-      create: (context) => FoldersCubit()..init(),
-      child: this,
-    );
+    return BlocProvider(create: (context) => FoldersCubit(), child: this);
   }
 
   @override

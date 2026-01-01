@@ -23,8 +23,7 @@ class SettingsScreen extends StatefulWidget implements AppRouteWrapper {
   @override
   Widget wrappedRoute(BuildContext context) {
     return BlocProvider(
-      create: (context) =>
-          ModelsCubit(repository: getIt<ModelRepository>())..init(),
+      create: (context) => ModelsCubit(repository: getIt<ModelRepository>()),
       child: this,
     );
   }

@@ -3,11 +3,14 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:voice_notes/core/error/app_failure.dart';
 import 'package:voice_notes/core/state/base_state.dart';
+import 'package:voice_notes/core/state/initializable.dart';
 
 /// Базовый кубит с удобными методами для работы с BaseState
 abstract class BaseCubit<T> extends Cubit<BaseState<T>> {
   BaseCubit([BaseState<T>? initialState])
-    : super(initialState ?? const BaseState.initial());
+    : super(initialState ?? const BaseState.initial()) {
+    if (this is Initializable) (this as Initializable).init();
+  }
 
   // ═══════════════════════════════════════════════════════════════════
   // Data helpers
@@ -108,7 +111,7 @@ abstract class BaseCubit<T> extends Cubit<BaseState<T>> {
   }
 
   /// Выполнить действие и вернуть результат или null
-  Future<R?> safeExecuteWithResult<R>({
+  Future<R?> safeExecuteResult<R>({
     required Future<R> Function() action,
     void Function(AppFailure failure)? onError,
   }) async {

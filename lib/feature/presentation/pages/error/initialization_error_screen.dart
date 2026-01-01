@@ -23,7 +23,7 @@ class InitializationErrorScreen extends StatelessWidget {
                 const Icon(Icons.error_outline, size: 64, color: Colors.red),
                 const SizedBox(height: 16),
                 const Text(
-                  'Initialization Error',
+                  'Ошибка инициализации',
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
@@ -33,7 +33,10 @@ class InitializationErrorScreen extends StatelessWidget {
                   style: const TextStyle(color: Colors.grey),
                 ),
                 const SizedBox(height: 24),
-                ElevatedButton(onPressed: onRetry, child: const Text('Retry')),
+                ElevatedButton(
+                  onPressed: onRetry,
+                  child: const Text('Повторить'),
+                ),
               ],
             ),
           ),
