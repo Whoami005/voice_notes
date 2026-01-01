@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:io';
+import 'dart:isolate';
 
 import 'package:archive/archive_io.dart';
 
@@ -16,20 +18,15 @@ class ArchiveExtractor {
     required String archivePath,
     required String destinationDir,
   }) async {
-    final destinationDirectory = Directory(destinationDir);
-    if (!destinationDirectory.existsSync()) {
-      await destinationDirectory.create(recursive: true);
-    }
+    await _createDirectory(destinationDir);
 
-    // Используем extractFileToDisk который автоматически определяет тип архива
-    // по расширению файла и распаковывает его
-    await Future(() => extractFileToDisk(archivePath, destinationDir));
+    // Используем Isolate.run для выполнения в фоновом изоляте
+    // extractFileToDisk автоматически определяет тип архива по расширению
+    await Isolate.run(() => extractFileToDisk(archivePath, destinationDir));
 
     // Удаляем архив после успешной распаковки
     final archiveFile = File(archivePath);
-    if (archiveFile.existsSync()) {
-      await archiveFile.delete();
-    }
+    if (archiveFile.existsSync()) unawaited(archiveFile.delete());
   }
 
   /// Распаковать архив без удаления оригинала
@@ -37,11 +34,16 @@ class ArchiveExtractor {
     required String archivePath,
     required String destinationDir,
   }) async {
-    final destinationDirectory = Directory(destinationDir);
+    await _createDirectory(destinationDir);
+
+    await Isolate.run(() => extractFileToDisk(archivePath, destinationDir));
+  }
+
+  static Future<void> _createDirectory(String path) async {
+    final destinationDirectory = Directory(path);
+
     if (!destinationDirectory.existsSync()) {
       await destinationDirectory.create(recursive: true);
     }
-
-    await Future(() => extractFileToDisk(archivePath, destinationDir));
   }
 }

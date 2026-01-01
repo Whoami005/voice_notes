@@ -174,12 +174,13 @@ class RecordingCubit extends Cubit<RecordingState> {
       _deleteTemporaryFile(filePath);
 
       _resetToIdleDelayed();
-    } on AsrNotInitializedException {
+    } on AsrNotInitializedException catch (e, s) {
       emit(const RecordingErrorState(RecordingFailure.noModelSelected()));
+      addError(e, s);
       _resetToIdleDelayed();
-    } on AsrException catch (e) {
+    } on AsrException catch (e, s) {
       emit(const RecordingErrorState(RecordingFailure.transcriptionFailed()));
-      addError(e);
+      addError(e, s);
       _resetToIdleDelayed();
     } catch (e, s) {
       addError(e, s);

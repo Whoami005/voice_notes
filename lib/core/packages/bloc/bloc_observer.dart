@@ -5,12 +5,12 @@ class BlocsObserver extends BlocObserver {
   void onChange(BlocBase<dynamic> bloc, Change<dynamic> change) {
     super.onChange(bloc, change);
 
-    print(
-      'BLOC: ${bloc.runtimeType} -'
-      '\n   CURRENTSTATE: ${change.currentState}'
-      '\n'
-      '\n   NEXTSTATE: ${change.nextState}',
-    );
+    // print(
+    //   'BLOC: ${bloc.runtimeType} -'
+    //   '\n   CURRENTSTATE: ${change.currentState}'
+    //   '\n'
+    //   '\n   NEXTSTATE: ${change.nextState}',
+    // );
 
     // AppLogs.info(
     //   msg: 'BLOC: ${bloc.runtimeType} -'
@@ -27,7 +27,7 @@ class BlocsObserver extends BlocObserver {
   ) {
     super.onTransition(bloc, transition);
 
-    print('BLOC: ${bloc.runtimeType} - \n$transition');
+    // print('BLOC: ${bloc.runtimeType} - \n$transition');
 
     // AppLogs.info(msg: 'BLOC: ${bloc.runtimeType} - \n$transition');
   }

@@ -46,8 +46,8 @@ Future<void> _initializeAsrService() async {
     if (modelPath == null) return;
 
     await SherpaAsrService.instance.initialize(selectedModel, modelPath);
-  } catch (e) {
-    debugPrint('Failed to initialize ASR: $e');
+  } catch (e, s) {
+    debugPrint('Failed to initialize ASR: $e $s');
   }
 }
 
