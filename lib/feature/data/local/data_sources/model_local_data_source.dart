@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:injectable/injectable.dart';
 import 'package:voice_notes/core/packages/db/object_box/objectbox.g.dart';
 import 'package:voice_notes/core/packages/db/object_box/objectbox_database.dart';
 import 'package:voice_notes/feature/data/local/models/downloaded_model_object.dart';
@@ -33,6 +34,7 @@ abstract interface class ModelLocalDataSource {
 }
 
 /// Реализация на основе ObjectBox
+@Singleton(as: ModelLocalDataSource)
 class ModelLocalDataSourceImpl implements ModelLocalDataSource {
   final DatabaseClient _db;
 

@@ -5,8 +5,9 @@ import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/packages/app_router/app_route_wrapper.dart';
-import 'package:voice_notes/core/packages/asr/sherpa_asr_service.dart';
+import 'package:voice_notes/core/packages/asr/asr_service.dart';
 import 'package:voice_notes/core/packages/audio/audio_recording_service.dart';
+import 'package:voice_notes/core/packages/di/injection.dart';
 import 'package:voice_notes/core/theme/app_colors.dart';
 import 'package:voice_notes/feature/domain/entities/folder_entity.dart';
 import 'package:voice_notes/feature/domain/entities/icon_ref_entity.dart';
@@ -31,8 +32,8 @@ class FolderDetailScreen extends StatefulWidget implements AppRouteWrapper {
   Widget wrappedRoute(BuildContext context) {
     return BlocProvider(
       create: (context) => RecordingCubit(
-        recordingService: AudioRecordingService.instance,
-        asrService: SherpaAsrService.instance,
+        recordingService: getIt<AudioRecordingService>(),
+        asrService: getIt<AsrService>(),
         folderId: folderId,
         onNoteCreated: (text) {
           // TODO: Обновить список заметок когда будет NoteRepository

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:injectable/injectable.dart';
 import 'package:voice_notes/core/packages/app_router/root_screen.dart';
 import 'package:voice_notes/core/packages/app_router/route_builder.dart';
 import 'package:voice_notes/core/packages/app_router/routes.dart';
@@ -9,19 +10,19 @@ import 'package:voice_notes/feature/presentation/pages/notes/screens/note_detail
 import 'package:voice_notes/feature/presentation/pages/settings/screens/settings_screen.dart';
 
 ///  AppRouter - класс для управления навигацией в приложении
-///  [createRouter] - метод для создания экземпляра GoRouter
+@singleton
 class AppRouter {
-  /// {@macro app_router}
-  const AppRouter();
-
   /// Ключ для доступа к корневому навигатору приложения
   static final rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 
   /// Начальный роут приложения
   static const String initialLocation = AppRoutes.folders;
 
+  /// Экземпляр GoRouter
+  late final GoRouter router = _createRouter();
+
   /// Метод для создания экземпляра GoRouter
-  static GoRouter createRouter({NavigatorObserver? observer}) {
+  GoRouter _createRouter({NavigatorObserver? observer}) {
     return GoRouter(
       navigatorKey: rootNavigatorKey,
       initialLocation: initialLocation,

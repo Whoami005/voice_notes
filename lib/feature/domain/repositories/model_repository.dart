@@ -49,4 +49,7 @@ abstract interface class ModelRepository {
 
   /// Получить путь к директории модели (если скачана)
   Future<String?> getModelPath(String modelId);
+
+  /// Освободить ресурсы
+  Future<void> dispose();
 }

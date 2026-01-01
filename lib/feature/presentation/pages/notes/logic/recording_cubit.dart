@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:voice_notes/core/error/app_failure.dart';
 import 'package:voice_notes/core/packages/asr/asr_exception.dart';
-import 'package:voice_notes/core/packages/asr/sherpa_asr_service.dart';
+import 'package:voice_notes/core/packages/asr/asr_service.dart';
 import 'package:voice_notes/core/packages/audio/audio_recording_exception.dart';
 import 'package:voice_notes/core/packages/audio/audio_recording_service.dart';
 import 'package:voice_notes/feature/domain/enums/recording_state.dart'
@@ -18,7 +18,7 @@ part 'recording_state.dart';
 ///
 /// Обрабатывает:
 /// - Запись аудио через AudioRecordingService
-/// - Транскрибацию через SherpaAsrService
+/// - Транскрибацию через AsrService
 /// - Создание заметок в папках или копирование в буфер обмена
 ///
 /// Будущие улучшения:
@@ -27,7 +27,7 @@ part 'recording_state.dart';
 /// - Настройки папок (язык по умолчанию, модель)
 class RecordingCubit extends Cubit<RecordingState> {
   final AudioRecordingService _recordingService;
-  final SherpaAsrService _asrService;
+  final AsrService _asrService;
 
   StreamSubscription<Duration>? _durationSubscription;
 
@@ -39,7 +39,7 @@ class RecordingCubit extends Cubit<RecordingState> {
 
   RecordingCubit({
     required AudioRecordingService recordingService,
-    required SherpaAsrService asrService,
+    required AsrService asrService,
     this.folderId,
     this.onNoteCreated,
   }) : _recordingService = recordingService,

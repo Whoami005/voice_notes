@@ -4,20 +4,18 @@ import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/packages/app_router/app_route_wrapper.dart';
-import 'package:voice_notes/core/packages/downloader/download_manager.dart';
+import 'package:voice_notes/core/packages/di/injection.dart';
 import 'package:voice_notes/core/packages/downloader/download_status.dart';
 import 'package:voice_notes/core/state/base_state.dart';
 import 'package:voice_notes/core/state/base_state_builder.dart';
 import 'package:voice_notes/core/theme/app_typography.dart';
-import 'package:voice_notes/feature/data/local/data_sources/model_local_data_source.dart';
-import 'package:voice_notes/feature/data/repositories/model_repository_impl.dart';
 import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
+import 'package:voice_notes/feature/domain/repositories/model_repository.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/logic/models_cubit.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/widgets/model_card.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/widgets/settings_row.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/widgets/settings_section.dart';
 import 'package:voice_notes/feature/presentation/widgets/dialogs/error_dialog.dart';
-import 'package:voice_notes/main.dart';
 
 class SettingsScreen extends StatefulWidget implements AppRouteWrapper {
   const SettingsScreen({super.key});
@@ -25,12 +23,8 @@ class SettingsScreen extends StatefulWidget implements AppRouteWrapper {
   @override
   Widget wrappedRoute(BuildContext context) {
     return BlocProvider(
-      create: (context) => ModelsCubit(
-        repository: ModelRepositoryImpl(
-          localDataSource: ModelLocalDataSourceImpl(objectbox),
-          downloadManager: DownloadManager.instance,
-        ),
-      )..init(),
+      create: (context) =>
+          ModelsCubit(repository: getIt<ModelRepository>())..init(),
       child: this,
     );
   }

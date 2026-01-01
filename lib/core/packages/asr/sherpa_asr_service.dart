@@ -12,16 +12,9 @@ import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
 
 /// Реализация ASR сервиса на базе sherpa-onnx
 ///
-/// Singleton сервис для распознавания речи.
+/// Сервис для распознавания речи.
 /// Поддерживает Whisper (offline) и Transducer (offline + streaming) модели.
 class SherpaAsrService implements AsrService {
-  SherpaAsrService._();
-
-  static final SherpaAsrService _instance = SherpaAsrService._();
-
-  /// Получить singleton instance
-  static SherpaAsrService get instance => _instance;
-
   // ==================== Состояние ====================
 
   bool _bindingsInitialized = false;

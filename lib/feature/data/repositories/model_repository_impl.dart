@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:injectable/injectable.dart';
 import 'package:voice_notes/core/error/app_failure.dart';
 import 'package:voice_notes/core/packages/archive/archive_extractor.dart';
 import 'package:voice_notes/core/packages/downloader/download_manager.dart';
@@ -12,6 +13,7 @@ import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
 import 'package:voice_notes/feature/domain/repositories/model_repository.dart';
 
 /// Реализация репозитория для управления ASR моделями
+@Singleton(as: ModelRepository)
 class ModelRepositoryImpl implements ModelRepository {
   final ModelLocalDataSource _localDataSource;
   final DownloadManager _downloadManager;
@@ -20,11 +22,7 @@ class ModelRepositoryImpl implements ModelRepository {
   final _extractionController =
       StreamController<ModelDownloadProgress>.broadcast();
 
-  ModelRepositoryImpl({
-    required ModelLocalDataSource localDataSource,
-    required DownloadManager downloadManager,
-  }) : _localDataSource = localDataSource,
-       _downloadManager = downloadManager;
+  ModelRepositoryImpl(this._localDataSource, this._downloadManager);
 
   @override
   Future<List<AsrModelEntity>> getModelsWithStatus() async {
@@ -255,6 +253,8 @@ class ModelRepositoryImpl implements ModelRepository {
   }
 
   /// Освободить ресурсы
+  @override
+  @disposeMethod
   Future<void> dispose() async {
     await _extractionController.close();
   }

@@ -1,21 +1,18 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:injectable/injectable.dart';
 import 'package:record/record.dart';
 import 'package:voice_notes/core/packages/audio/audio_recording_exception.dart';
 import 'package:voice_notes/core/packages/path/app_path_provider.dart';
 
-/// Singleton сервис для записи аудио
+/// Сервис для записи аудио
 ///
 /// Управляет жизненным циклом аудио записи с правильной обработкой разрешений,
 /// отслеживанием длительности и выводом в WAV формате для ASR.
+@singleton
 class AudioRecordingService {
-  AudioRecordingService._();
-
-  static final AudioRecordingService _instance = AudioRecordingService._();
-
-  /// Получить singleton instance
-  static AudioRecordingService get instance => _instance;
+  AudioRecordingService();
 
   // ==================== Конфигурация ====================
 
@@ -178,6 +175,7 @@ class AudioRecordingService {
   }
 
   /// Освободить ресурсы
+  @disposeMethod
   Future<void> dispose() async {
     await cancelRecording();
     await _durationController.close();

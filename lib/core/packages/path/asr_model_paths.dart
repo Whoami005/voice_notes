@@ -6,19 +6,19 @@ import 'package:voice_notes/core/packages/path/app_path_provider.dart';
 class AsrModelPaths {
   AsrModelPaths._();
 
-  static const String _modelsSubdir = 'asr_models';
-  static const String _downloadsSubdir = 'downloads';
+  static const String modelsSubdir = 'asr_models';
+  static const String downloadsSubdir = 'downloads';
 
   /// Директория для распакованных моделей (Documents/asr_models)
   static Future<String> get modelsDir async {
     final docsDir = await AppPathProvider.getApplicationDocumentsPath;
-    return '$docsDir/$_modelsSubdir';
+    return '$docsDir/$modelsSubdir';
   }
 
   /// Директория для скачанных архивов (Documents/downloads)
   static Future<String> get downloadsDir async {
     final docsDir = await AppPathProvider.getApplicationDocumentsPath;
-    return '$docsDir/$_downloadsSubdir';
+    return '$docsDir/$downloadsSubdir';
   }
 
   /// Путь к конкретной модели (Documents/asr_models/{modelDirName})

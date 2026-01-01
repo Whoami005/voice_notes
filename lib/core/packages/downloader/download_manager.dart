@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:background_downloader/background_downloader.dart';
 import 'package:equatable/equatable.dart';
+import 'package:injectable/injectable.dart';
 import 'package:voice_notes/core/packages/downloader/download_status.dart';
 import 'package:voice_notes/core/packages/path/asr_model_paths.dart';
 import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
@@ -55,13 +56,8 @@ class ModelDownloadProgress extends Equatable {
 /// - Отслеживание прогресса
 /// - Pause/Resume/Cancel
 /// - Уведомления в системной шторке
+@singleton
 class DownloadManager {
-  DownloadManager._();
-
-  static final DownloadManager _instance = DownloadManager._();
-
-  static DownloadManager get instance => _instance;
-
   static const String _downloadGroup = 'asr_models';
   static const int _maxConcurrent = 2;
 
@@ -78,12 +74,14 @@ class DownloadManager {
       _progressController.stream;
 
   /// Инициализация менеджера загрузок
+  @PostConstruct(preResolve: true)
   Future<void> init() async {
     if (_initialized) return;
 
-    // Запускаем FileDownloader
-    await FileDownloader().start();
-    await FileDownloader().trackTasks();
+    // Настраиваем очередь
+    await FileDownloader().configure(
+      globalConfig: [(Config.holdingQueue, (_downloadGroup, _maxConcurrent))],
+    );
 
     // Настраиваем уведомления
     FileDownloader().configureNotification(
@@ -94,13 +92,11 @@ class DownloadManager {
       progressBar: true,
     );
 
-    // Настраиваем очередь
-    await FileDownloader().configure(
-      globalConfig: [(Config.holdingQueue, (_downloadGroup, _maxConcurrent))],
-    );
-
     // Подписываемся на обновления
     FileDownloader().updates.listen(_handleUpdate);
+
+    // Запускаем FileDownloader
+    await FileDownloader().start(autoCleanDatabase: true);
 
     _initialized = true;
   }
@@ -118,13 +114,10 @@ class DownloadManager {
       return _modelIdToTaskId[model.id]!;
     }
 
-    final downloadDir = await AsrModelPaths.downloadsDir;
-
     final task = DownloadTask(
       url: model.downloadUrl,
       filename: '${model.modelDirName}.tar.bz2',
-      directory: downloadDir,
-      baseDirectory: BaseDirectory.root,
+      directory: AsrModelPaths.downloadsSubdir,
       group: _downloadGroup,
       updates: Updates.statusAndProgress,
       allowPause: true,
@@ -283,7 +276,9 @@ class DownloadManager {
   }
 
   /// Освободить ресурсы
+  @disposeMethod
   Future<void> dispose() async {
+    await FileDownloader().resetUpdates();
     await _progressController.close();
   }
 }
