@@ -16,7 +16,7 @@ class LoadingDialogExamples {
   static Future<void> exampleEasyDialog(BuildContext context) async {
     await EasyLoadingDialog.showCancelable<String>(
       future: (cancelToken) async {
-        await Future.delayed(const Duration(seconds: 2));
+        // await Future.delayed(const Duration(seconds: 2));
         return 'Готово';
       },
       onCancel: () {
@@ -29,7 +29,7 @@ class LoadingDialogExamples {
   static Future<void> exampleEasyDialogFade(BuildContext context) async {
     await EasyLoadingDialog.showCancelable(
       future: (cancelToken) async {
-        await Future.delayed(const Duration(seconds: 2));
+        // await Future.delayed(const Duration(seconds: 2));
         return 'Готово';
       },
       onCancel: () => debugPrint('Отменено'),
@@ -42,7 +42,7 @@ class LoadingDialogExamples {
       position: EasyDialogPosition.top,
       animation: const EasyDialogAnimation.slideVertical(),
       future: (cancelToken) async {
-        await Future.delayed(const Duration(seconds: 2));
+        // await Future.delayed(const Duration(seconds: 2));
         return 'Готово';
       },
       onCancel: () => debugPrint('Отменено'),
@@ -55,7 +55,7 @@ class LoadingDialogExamples {
       position: EasyDialogPosition.bottom,
       animation: const EasyDialogAnimation.slideHorizontal(),
       future: (cancelToken) async {
-        await Future.delayed(const Duration(seconds: 2));
+        // await Future.delayed(const Duration(seconds: 2));
         return 'Готово';
       },
       onCancel: () => debugPrint('Отменено'),
@@ -67,7 +67,7 @@ class LoadingDialogExamples {
     await EasyLoadingDialog.showCancelable(
       draggable: true, // Диалог можно перетаскивать
       future: (cancelToken) async {
-        await Future.delayed(const Duration(seconds: 3));
+        // await Future.delayed(const Duration(seconds: 3));
         return 'Готово';
       },
       onCancel: () => debugPrint('Отменено'),
@@ -78,7 +78,7 @@ class LoadingDialogExamples {
   static Future<void> exampleEasyDialogSimple(BuildContext context) async {
     await EasyLoadingDialog.showFuture(
       future: () async {
-        await Future.delayed(const Duration(seconds: 2));
+        // await Future.delayed(const Duration(seconds: 2));
         return 'Данные загружены';
       },
     );
@@ -89,7 +89,7 @@ class LoadingDialogExamples {
     await EasyLoadingDialog.showFuture(
       animation: const EasyDialogAnimation.bounce(),
       future: () async {
-        await Future.delayed(const Duration(seconds: 2));
+        // await Future.delayed(const Duration(seconds: 2));
         return 'Готово';
       },
     );
