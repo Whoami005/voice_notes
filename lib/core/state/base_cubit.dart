@@ -5,11 +5,20 @@ import 'package:voice_notes/core/error/app_failure.dart';
 import 'package:voice_notes/core/state/base_state.dart';
 import 'package:voice_notes/core/state/initializable.dart';
 
-/// Базовый кубит с удобными методами для работы с BaseState
+/// Базовый кубит с удобными методами для работы с BaseState.
+///
+/// ## Группы методов
+///
+/// - **emit*** — прямая отправка состояния
+/// - **guard** — полный цикл Loading → Success/Error
+/// - **update** — трансформация без error handling
+/// - **updateSafe** — трансформация с error handling
+/// - **safeExecute** — фоновые операции без изменения UI
+/// - **withData** — работа с данными + ручной emit
 abstract class BaseCubit<T> extends Cubit<BaseState<T>> {
   BaseCubit([BaseState<T>? initialState])
     : super(initialState ?? const BaseState.initial()) {
-    if (this is Initializable) (this as Initializable).init();
+    _initializable();
   }
 
   // ═══════════════════════════════════════════════════════════════════
@@ -40,24 +49,24 @@ abstract class BaseCubit<T> extends Cubit<BaseState<T>> {
 
   /// Выполнить действие с текущими данными (гарантированно не null).
   /// Ничего не делает, если состояние не Success.
-  void withData(void Function(T data) action) {
+  /// Поддерживает sync и async.
+  FutureOr<void> withData(FutureOr<void> Function(T data) action) {
     final data = state.dataOrNull;
-    if (data != null) action(data);
-  }
+    if (data == null) return null;
 
-  /// Async версия [withData].
-  Future<void> withDataAsync(Future<void> Function(T data) action) async {
-    final data = state.dataOrNull;
-    if (data != null) await action(data);
+    final result = action(data);
+
+    if (result is Future<void>) return result;
   }
 
   // ═══════════════════════════════════════════════════════════════════
   // State transformation
   // ═══════════════════════════════════════════════════════════════════
 
-  /// Выполнить действие с автоматическим управлением состояниями
+  /// Выполнить действие с автоматическим управлением состояниями.
   ///
-  /// Loading → Success/Error
+  /// Loading → Success/Error.
+  /// Используй для начальной загрузки данных (init).
   Future<void> guard(FutureOr<T> Function() action) async {
     emitLoading();
     await safeExecute(
@@ -67,8 +76,10 @@ abstract class BaseCubit<T> extends Cubit<BaseState<T>> {
   }
 
   /// Трансформировать данные с обработкой ошибок.
+  ///
   /// При ошибке emitError, иначе emitSuccess.
-  Future<void> tryUpdate(FutureOr<T> Function(T current) updater) async {
+  /// Используй когда возможны исключения (например, pull-to-refresh).
+  Future<void> updateSafe(FutureOr<T> Function(T current) updater) async {
     final data = state.dataOrNull;
     if (data == null) return;
 
@@ -78,24 +89,29 @@ abstract class BaseCubit<T> extends Cubit<BaseState<T>> {
     );
   }
 
-  /// Трансформировать данные и emit Success (sync).
+  /// Трансформировать данные и emit Success.
+  ///
   /// Ничего не делает, если состояние не Success.
-  void update(T Function(T current) updater) {
+  /// Без обработки ошибок — используй для безопасных операций.
+  /// Поддерживает sync и async.
+  FutureOr<void> update(FutureOr<T> Function(T current) updater) {
     final data = state.dataOrNull;
-    if (data != null) emitSuccess(updater(data));
+    if (data == null) return null;
+
+    final result = updater(data);
+
+    if (result is Future<T>) {
+      return result.then(emitSuccess);
+    } else {
+      emitSuccess(result);
+    }
   }
 
-  /// Трансформировать данные и emit Success (async).
-  /// Ничего не делает, если состояние не Success.
-  Future<void> updateAsync(Future<T> Function(T current) updater) async {
-    final data = state.dataOrNull;
-    if (data != null) emitSuccess(await updater(data));
-  }
-
-  /// Выполнить действие без смены состояния
+  /// Выполнить действие без смены состояния.
   ///
   /// Ошибки логируются через addError, но состояние не меняется.
   /// Используй для фоновых операций, где не нужно показывать ошибку в UI.
+  /// Поддерживает sync и async.
   Future<void> safeExecute({
     required FutureOr<void> Function() action,
     void Function(AppFailure failure)? onError,
@@ -110,20 +126,6 @@ abstract class BaseCubit<T> extends Cubit<BaseState<T>> {
     }
   }
 
-  /// Выполнить действие и вернуть результат или null
-  Future<R?> safeExecuteResult<R>({
-    required Future<R> Function() action,
-    void Function(AppFailure failure)? onError,
-  }) async {
-    try {
-      return await action();
-    } catch (e, s) {
-      addError(e, s);
-
-      final failure = AppFailure.from(e, s);
-      onError?.call(failure);
-
-      return null;
-    }
-  }
+  Future<void> _initializable() =>
+      safeExecute(action: (this as Initializable).init, onError: emitError);
 }

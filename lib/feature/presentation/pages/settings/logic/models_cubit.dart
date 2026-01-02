@@ -45,7 +45,7 @@ class ModelsCubit extends BaseCubit<ModelsState> implements Refreshable {
   Future<void> refresh() async {
     await safeExecute(
       action: () async {
-        await updateAsync((current) async {
+        await update((current) async {
           await _repository.verifyAllModels();
           final models = await _repository.getModelsWithStatus();
           final selected = await _repository.getSelectedModel();
@@ -107,7 +107,7 @@ class ModelsCubit extends BaseCubit<ModelsState> implements Refreshable {
     String modelId,
     Map<String, ModelDownloadProgress> currentDownloads,
   ) async {
-    await updateAsync((current) async {
+    await update((current) async {
       final models = await _repository.getModelsWithStatus();
       final newDownloads = {...currentDownloads}..remove(modelId);
 
