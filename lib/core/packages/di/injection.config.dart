@@ -12,9 +12,14 @@
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
 
+import '../../../feature/data/local/data_sources/folder_local_data_source.dart'
+    as _i377;
 import '../../../feature/data/local/data_sources/model_local_data_source.dart'
     as _i130;
+import '../../../feature/data/repositories/folder_repository_impl.dart'
+    as _i749;
 import '../../../feature/data/repositories/model_repository_impl.dart' as _i465;
+import '../../../feature/domain/repositories/folder_repository.dart' as _i500;
 import '../../../feature/domain/repositories/model_repository.dart' as _i56;
 import '../app_router/app_router.dart' as _i796;
 import '../asr/asr_service.dart' as _i233;
@@ -49,6 +54,9 @@ extension GetItInjectableX on _i174.GetIt {
       preResolve: true,
       dispose: (i) => i.close(),
     );
+    gh.singleton<_i377.FolderLocalDataSource>(
+      () => _i377.FolderLocalDataSourceImpl(gh<_i88.DatabaseClient>()),
+    );
     gh.singleton<_i130.ModelLocalDataSource>(
       () => _i130.ModelLocalDataSourceImpl(gh<_i88.DatabaseClient>()),
     );
@@ -58,6 +66,9 @@ extension GetItInjectableX on _i174.GetIt {
         gh<_i551.DownloadManager>(),
       ),
       dispose: (i) => i.dispose(),
+    );
+    gh.singleton<_i500.FolderRepository>(
+      () => _i749.FolderRepositoryImpl(gh<_i377.FolderLocalDataSource>()),
     );
     await gh.singletonAsync<_i233.AsrService>(
       () => asrModule.asrService(gh<_i56.ModelRepository>()),

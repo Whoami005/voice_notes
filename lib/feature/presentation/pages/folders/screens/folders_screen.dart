@@ -6,16 +6,17 @@ import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/packages/app_router/app_route_wrapper.dart';
 import 'package:voice_notes/core/packages/app_router/routes.dart';
+import 'package:voice_notes/core/packages/di/injection.dart';
 import 'package:voice_notes/core/state/base_state_builder.dart';
-import 'package:voice_notes/core/theme/app_colors.dart';
 import 'package:voice_notes/core/theme/app_typography.dart';
 import 'package:voice_notes/feature/domain/entities/folder_entity.dart';
-import 'package:voice_notes/feature/domain/entities/icon_ref_entity.dart';
+import 'package:voice_notes/feature/domain/repositories/folder_repository.dart';
 import 'package:voice_notes/feature/presentation/pages/folders/logic/folders_cubit.dart';
 import 'package:voice_notes/feature/presentation/pages/folders/widgets/folder_card.dart';
 import 'package:voice_notes/feature/presentation/pages/folders/widgets/quick_record_card.dart';
 import 'package:voice_notes/feature/presentation/widgets/bottom_sheet/create_folder_sheet.dart';
 import 'package:voice_notes/feature/presentation/widgets/buttons/app_fab.dart';
+import 'package:voice_notes/feature/presentation/widgets/dialogs/confirm_dialog.dart';
 import 'package:voice_notes/feature/presentation/widgets/refresh/refreshable_wrapper.dart';
 
 class FoldersScreen extends StatefulWidget implements AppRouteWrapper {
@@ -23,7 +24,10 @@ class FoldersScreen extends StatefulWidget implements AppRouteWrapper {
 
   @override
   Widget wrappedRoute(BuildContext context) {
-    return BlocProvider(create: (context) => FoldersCubit(), child: this);
+    return BlocProvider(
+      create: (context) => FoldersCubit(repository: getIt<FolderRepository>()),
+      child: this,
+    );
   }
 
   @override
@@ -32,49 +36,13 @@ class FoldersScreen extends StatefulWidget implements AppRouteWrapper {
 
 class _FoldersScreenState extends State<FoldersScreen> {
   bool _isSearchVisible = false;
-  final _searchController = TextEditingController();
+  late final TextEditingController _searchController;
 
-  // Mock data for UI preview
-  final List<FolderEntity> _folders = [
-    FolderEntity(
-      uid: '1',
-      name: 'Работа',
-      description: 'Рабочие заметки и митинги',
-      color: AppColors.folderColors[2],
-      icon: MaterialIconRefEntity(Icons.work.codePoint),
-      notesCount: 15,
-      createdAt: DateTime.now().subtract(const Duration(days: 30)),
-      updatedAt: DateTime.now().subtract(const Duration(hours: 2)),
-    ),
-    FolderEntity(
-      uid: '2',
-      name: 'Личное',
-      color: AppColors.folderColors[3],
-      icon: MaterialIconRefEntity(Icons.favorite.codePoint),
-      notesCount: 8,
-      createdAt: DateTime.now().subtract(const Duration(days: 60)),
-      updatedAt: DateTime.now().subtract(const Duration(days: 1)),
-    ),
-    FolderEntity(
-      uid: '3',
-      name: 'Книги',
-      description: 'Цитаты и идеи из книг',
-      color: AppColors.folderColors[4],
-      icon: MaterialIconRefEntity(Icons.book.codePoint),
-      notesCount: 23,
-      createdAt: DateTime.now().subtract(const Duration(days: 90)),
-      updatedAt: DateTime.now().subtract(const Duration(days: 3)),
-    ),
-    FolderEntity(
-      uid: '4',
-      name: 'Музыка',
-      color: AppColors.folderColors[0],
-      icon: MaterialIconRefEntity(Icons.music_note.codePoint),
-      notesCount: 5,
-      createdAt: DateTime.now().subtract(const Duration(days: 14)),
-      updatedAt: DateTime.now().subtract(const Duration(days: 7)),
-    ),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _searchController = TextEditingController();
+  }
 
   @override
   void dispose() {
@@ -84,12 +52,10 @@ class _FoldersScreenState extends State<FoldersScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final themeColors = context.themeColors;
-
     return Scaffold(
-      backgroundColor: themeColors.bgPrimary,
       floatingActionButton: AppFab(icon: Icons.add, onPressed: _onCreateFolder),
       body: BaseStateBuilder<FoldersCubit, FoldersState>(
+        buildWhen: (c, p) => true,
         onSuccess: (context, state) {
           return SafeArea(
             bottom: false,
@@ -112,7 +78,7 @@ class _FoldersScreenState extends State<FoldersScreen> {
                       children: [
                         QuickRecordCard(onTap: _onQuickRecord),
                         AppSpacer.p24,
-                        _SectionHeader(count: _folders.length),
+                        _SectionHeader(count: state.folders.length),
                         AppSpacer.p12,
                       ],
                     ),
@@ -122,15 +88,15 @@ class _FoldersScreenState extends State<FoldersScreen> {
                       horizontal: AppSizes.screenPadding,
                     ),
                     sliver: SliverList.builder(
-                      itemCount: _folders.length,
+                      itemCount: state.folders.length,
                       itemBuilder: (context, index) {
+                        final folder = state.folders[index];
                         return Padding(
                           padding: const EdgeInsets.only(bottom: AppSizes.p12),
                           child: FolderCard(
-                            folder: _folders[index],
-                            onTap: () => _onFolderTap(_folders[index]),
-                            onLongPress: () =>
-                                _onFolderLongPress(_folders[index]),
+                            folder: folder,
+                            onTap: () => _onFolderTap(folder),
+                            onLongPress: () => _onFolderLongPress(folder),
                           ),
                         );
                       },
@@ -148,15 +114,14 @@ class _FoldersScreenState extends State<FoldersScreen> {
   void _toggleSearch() {
     setState(() {
       _isSearchVisible = !_isSearchVisible;
-      if (!_isSearchVisible) {
-        _searchController.clear();
-      }
+      if (!_isSearchVisible) _searchController.clear();
     });
   }
 
   void _clearSearch() {
-    _searchController.clear();
-    setState(() {});
+    setState(() {
+      _searchController.clear();
+    });
   }
 
   void _onSettingsTap() {
@@ -171,15 +136,113 @@ class _FoldersScreenState extends State<FoldersScreen> {
     context.go('/folders/${folder.uid}');
   }
 
-  void _onFolderLongPress(FolderEntity folder) {
-    // TODO: Show folder context menu
+  Future<void> _onFolderLongPress(FolderEntity folder) async {
+    final action = await showModalBottomSheet<_FolderAction>(
+      context: context,
+      builder: (context) => _FolderActionsSheet(folder: folder),
+    );
+
+    if (!mounted || action == null) return;
+
+    switch (action) {
+      case _FolderAction.edit:
+        await _onEditFolder(folder);
+      case _FolderAction.delete:
+        await _onDeleteFolder(folder);
+    }
+  }
+
+  Future<void> _onEditFolder(FolderEntity folder) async {
+    final result = await CreateFolderSheet.show(
+      context: context,
+      initialName: folder.name,
+      initialDescription: folder.description,
+      initialColor: folder.color,
+      initialIcon: folder.icon,
+    );
+
+    if (result != null && mounted) {
+      final updatedFolder = folder.copyWith(
+        name: result.name,
+        description: result.description,
+        color: result.color,
+        icon: result.icon,
+      );
+      await context.read<FoldersCubit>().updateFolder(updatedFolder);
+    }
+  }
+
+  Future<void> _onDeleteFolder(FolderEntity folder) async {
+    final confirmed = await ConfirmDialog.show(
+      context: context,
+      title: 'Удалить папку?',
+      message:
+          'Папка "${folder.name}" и все заметки в ней '
+          'будут удалены безвозвратно.',
+      confirmText: 'Удалить',
+      icon: Icons.delete_outline,
+    );
+
+    if ((confirmed ?? false) && mounted) {
+      await context.read<FoldersCubit>().deleteFolder(folder.uid);
+    }
   }
 
   Future<void> _onCreateFolder() async {
     final result = await CreateFolderSheet.show(context: context);
-    if (result != null) {
-      // TODO: Add folder via state management
+
+    if (result != null && mounted) {
+      await context.read<FoldersCubit>().createFolder(result);
     }
+  }
+}
+
+enum _FolderAction { edit, delete }
+
+class _FolderActionsSheet extends StatelessWidget {
+  final FolderEntity folder;
+
+  const _FolderActionsSheet({required this.folder});
+
+  @override
+  Widget build(BuildContext context) {
+    final themeColors = context.themeColors;
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: AppSizes.p8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 32,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: AppSizes.p16),
+              decoration: BoxDecoration(
+                color: themeColors.bgTertiary,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            ListTile(
+              leading: Icon(
+                Icons.edit_outlined,
+                color: themeColors.textPrimary,
+              ),
+              title: const Text('Редактировать'),
+              onTap: () => Navigator.pop(context, _FolderAction.edit),
+            ),
+            ListTile(
+              leading: Icon(Icons.delete_outline, color: themeColors.error),
+              title: Text(
+                'Удалить',
+                style: TextStyle(color: themeColors.error),
+              ),
+              onTap: () => Navigator.pop(context, _FolderAction.delete),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

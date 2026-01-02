@@ -6,7 +6,7 @@ import 'package:voice_notes/feature/domain/entities/icon_ref_entity.dart';
 abstract final class FolderMapper {
   /// Конвертирует entity в domain модель.
   /// notesCount нужно передавать отдельно (через query.count()).
-  static FolderEntity toDomain(FolderObject e, {required int notesCount}) {
+  static FolderEntity toDomain(FolderObject e) {
     return FolderEntity(
       uid: e.uid,
       name: e.name,
@@ -15,7 +15,7 @@ abstract final class FolderMapper {
       icon:
           IconRefEntity.deserialize(e.iconRef) ??
           MaterialIconRefEntity(Icons.folder.codePoint),
-      notesCount: notesCount,
+      notesCount: e.notes.length,
       createdAt: e.createdAt,
       updatedAt: e.updatedAt,
     );

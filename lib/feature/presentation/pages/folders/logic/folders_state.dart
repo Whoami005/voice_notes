@@ -1,8 +1,14 @@
 part of 'folders_cubit.dart';
 
 class FoldersState extends Equatable {
-  const FoldersState();
+  final List<FolderEntity> folders;
+
+  const FoldersState({this.folders = const []});
+
+  FoldersState copyWith({List<FolderEntity>? folders}) {
+    return FoldersState(folders: folders ?? this.folders);
+  }
 
   @override
-  List<Object> get props => [];
+  List<Object> get props => [folders];
 }
