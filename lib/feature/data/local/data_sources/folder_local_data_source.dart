@@ -4,6 +4,7 @@ import 'package:voice_notes/core/packages/db/object_box/objectbox.g.dart'
     hide Order;
 import 'package:voice_notes/core/packages/db/object_box/objectbox_database.dart';
 import 'package:voice_notes/feature/data/local/models/folder_object.dart';
+import 'package:voice_notes/feature/data/local/models/note_object.dart';
 
 /// Локальный источник данных для работы с папками
 abstract interface class FolderLocalDataSource {
@@ -24,6 +25,9 @@ abstract interface class FolderLocalDataSource {
 
   /// Удалить папку по UID
   Future<void> delete(String uid);
+
+  /// Удалить папку вместе со всеми заметками (каскадное удаление)
+  Future<void> deleteWithNotes(String uid);
 
   /// Получить количество заметок в папке
   Future<int> getNotesCount(int folderId);
@@ -89,6 +93,25 @@ class FolderLocalDataSourceImpl implements FolderLocalDataSource {
     final folder = await getByUid(uid);
 
     if (folder != null) _folderBox.remove(folder.id);
+  }
+
+  @override
+  Future<void> deleteWithNotes(String uid) async {
+    await _db.runInTransactionAsync((Store store, String uid) async {
+      final folderBox = store.box<FolderObject>();
+      final noteBox = store.box<NoteObject>();
+
+      final query = folderBox.query(FolderObject_.uid.equals(uid)).build();
+      final folder = query.findFirst();
+      query.close();
+
+      if (folder == null) return;
+
+      final noteIds = [for (final note in folder.notes) note.id];
+      await noteBox.removeManyAsync(noteIds);
+
+      folderBox.remove(folder.id);
+    }, param: uid);
   }
 
   @override

@@ -91,17 +91,15 @@ extension GetItInjectableX on _i174.GetIt {
     gh.singleton<_i138.TransactionManager>(
       () => _i138.TransactionManager(gh<_i88.DatabaseClient>()),
     );
-    await gh.singletonAsync<_i233.AsrService>(
-      () => asrModule.asrService(gh<_i56.ModelRepository>()),
-      preResolve: true,
-    );
     gh.singleton<_i1032.NoteRepository>(
       () => _i910.NoteRepositoryImpl(
         gh<_i798.NoteLocalDataSource>(),
         gh<_i377.FolderLocalDataSource>(),
-        gh<_i952.TagLocalDataSource>(),
-        gh<_i138.TransactionManager>(),
       ),
+    );
+    await gh.singletonAsync<_i233.AsrService>(
+      () => asrModule.asrService(gh<_i56.ModelRepository>()),
+      preResolve: true,
     );
     return this;
   }

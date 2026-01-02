@@ -1,9 +1,7 @@
 import 'package:injectable/injectable.dart';
-import 'package:voice_notes/core/packages/db/transaction_manager.dart';
 import 'package:voice_notes/core/packages/uuid/uuid_manager.dart';
 import 'package:voice_notes/feature/data/local/data_sources/folder_local_data_source.dart';
 import 'package:voice_notes/feature/data/local/data_sources/note_local_data_source.dart';
-import 'package:voice_notes/feature/data/local/data_sources/tag_local_data_source.dart';
 import 'package:voice_notes/feature/data/local/mappers/note_mapper.dart';
 import 'package:voice_notes/feature/data/local/models/note_object.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
@@ -14,15 +12,8 @@ import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
 class NoteRepositoryImpl implements NoteRepository {
   final NoteLocalDataSource _noteDataSource;
   final FolderLocalDataSource _folderDataSource;
-  final TagLocalDataSource _tagDataSource;
-  final TransactionManager _txManager;
 
-  NoteRepositoryImpl(
-    this._noteDataSource,
-    this._folderDataSource,
-    this._tagDataSource,
-    this._txManager,
-  );
+  NoteRepositoryImpl(this._noteDataSource, this._folderDataSource);
 
   @override
   Future<List<NoteEntity>> getAll() async {
@@ -78,20 +69,11 @@ class NoteRepositoryImpl implements NoteRepository {
       hasAudio: hasAudio,
     );
 
-    // Атомарно сохраняем теги, папку и заметку
-    final savedNote = await _txManager.runInTransaction(() async {
-      if (folderId != null) {
-        final folder = await _folderDataSource.getByUid(folderId);
-        if (folder != null) noteObject.folder.target = folder;
-      }
-
-      if (tagNames.isNotEmpty) {
-        final tags = await _tagDataSource.saveMany(tagNames);
-        noteObject.tags.addAll(tags);
-      }
-
-      return _noteDataSource.save(noteObject);
-    });
+    final savedNote = await _noteDataSource.saveWithRelations(
+      note: noteObject,
+      folderUid: folderId,
+      tagNames: tagNames,
+    );
 
     return NoteMapper.toDomain(savedNote);
   }

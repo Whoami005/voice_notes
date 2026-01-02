@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:collection/collection.dart';
 import 'package:injectable/injectable.dart';
 import 'package:voice_notes/core/error/app_failure.dart';
 import 'package:voice_notes/core/packages/archive/archive_extractor.dart';
@@ -205,12 +206,11 @@ class ModelRepositoryImpl implements ModelRepository {
     if (selected == null) return null;
 
     // Находим соответствующую модель из списка доступных
-    for (final model in AsrModelEntity.availableModels) {
-      if (model.uuid == selected.modelId) {
-        return model.copyWith(isDownloaded: true, isSelected: true);
-      }
-    }
-    return null;
+    final selectedModel = AsrModelEntity.availableModels.firstWhereOrNull(
+      (model) => model.uuid == selected.modelId,
+    );
+
+    return selectedModel?.copyWith(isDownloaded: true, isSelected: true);
   }
 
   @override
@@ -235,12 +235,11 @@ class ModelRepositoryImpl implements ModelRepository {
     return _localDataSource.watchSelected().map((selected) {
       if (selected == null) return null;
 
-      for (final model in AsrModelEntity.availableModels) {
-        if (model.uuid == selected.modelId) {
-          return model.copyWith(isDownloaded: true, isSelected: true);
-        }
-      }
-      return null;
+      final selectedModel = AsrModelEntity.availableModels.firstWhereOrNull(
+        (model) => model.uuid == selected.modelId,
+      );
+
+      return selectedModel?.copyWith(isDownloaded: true, isSelected: true);
     });
   }
 

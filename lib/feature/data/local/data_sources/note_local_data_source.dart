@@ -1,9 +1,11 @@
 import 'package:injectable/injectable.dart' hide Order;
-import 'package:objectbox/objectbox.dart' show Order;
+import 'package:objectbox/objectbox.dart' show Order, PutMode;
 import 'package:voice_notes/core/packages/db/object_box/objectbox.g.dart'
     hide Order;
 import 'package:voice_notes/core/packages/db/object_box/objectbox_database.dart';
+import 'package:voice_notes/feature/data/local/models/folder_object.dart';
 import 'package:voice_notes/feature/data/local/models/note_object.dart';
+import 'package:voice_notes/feature/data/local/models/tag_object.dart';
 
 /// Локальный источник данных для работы с заметками
 abstract interface class NoteLocalDataSource {
@@ -36,6 +38,13 @@ abstract interface class NoteLocalDataSource {
 
   /// Стрим заметок без папки с реактивными обновлениями
   Stream<List<NoteObject>> watchWithoutFolder();
+
+  /// Сохранить заметку с папкой и тегами атомарно
+  Future<NoteObject> saveWithRelations({
+    required NoteObject note,
+    String? folderUid,
+    List<String> tagNames,
+  });
 }
 
 /// Реализация на основе ObjectBox
@@ -135,4 +144,60 @@ class NoteLocalDataSourceImpl implements NoteLocalDataSource {
         .watch(triggerImmediately: true)
         .map((query) => query.find());
   }
+
+  @override
+  Future<NoteObject> saveWithRelations({
+    required NoteObject note,
+    String? folderUid,
+    List<String> tagNames = const [],
+  }) async {
+    return _db.runInTransactionAsync(
+      (Store store, _SaveNoteParams params) {
+        final noteBox = store.box<NoteObject>();
+        final folderBox = store.box<FolderObject>();
+        final tagBox = store.box<TagObject>();
+
+        final note = params.note;
+
+        if (params.folderUid != null) {
+          final query = folderBox
+              .query(FolderObject_.uid.equals(params.folderUid!))
+              .build();
+          final folder = query.findFirst();
+          query.close();
+          if (folder != null) note.folder.target = folder;
+        }
+
+        if (params.tagNames.isNotEmpty) {
+          final now = DateTime.now();
+          final tags = [
+            for (final name in params.tagNames)
+              TagObject(name: name.toLowerCase().trim(), createdAt: now),
+          ];
+          tagBox.putMany(tags, mode: PutMode.put);
+          note.tags.addAll(tags);
+        }
+
+        noteBox.put(note, mode: PutMode.insert);
+        return note;
+      },
+      param: _SaveNoteParams(
+        note: note,
+        folderUid: folderUid,
+        tagNames: tagNames,
+      ),
+    );
+  }
+}
+
+class _SaveNoteParams {
+  final NoteObject note;
+  final String? folderUid;
+  final List<String> tagNames;
+
+  _SaveNoteParams({
+    required this.note,
+    this.folderUid,
+    this.tagNames = const [],
+  });
 }

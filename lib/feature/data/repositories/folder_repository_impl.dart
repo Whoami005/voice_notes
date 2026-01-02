@@ -74,6 +74,9 @@ class FolderRepositoryImpl implements FolderRepository {
   }
 
   @override
+  Future<void> deleteWithNotes(String uid) => _dataSource.deleteWithNotes(uid);
+
+  @override
   Stream<List<FolderEntity>> watchAll() {
     return _dataSource.watchAll().map(FolderMapper.toDomainList);
   }

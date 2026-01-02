@@ -58,6 +58,8 @@ dependencies:
   record: 6.1.2
   injectable: 2.7.1+4
   get_it: 9.2.0
+  intl: ^0.20.2
+  rxdart: ^0.28.0
 
 dev_dependencies:
   flutter_test:

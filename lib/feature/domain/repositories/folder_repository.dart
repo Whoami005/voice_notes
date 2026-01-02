@@ -25,6 +25,9 @@ abstract interface class FolderRepository {
   /// Удалить папку по UID
   Future<void> delete(String uid);
 
+  /// Удалить папку вместе со всеми заметками (каскадное удаление)
+  Future<void> deleteWithNotes(String uid);
+
   /// Стрим всех папок с реактивными обновлениями
   Stream<List<FolderEntity>> watchAll();
 

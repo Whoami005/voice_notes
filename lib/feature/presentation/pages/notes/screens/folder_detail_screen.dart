@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:voice_notes/common/utils/date_grouper.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
@@ -8,13 +9,13 @@ import 'package:voice_notes/core/packages/app_router/app_route_wrapper.dart';
 import 'package:voice_notes/core/packages/asr/asr_service.dart';
 import 'package:voice_notes/core/packages/audio/audio_recording_service.dart';
 import 'package:voice_notes/core/packages/di/injection.dart';
-import 'package:voice_notes/core/theme/app_colors.dart';
-import 'package:voice_notes/feature/domain/entities/folder_entity.dart';
-import 'package:voice_notes/feature/domain/entities/icon_ref_entity.dart';
+import 'package:voice_notes/core/state/base_state_builder.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
-import 'package:voice_notes/feature/domain/entities/tag_entity.dart';
 import 'package:voice_notes/feature/domain/enums/recording_state.dart'
     show SearchFilter;
+import 'package:voice_notes/feature/domain/repositories/folder_repository.dart';
+import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
+import 'package:voice_notes/feature/presentation/pages/notes/logic/folder_detail_cubit.dart';
 import 'package:voice_notes/feature/presentation/pages/notes/logic/recording_cubit.dart';
 import 'package:voice_notes/feature/presentation/pages/notes/widgets/date_separator.dart';
 import 'package:voice_notes/feature/presentation/pages/notes/widgets/note_bubble.dart';
@@ -30,15 +31,24 @@ class FolderDetailScreen extends StatefulWidget implements AppRouteWrapper {
 
   @override
   Widget wrappedRoute(BuildContext context) {
-    return BlocProvider(
-      create: (context) => RecordingCubit(
-        recordingService: getIt<AudioRecordingService>(),
-        asrService: getIt<AsrService>(),
-        folderId: folderId,
-        onNoteCreated: (text) {
-          // TODO: Обновить список заметок когда будет NoteRepository
-        },
-      ),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) => FolderDetailCubit(
+            noteRepository: getIt<NoteRepository>(),
+            folderRepository: getIt<FolderRepository>(),
+            folderId: folderId,
+          ),
+        ),
+        BlocProvider(
+          create: (_) => RecordingCubit(
+            recordingService: getIt<AudioRecordingService>(),
+            asrService: getIt<AsrService>(),
+            noteRepository: getIt<NoteRepository>(),
+            folderId: folderId,
+          ),
+        ),
+      ],
       child: this,
     );
   }
@@ -52,97 +62,18 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
   String _searchQuery = '';
   SearchFilter _activeFilter = SearchFilter.all;
 
-  // Mock folder data
-  late final FolderEntity _folder;
-
-  // Mock notes data grouped by date
-  final List<_DateGroup> _noteGroups = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _initMockData();
-  }
-
-  void _initMockData() {
-    final now = DateTime.now();
-    final yesterday = now.subtract(const Duration(days: 1));
-
-    // Mock folder based on ID
-    _folder = FolderEntity(
-      uid: widget.folderId,
-      name: 'Работа',
-      description: 'Рабочие заметки и митинги',
-      color: AppColors.folderColors[2],
-      icon: MaterialIconRefEntity(Icons.work.codePoint),
-      notesCount: 15,
-      createdAt: now.subtract(const Duration(days: 30)),
-      updatedAt: now.subtract(const Duration(hours: 2)),
-    );
-
-    _noteGroups.addAll([
-      _DateGroup(
-        label: 'Сегодня',
-        notes: [
-          NoteEntity(
-            uuid: '1',
-            text:
-                'Обсудили план на следующий спринт. Нужно добавить новый '
-                'функционал для авторизации и интеграцию с внешним API.',
-            createdAt: now.subtract(const Duration(hours: 1)),
-            updatedAt: now.subtract(const Duration(hours: 1)),
-            duration: const Duration(seconds: 45),
-            modelName: 'Whisper Small',
-            language: 'Русский',
-            wordCount: 18,
-            tags: [
-              TagEntity(uid: '1', name: 'работа', createdAt: now),
-              TagEntity(uid: '2', name: 'спринт', createdAt: now),
-            ],
-          ),
-          NoteEntity(
-            uuid: '2',
-            text:
-                'Записка о встрече с клиентом. Нужно подготовить '
-                'презентацию до пятницы.',
-            createdAt: now.subtract(const Duration(hours: 3)),
-            updatedAt: now.subtract(const Duration(hours: 3)),
-            duration: const Duration(seconds: 32),
-            modelName: 'Whisper Small',
-            language: 'Русский',
-            wordCount: 11,
-            tags: [
-              TagEntity(uid: '3', name: 'клиент', createdAt: now),
-              TagEntity(uid: '4', name: 'презентация', createdAt: now),
-            ],
-          ),
-        ],
-      ),
-      _DateGroup(
-        label: 'Вчера',
-        notes: [
-          NoteEntity(
-            uuid: '3',
-            text:
-                'Идея для нового проекта: приложение для трекинга привычек '
-                'с геймификацией.',
-            createdAt: yesterday.subtract(const Duration(hours: 5)),
-            updatedAt: yesterday.subtract(const Duration(hours: 5)),
-            duration: const Duration(seconds: 28),
-            modelName: 'Whisper Small',
-            language: 'Русский',
-            wordCount: 10,
-            tags: [TagEntity(uid: '5', name: 'идея', createdAt: yesterday)],
-          ),
-        ],
-      ),
-    ]);
-  }
-
   @override
   Widget build(BuildContext context) {
+    return BaseStateBuilder<FolderDetailCubit, FolderDetailData>(
+      buildWhen: (_, _) => true,
+      onSuccess: _buildScaffold,
+    );
+  }
+
+  Widget _buildScaffold(BuildContext context, FolderDetailData data) {
     final themeColors = context.themeColors;
     final textTheme = context.textTheme;
+    final folder = data.folder!;
 
     return Scaffold(
       extendBody: true,
@@ -161,15 +92,15 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                color: _folder.color.withValues(alpha: 0.15),
+                color: folder.color.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(AppSizes.p8),
               ),
-              child: Icon(_folder.iconData, color: _folder.color, size: 18),
+              child: Icon(folder.iconData, color: folder.color, size: 18),
             ),
             AppSpacer.p10,
             Flexible(
               child: Text(
-                _folder.name,
+                folder.name,
                 style: textTheme.titleLarge,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -246,7 +177,7 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
             ),
             AppSpacer.p16,
           ],
-          ..._buildNotesList(),
+          ..._buildNotesList(data.groupedNotes),
         ],
       ),
     );
@@ -281,13 +212,13 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
     );
   }
 
-  List<Widget> _buildNotesList() {
+  List<Widget> _buildNotesList(List<DateGroup<NoteEntity>> groups) {
     final widgets = <Widget>[];
 
-    for (final group in _noteGroups) {
+    for (final group in groups) {
       widgets.add(DateSeparator(date: group.label));
 
-      for (final note in group.notes) {
+      for (final note in group.items) {
         widgets.add(
           Padding(
             padding: const EdgeInsets.only(bottom: AppSizes.p12),
@@ -330,7 +261,8 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
     );
 
     if ((confirmed ?? false) && mounted) {
-      context.pop();
+      await context.read<FolderDetailCubit>().deleteFolder();
+      if (mounted) context.pop();
     }
   }
 
@@ -349,11 +281,4 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
   void _onUploadFile() {
     // TODO: Open file picker
   }
-}
-
-class _DateGroup {
-  final String label;
-  final List<NoteEntity> notes;
-
-  const _DateGroup({required this.label, required this.notes});
 }

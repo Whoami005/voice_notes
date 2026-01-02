@@ -11,6 +11,7 @@ import 'package:voice_notes/core/packages/audio/audio_recording_exception.dart';
 import 'package:voice_notes/core/packages/audio/audio_recording_service.dart';
 import 'package:voice_notes/feature/domain/enums/recording_state.dart'
     show RecordingInputState;
+import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
 
 part 'recording_state.dart';
 
@@ -28,22 +29,21 @@ part 'recording_state.dart';
 class RecordingCubit extends Cubit<RecordingState> {
   final AudioRecordingService _recordingService;
   final AsrService _asrService;
+  final NoteRepository _noteRepository;
 
   StreamSubscription<Duration>? _durationSubscription;
 
   /// ID папки для записи в папку (null = Quick Record в буфер обмена)
   final String? folderId;
 
-  /// Callback для уведомления о успешной записи (для обновления списка заметок)
-  final void Function(String text)? onNoteCreated;
-
   RecordingCubit({
     required AudioRecordingService recordingService,
     required AsrService asrService,
+    required NoteRepository noteRepository,
     this.folderId,
-    this.onNoteCreated,
   }) : _recordingService = recordingService,
        _asrService = asrService,
+       _noteRepository = noteRepository,
        super(const RecordingIdleState());
 
   // ==================== Public API ====================
@@ -195,18 +195,16 @@ class RecordingCubit extends Cubit<RecordingState> {
     required int wordCount,
     String? language,
   }) async {
-    // TODO: Реализовать когда NoteRepository будет доступен
-    // await _noteRepository.createNote(
-    //   folderId: folderId!,
-    //   text: text,
-    //   duration: duration,
-    //   language: language ?? 'Unknown',
-    //   modelName: _asrService.currentModel?.name ?? 'Unknown',
-    //   wordCount: wordCount,
-    // );
+    if (folderId == null) return;
 
-    // Вызываем callback для обновления списка заметок
-    onNoteCreated?.call(text);
+    await _noteRepository.create(
+      text: text,
+      duration: duration,
+      folderId: folderId,
+      language: language ?? '',
+      modelName: _asrService.currentModel?.name ?? 'Unknown',
+      wordCount: wordCount,
+    );
   }
 
   Future<void> _copyToClipboard(String text) async {
