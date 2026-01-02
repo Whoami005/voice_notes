@@ -6,7 +6,7 @@ import 'package:voice_notes/feature/domain/entities/tag_entity.dart';
 abstract final class NoteMapper {
   static NoteEntity toDomain(NoteObject e, {List<TagEntity>? tags}) {
     return NoteEntity(
-      id: e.uid,
+      uuid: e.uid,
       folderId: e.folder.targetId != 0 ? e.folder.targetId.toString() : null,
       text: e.text,
       createdAt: e.createdAt,
@@ -23,7 +23,7 @@ abstract final class NoteMapper {
   static NoteObject toEntity(NoteEntity n, {int id = 0}) {
     return NoteObject(
       id: id,
-      uid: n.id,
+      uid: n.uuid,
       text: n.text,
       createdAt: n.createdAt,
       updatedAt: n.updatedAt,

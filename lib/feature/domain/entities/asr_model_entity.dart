@@ -10,7 +10,7 @@ enum AsrModelType {
 }
 
 class AsrModelEntity extends Equatable {
-  final String id;
+  final String uuid;
   final String name;
   final String engine;
   final String size;
@@ -24,7 +24,7 @@ class AsrModelEntity extends Equatable {
   final double? downloadProgress;
 
   const AsrModelEntity({
-    required this.id,
+    required this.uuid,
     required this.name,
     required this.engine,
     required this.size,
@@ -90,7 +90,7 @@ class AsrModelEntity extends Equatable {
 
   @override
   List<Object?> get props => [
-    id,
+    uuid,
     name,
     engine,
     size,
@@ -106,7 +106,7 @@ class AsrModelEntity extends Equatable {
 
   /// Создать копию с изменёнными полями
   AsrModelEntity copyWith({
-    String? id,
+    String? uuid,
     String? name,
     String? engine,
     String? size,
@@ -120,7 +120,7 @@ class AsrModelEntity extends Equatable {
     double? downloadProgress,
   }) {
     return AsrModelEntity(
-      id: id ?? this.id,
+      uuid: uuid ?? this.uuid,
       name: name ?? this.name,
       engine: engine ?? this.engine,
       size: size ?? this.size,
@@ -139,7 +139,7 @@ class AsrModelEntity extends Equatable {
   static const List<AsrModelEntity> availableModels = [
     // Whisper Tiny.en (~117MB int8)
     AsrModelEntity(
-      id: 'whisper-tiny-en',
+      uuid: 'whisper-tiny-en',
       name: 'Whisper Tiny',
       engine: 'OpenAI Whisper',
       size: '117 MB',
@@ -152,7 +152,7 @@ class AsrModelEntity extends Equatable {
 
     // Whisper Small (~466MB)
     AsrModelEntity(
-      id: 'whisper-small',
+      uuid: 'whisper-small',
       name: 'Whisper Small',
       engine: 'OpenAI Whisper',
       size: '466 MB',
@@ -167,7 +167,7 @@ class AsrModelEntity extends Equatable {
 
     // Whisper Medium (~1.5GB)
     AsrModelEntity(
-      id: 'whisper-medium',
+      uuid: 'whisper-medium',
       name: 'Whisper Medium',
       engine: 'OpenAI Whisper',
       size: '1.5 GB',
@@ -182,7 +182,7 @@ class AsrModelEntity extends Equatable {
 
     // Parakeet TDT v3 (~640MB int8)
     AsrModelEntity(
-      id: 'parakeet-tdt-v3',
+      uuid: 'parakeet-tdt-v3',
       name: 'Parakeet V3',
       engine: 'NVIDIA NeMo',
       size: '640 MB',

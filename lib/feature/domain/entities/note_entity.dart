@@ -1,7 +1,7 @@
 import 'package:voice_notes/feature/domain/entities/tag_entity.dart';
 
 class NoteEntity {
-  final String id;
+  final String uuid;
   final String? folderId;
   final String text;
   final Duration duration;
@@ -14,7 +14,7 @@ class NoteEntity {
   final DateTime updatedAt;
 
   const NoteEntity({
-    required this.id,
+    required this.uuid,
     required this.text,
     required this.createdAt,
     required this.updatedAt,
@@ -28,7 +28,7 @@ class NoteEntity {
   });
 
   NoteEntity copyWith({
-    String? id,
+    String? uuid,
     String? folderId,
     String? text,
     DateTime? createdAt,
@@ -41,7 +41,7 @@ class NoteEntity {
     bool? hasAudio,
   }) {
     return NoteEntity(
-      id: id ?? this.id,
+      uuid: uuid ?? this.uuid,
       folderId: folderId ?? this.folderId,
       text: text ?? this.text,
       createdAt: createdAt ?? this.createdAt,

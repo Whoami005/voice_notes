@@ -85,7 +85,7 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
         label: 'Сегодня',
         notes: [
           NoteEntity(
-            id: '1',
+            uuid: '1',
             text:
                 'Обсудили план на следующий спринт. Нужно добавить новый '
                 'функционал для авторизации и интеграцию с внешним API.',
@@ -101,7 +101,7 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
             ],
           ),
           NoteEntity(
-            id: '2',
+            uuid: '2',
             text:
                 'Записка о встрече с клиентом. Нужно подготовить '
                 'презентацию до пятницы.',
@@ -122,7 +122,7 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
         label: 'Вчера',
         notes: [
           NoteEntity(
-            id: '3',
+            uuid: '3',
             text:
                 'Идея для нового проекта: приложение для трекинга привычек '
                 'с геймификацией.',
@@ -335,7 +335,7 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
   }
 
   void _onNoteTap(NoteEntity note) {
-    context.go('/folders/${widget.folderId}/note/${note.id}');
+    context.go('/folders/${widget.folderId}/note/${note.uuid}');
   }
 
   void _onCopyNote(NoteEntity note) {

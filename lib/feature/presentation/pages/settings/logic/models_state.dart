@@ -21,7 +21,7 @@ class ModelsState extends Equatable {
   AsrModelEntity? get selectedModel {
     if (selectedModelId == null) return null;
 
-    return models.firstWhereOrNull((model) => model.id == selectedModelId);
+    return models.firstWhereOrNull((model) => model.uuid == selectedModelId);
   }
 
   /// Скачанные модели
@@ -35,7 +35,7 @@ class ModelsState extends Equatable {
     final result = <AsrModelEntity>[];
 
     for (final model in models) {
-      final progress = downloads[model.id];
+      final progress = downloads[model.uuid];
 
       if (progress != null && _isActiveDownload(progress.status)) {
         result.add(model);

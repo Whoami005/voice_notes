@@ -393,28 +393,28 @@ class _ModelsTabState extends State<_ModelsTab>
     AsrModelEntity model,
   ) {
     final cubit = context.read<ModelsCubit>();
-    final downloadProgress = state.getDownloadProgress(model.id);
+    final downloadProgress = state.getDownloadProgress(model.uuid);
 
     return ModelCard(
       model: model,
       downloadProgress: downloadProgress,
       onUse: model.isDownloaded && !model.isSelected
-          ? () => cubit.selectModel(model.id)
+          ? () => cubit.selectModel(model.uuid)
           : null,
-      onDownload: !model.isDownloaded && !state.isDownloading(model.id)
+      onDownload: !model.isDownloaded && !state.isDownloading(model.uuid)
           ? () => _onDownloadModel(context, model)
           : null,
       onDelete: model.isDownloaded
           ? () => _onDeleteModel(context, model)
           : null,
-      onPause: state.isDownloading(model.id)
-          ? () => cubit.pauseDownload(model.id)
+      onPause: state.isDownloading(model.uuid)
+          ? () => cubit.pauseDownload(model.uuid)
           : null,
       onResume: downloadProgress?.status == DownloadStatus.paused
-          ? () => cubit.resumeDownload(model.id)
+          ? () => cubit.resumeDownload(model.uuid)
           : null,
-      onCancel: state.isDownloading(model.id)
-          ? () => cubit.cancelDownload(model.id)
+      onCancel: state.isDownloading(model.uuid)
+          ? () => cubit.cancelDownload(model.uuid)
           : null,
     );
   }
@@ -457,7 +457,7 @@ class _ModelsTabState extends State<_ModelsTab>
     );
 
     if ((confirmed ?? false) && context.mounted) {
-      await context.read<ModelsCubit>().deleteModel(model.id);
+      await context.read<ModelsCubit>().deleteModel(model.uuid);
     }
   }
 }

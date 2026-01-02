@@ -37,7 +37,7 @@ class ModelsCubit extends BaseCubit<ModelsState> implements Refreshable {
       // Подписываемся на обновления прогресса
       _subscribeToDownloads();
 
-      return ModelsState(models: models, selectedModelId: selected?.id);
+      return ModelsState(models: models, selectedModelId: selected?.uuid);
     });
   }
 
@@ -52,7 +52,7 @@ class ModelsCubit extends BaseCubit<ModelsState> implements Refreshable {
 
           return current.copyWith(
             models: models,
-            selectedModelId: selected?.id,
+            selectedModelId: selected?.uuid,
             clearSelectedModelId: selected == null,
           );
         });
@@ -149,7 +149,7 @@ class ModelsCubit extends BaseCubit<ModelsState> implements Refreshable {
         // Обновляем прогресс с ошибкой
         _handleDownloadProgress(
           ModelDownloadProgress(
-            modelId: model.id,
+            modelId: model.uuid,
             status: DownloadStatus.failed,
             errorMessage: failure.message,
           ),
@@ -236,7 +236,7 @@ class ModelsCubit extends BaseCubit<ModelsState> implements Refreshable {
         update((current) {
           final updatedModels = <AsrModelEntity>[
             for (final model in current.models)
-              model.copyWith(isSelected: model.id == modelId),
+              model.copyWith(isSelected: model.uuid == modelId),
           ];
 
           return current.copyWith(

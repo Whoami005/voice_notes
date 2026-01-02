@@ -44,7 +44,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
 
     // Mock note data based on ID
     _note = NoteEntity(
-      id: widget.noteId,
+      uuid: widget.noteId,
       text:
           'Обсудили план на следующий спринт. Нужно добавить новый '
           'функционал для авторизации и интеграцию с внешним API.',

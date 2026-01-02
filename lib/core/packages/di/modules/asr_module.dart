@@ -12,7 +12,7 @@ abstract class AsrModule {
 
     final model = await modelRepo.getSelectedModel();
     if (model != null) {
-      final path = await modelRepo.getModelPath(model.id);
+      final path = await modelRepo.getModelPath(model.uuid);
       if (path != null) await service.initialize(model, path);
     }
 

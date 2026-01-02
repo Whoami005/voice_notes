@@ -110,8 +110,8 @@ class DownloadManager {
     }
 
     // Проверяем, не скачивается ли уже
-    if (_modelIdToTaskId.containsKey(model.id)) {
-      return _modelIdToTaskId[model.id]!;
+    if (_modelIdToTaskId.containsKey(model.uuid)) {
+      return _modelIdToTaskId[model.uuid]!;
     }
 
     final task = DownloadTask(
@@ -122,25 +122,25 @@ class DownloadManager {
       updates: Updates.statusAndProgress,
       allowPause: true,
       retries: 3,
-      metaData: model.id,
+      metaData: model.uuid,
     );
 
-    _modelIdToTaskId[model.id] = task.taskId;
-    _taskIdToModelId[task.taskId] = model.id;
+    _modelIdToTaskId[model.uuid] = task.taskId;
+    _taskIdToModelId[task.taskId] = model.uuid;
 
     // Отправляем начальный статус
     _progressController.add(
-      ModelDownloadProgress(modelId: model.id, status: DownloadStatus.queued),
+      ModelDownloadProgress(modelId: model.uuid, status: DownloadStatus.queued),
     );
 
     final success = await FileDownloader().enqueue(task);
     if (!success) {
-      _modelIdToTaskId.remove(model.id);
+      _modelIdToTaskId.remove(model.uuid);
       _taskIdToModelId.remove(task.taskId);
 
       _progressController.add(
         ModelDownloadProgress(
-          modelId: model.id,
+          modelId: model.uuid,
           status: DownloadStatus.failed,
           errorMessage: 'Не удалось добавить в очередь',
         ),
