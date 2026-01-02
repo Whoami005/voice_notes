@@ -1,6 +1,7 @@
+import 'package:equatable/equatable.dart';
 import 'package:voice_notes/feature/domain/entities/tag_entity.dart';
 
-class NoteEntity {
+class NoteEntity extends Equatable {
   final String uuid;
   final String? folderId;
   final String text;
@@ -26,6 +27,21 @@ class NoteEntity {
     this.tags = const [],
     this.hasAudio = true,
   });
+
+  @override
+  List<Object?> get props => [
+    uuid,
+    folderId,
+    text,
+    createdAt,
+    updatedAt,
+    duration,
+    modelName,
+    language,
+    wordCount,
+    tags,
+    hasAudio,
+  ];
 
   NoteEntity copyWith({
     String? uuid,

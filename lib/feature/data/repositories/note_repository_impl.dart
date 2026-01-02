@@ -31,10 +31,10 @@ class NoteRepositoryImpl implements NoteRepository {
 
   @override
   Future<List<NoteEntity>> getByFolderId(String folderId) async {
-    final folderIdInt = int.tryParse(folderId);
-    if (folderIdInt == null) return [];
+    final obj = await _folderDataSource.getByUid(folderId);
+    if (obj == null) return [];
 
-    final objects = await _noteDataSource.getByFolderId(folderIdInt);
+    final objects = await _noteDataSource.getByFolderId(obj.id);
     return NoteMapper.toDomainList(objects);
   }
 

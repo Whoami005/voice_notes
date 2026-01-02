@@ -51,6 +51,9 @@ class FolderDetailCubit extends BaseCubit<FolderDetailData>
         final folder = await _folderRepository.getByUid(folderId);
         final notes = await _noteRepository.getByFolderId(folderId);
 
+        print('Folder: $folder');
+        print('Notes: $notes');
+
         emitSuccess(FolderDetailData(folder: folder!, notes: notes));
       },
     );

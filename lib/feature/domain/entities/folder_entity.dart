@@ -1,7 +1,8 @@
+import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 import 'package:voice_notes/feature/domain/entities/icon_ref_entity.dart';
 
-class FolderEntity {
+class FolderEntity extends Equatable {
   final String uid;
   final String name;
   final String? description;
@@ -24,6 +25,18 @@ class FolderEntity {
 
   /// Getter для UI совместимости с IconData.
   IconData get iconData => icon.toIconData() ?? Icons.folder;
+
+  @override
+  List<Object?> get props => [
+    uid,
+    name,
+    description,
+    color,
+    icon,
+    notesCount,
+    createdAt,
+    updatedAt,
+  ];
 
   FolderEntity copyWith({
     String? uid,

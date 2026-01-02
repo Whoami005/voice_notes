@@ -10,14 +10,9 @@ class DateGroup<T> extends Equatable {
 
   @override
   List<Object?> get props => [label, items];
-}
 
-/// Утилита для группировки элементов по датам
-///
-/// Группировка: "Сегодня", "Вчера", затем конкретные даты ("15 декабря", "14 декабря"...)
-class DateGrouper {
-  DateGrouper._();
-
+  /// Группировка: "Сегодня", "Вчера",
+  /// затем конкретные даты ("15 декабря", "14 декабря"...)
   static List<DateGroup<T>> groupByDate<T>(
     List<T> items,
     DateTime Function(T) getDate,

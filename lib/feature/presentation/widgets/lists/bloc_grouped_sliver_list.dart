@@ -59,7 +59,10 @@ class BlocGroupedSliverList<B extends BlocBase<S>, S, T>
         final groups = selector(state);
 
         if (groups.isEmpty) {
-          return const SliverToBoxAdapter(child: Center(child: Text('Пусто')));
+          return const SliverFillRemaining(
+            hasScrollBody: false,
+            child: Center(child: Text('Пусто')),
+          );
         }
 
         // Calculate total item count: sum of (1 header + items) for each group

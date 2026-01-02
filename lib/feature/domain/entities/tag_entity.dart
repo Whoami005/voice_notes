@@ -1,6 +1,7 @@
+import 'package:equatable/equatable.dart';
 import 'package:flutter/material.dart';
 
-class TagEntity {
+class TagEntity extends Equatable {
   final String uid;
   final String name;
   final Color? color;
@@ -12,6 +13,9 @@ class TagEntity {
     required this.createdAt,
     this.color,
   });
+
+  @override
+  List<Object?> get props => [uid, name, color, createdAt];
 
   TagEntity copyWith({
     String? uid,

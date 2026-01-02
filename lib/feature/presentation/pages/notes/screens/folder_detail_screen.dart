@@ -20,6 +20,7 @@ import 'package:voice_notes/feature/presentation/pages/notes/widgets/folder_deta
 import 'package:voice_notes/feature/presentation/pages/notes/widgets/note_details_widget.dart';
 import 'package:voice_notes/feature/presentation/pages/notes/widgets/search_bar_with_filters.dart';
 import 'package:voice_notes/feature/presentation/widgets/dialogs/confirm_dialog.dart';
+import 'package:voice_notes/feature/presentation/widgets/refresh/refreshable_wrapper.dart';
 
 class FolderDetailScreen extends StatefulWidget implements AppRouteWrapper {
   final String folderId;
@@ -81,25 +82,27 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
           bottomNavigationBar: FolderDetailRecordingBar(
             onUploadFile: _onUploadFile,
           ),
-          body: CustomScrollView(
-            slivers: [
-              if (_isSearchVisible)
-                SliverToBoxAdapter(
-                  child: SearchBarWithFilters(
-                    padding: const EdgeInsets.only(
-                      left: AppSizes.screenPadding,
-                      right: AppSizes.screenPadding,
-                      bottom: AppSizes.p16,
+          body: RefreshableWrapper<FolderDetailCubit>(
+            child: CustomScrollView(
+              slivers: [
+                if (_isSearchVisible)
+                  SliverToBoxAdapter(
+                    child: SearchBarWithFilters(
+                      padding: const EdgeInsets.only(
+                        left: AppSizes.screenPadding,
+                        right: AppSizes.screenPadding,
+                        bottom: AppSizes.p16,
+                      ),
+                      query: _searchQuery,
+                      onQueryChanged: (q) => setState(() => _searchQuery = q),
+                      activeFilter: _activeFilter,
+                      onFilterChanged: (f) => setState(() => _activeFilter = f),
+                      placeholder: 'Поиск в папке...',
                     ),
-                    query: _searchQuery,
-                    onQueryChanged: (q) => setState(() => _searchQuery = q),
-                    activeFilter: _activeFilter,
-                    onFilterChanged: (f) => setState(() => _activeFilter = f),
-                    placeholder: 'Поиск в папке...',
                   ),
-                ),
-              const NoteDetailsWidget(),
-            ],
+                const NoteDetailsWidget(),
+              ],
+            ),
           ),
         );
       },
