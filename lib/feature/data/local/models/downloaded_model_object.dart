@@ -13,7 +13,7 @@ class DownloadedModelObject {
   /// Имя директории модели (например 'sherpa-onnx-whisper-small')
   String modelDirName;
 
-  /// Полный путь к директории модели на устройстве
+  /// Относительный путь к директории модели (от Documents)
   String localPath;
 
   /// Является ли модель выбранной (активной)

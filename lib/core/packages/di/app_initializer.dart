@@ -33,9 +33,8 @@ class _AppInitializerState extends State<AppInitializer> {
     return FutureBuilder<AppInitializationResult>(
       future: _initFuture,
       builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done) {
-          return const _SplashScreen();
-        }
+        final isDone = snapshot.connectionState != ConnectionState.done;
+        if (isDone) return const _SplashScreen();
 
         return switch (snapshot.data) {
           AppInitializationSuccess() => VoiceNotesApp(

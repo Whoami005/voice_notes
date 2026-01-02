@@ -192,8 +192,8 @@ class RecordingCubit extends Cubit<RecordingState> {
   Future<void> _createNote({
     required String text,
     required Duration duration,
-    String? language,
     required int wordCount,
+    String? language,
   }) async {
     // TODO: Реализовать когда NoteRepository будет доступен
     // await _noteRepository.createNote(

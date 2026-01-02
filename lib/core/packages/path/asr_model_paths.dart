@@ -21,10 +21,21 @@ class AsrModelPaths {
     return '$docsDir/$downloadsSubdir';
   }
 
-  /// Путь к конкретной модели (Documents/asr_models/{modelDirName})
+  /// Относительный путь к модели (для хранения в БД)
+  static String modelRelativePath(String modelDirName) {
+    return '$modelsSubdir/$modelDirName';
+  }
+
+  /// Полный путь к модели (Documents/asr_models/{modelDirName})
   static Future<String> modelPath(String modelDirName) async {
     final models = await modelsDir;
     return '$models/$modelDirName';
+  }
+
+  /// Восстановить полный путь из относительного
+  static Future<String> resolveRelativePath(String relativePath) async {
+    final docsDir = await AppPathProvider.getApplicationDocumentsPath;
+    return '$docsDir/$relativePath';
   }
 
   /// Путь к архиву модели (Documents/downloads/{modelDirName}.tar.bz2)

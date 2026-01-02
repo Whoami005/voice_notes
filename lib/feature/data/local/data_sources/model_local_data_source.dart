@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:injectable/injectable.dart';
 import 'package:voice_notes/core/packages/db/object_box/objectbox.g.dart';
 import 'package:voice_notes/core/packages/db/object_box/objectbox_database.dart';
+import 'package:voice_notes/core/packages/path/asr_model_paths.dart';
 import 'package:voice_notes/feature/data/local/models/downloaded_model_object.dart';
 
 /// Локальный источник данных для работы со скачанными моделями
@@ -109,7 +110,8 @@ class ModelLocalDataSourceImpl implements ModelLocalDataSource {
     final model = await getByModelId(modelId);
     if (model == null) return false;
 
-    final directory = Directory(model.localPath);
+    final fullPath = await AsrModelPaths.resolveRelativePath(model.localPath);
+    final directory = Directory(fullPath);
     if (!directory.existsSync()) return false;
 
     // Проверяем что директория не пустая

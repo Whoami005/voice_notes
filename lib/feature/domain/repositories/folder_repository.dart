@@ -14,9 +14,9 @@ abstract interface class FolderRepository {
   /// Создать новую папку
   Future<FolderEntity> create({
     required String name,
-    String? description,
     required Color color,
     required IconRefEntity icon,
+    String? description,
   });
 
   /// Обновить существующую папку

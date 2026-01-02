@@ -121,7 +121,7 @@ class ModelRepositoryImpl implements ModelRepository {
       final downloadedModel = DownloadedModelObject(
         modelId: model.id,
         modelDirName: model.modelDirName,
-        localPath: modelPath,
+        localPath: AsrModelPaths.modelRelativePath(model.modelDirName),
         downloadedAt: DateTime.now(),
         fileSizeBytes: totalSize,
       );
@@ -186,10 +186,9 @@ class ModelRepositoryImpl implements ModelRepository {
     if (model == null) return;
 
     // Удаляем файлы с диска
-    final directory = Directory(model.localPath);
-    if (directory.existsSync()) {
-      await directory.delete(recursive: true);
-    }
+    final fullPath = await AsrModelPaths.resolveRelativePath(model.localPath);
+    final directory = Directory(fullPath);
+    if (directory.existsSync()) await directory.delete(recursive: true);
 
     // Удаляем запись из БД
     await _localDataSource.delete(modelId);
@@ -249,7 +248,7 @@ class ModelRepositoryImpl implements ModelRepository {
       return null;
     }
 
-    return model.localPath;
+    return AsrModelPaths.resolveRelativePath(model.localPath);
   }
 
   /// Освободить ресурсы
