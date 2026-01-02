@@ -7,6 +7,15 @@ import 'package:voice_notes/core/packages/path/app_path_provider.dart';
 abstract interface class DatabaseClient {
   Box<T> box<T>();
 
+  /// Выполнить операции в транзакции (атомарно)
+  R runInTransaction<R>(R Function() action, {TxMode mode = TxMode.write});
+
+  Future<R> runInTransactionAsync<R, P>(
+    R Function(Store, P) action, {
+    required P param,
+    TxMode mode = TxMode.write,
+  });
+
   Future<void> close();
 }
 
@@ -29,6 +38,17 @@ class ObjectBoxDatabase implements DatabaseClient {
 
   @override
   Box<T> box<T>() => _store.box<T>();
+
+  @override
+  R runInTransaction<R>(R Function() action, {TxMode mode = TxMode.write}) =>
+      _store.runInTransaction(mode, action);
+
+  @override
+  Future<R> runInTransactionAsync<R, P>(
+    R Function(Store, P) action, {
+    required P param,
+    TxMode mode = TxMode.write,
+  }) => _store.runInTransactionAsync(mode, action, param);
 
   @override
   @disposeMethod

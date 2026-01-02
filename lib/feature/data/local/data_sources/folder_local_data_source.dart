@@ -13,6 +13,9 @@ abstract interface class FolderLocalDataSource {
   /// Получить папку по UID
   Future<FolderObject?> getByUid(String uid);
 
+  /// Получить папку по UID (синхронно, для транзакций)
+  FolderObject? getByUidSync(String uid);
+
   /// Сохранить новую папку
   Future<FolderObject> save(FolderObject folder);
 
@@ -24,6 +27,12 @@ abstract interface class FolderLocalDataSource {
 
   /// Получить количество заметок в папке
   Future<int> getNotesCount(int folderId);
+
+  /// Стрим всех папок с реактивными обновлениями
+  Stream<List<FolderObject>> watchAll();
+
+  /// Стрим папки по UID с реактивными обновлениями
+  Stream<FolderObject?> watchByUid(String uid);
 }
 
 /// Реализация на основе ObjectBox
@@ -31,12 +40,13 @@ abstract interface class FolderLocalDataSource {
 class FolderLocalDataSourceImpl implements FolderLocalDataSource {
   final DatabaseClient _db;
 
+  Box<FolderObject> get _folderBox => _db.box<FolderObject>();
+
   FolderLocalDataSourceImpl(this._db);
 
   @override
   Future<List<FolderObject>> getAll() async {
-    final query = _db
-        .box<FolderObject>()
+    final query = _folderBox
         .query()
         .order(FolderObject_.updatedAt, flags: Order.descending)
         .build();
@@ -48,10 +58,16 @@ class FolderLocalDataSourceImpl implements FolderLocalDataSource {
 
   @override
   Future<FolderObject?> getByUid(String uid) async {
-    final query = _db
-        .box<FolderObject>()
-        .query(FolderObject_.uid.equals(uid))
-        .build();
+    final query = _folderBox.query(FolderObject_.uid.equals(uid)).build();
+    final result = query.findFirst();
+    query.close();
+
+    return result;
+  }
+
+  @override
+  FolderObject? getByUidSync(String uid) {
+    final query = _folderBox.query(FolderObject_.uid.equals(uid)).build();
     final result = query.findFirst();
     query.close();
 
@@ -60,24 +76,41 @@ class FolderLocalDataSourceImpl implements FolderLocalDataSource {
 
   @override
   Future<FolderObject> save(FolderObject folder) async {
-    return _db.box<FolderObject>().putAndGetAsync(folder, mode: PutMode.insert);
+    return _folderBox.putAndGetAsync(folder, mode: PutMode.insert);
   }
 
   @override
   Future<FolderObject> update(FolderObject folder) async {
-    return _db.box<FolderObject>().putAndGetAsync(folder, mode: PutMode.update);
+    return _folderBox.putAndGetAsync(folder, mode: PutMode.update);
   }
 
   @override
   Future<void> delete(String uid) async {
     final folder = await getByUid(uid);
 
-    if (folder != null) _db.box<FolderObject>().remove(folder.id);
+    if (folder != null) _folderBox.remove(folder.id);
   }
 
   @override
   Future<int> getNotesCount(int folderId) async {
-    final folder = _db.box<FolderObject>().get(folderId);
+    final folder = _folderBox.get(folderId);
     return folder?.notes.length ?? 0;
+  }
+
+  @override
+  Stream<List<FolderObject>> watchAll() {
+    return _folderBox
+        .query()
+        .order(FolderObject_.updatedAt, flags: Order.descending)
+        .watch(triggerImmediately: true)
+        .map((query) => query.find());
+  }
+
+  @override
+  Stream<FolderObject?> watchByUid(String uid) {
+    return _folderBox
+        .query(FolderObject_.uid.equals(uid))
+        .watch(triggerImmediately: true)
+        .map((query) => query.findFirst());
   }
 }

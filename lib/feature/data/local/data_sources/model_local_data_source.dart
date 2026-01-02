@@ -32,6 +32,12 @@ abstract interface class ModelLocalDataSource {
 
   /// Проверить существование файлов модели на диске
   Future<bool> verifyModelFiles(String modelId);
+
+  /// Стрим всех скачанных моделей с реактивными обновлениями
+  Stream<List<DownloadedModelObject>> watchAll();
+
+  /// Стрим выбранной модели с реактивными обновлениями
+  Stream<DownloadedModelObject?> watchSelected();
 }
 
 /// Реализация на основе ObjectBox
@@ -39,17 +45,18 @@ abstract interface class ModelLocalDataSource {
 class ModelLocalDataSourceImpl implements ModelLocalDataSource {
   final DatabaseClient _db;
 
+  Box<DownloadedModelObject> get _modelBox => _db.box<DownloadedModelObject>();
+
   ModelLocalDataSourceImpl(this._db);
 
   @override
   Future<List<DownloadedModelObject>> getAll() async {
-    return _db.box<DownloadedModelObject>().getAll();
+    return _modelBox.getAll();
   }
 
   @override
   Future<DownloadedModelObject?> getByModelId(String modelId) async {
-    final query = _db
-        .box<DownloadedModelObject>()
+    final query = _modelBox
         .query(DownloadedModelObject_.modelId.equals(modelId))
         .build();
     final result = query.findFirst();
@@ -60,34 +67,49 @@ class ModelLocalDataSourceImpl implements ModelLocalDataSource {
 
   @override
   Future<void> save(DownloadedModelObject model) async {
-    _db.box<DownloadedModelObject>().put(model);
+    _modelBox.put(model);
   }
 
   @override
   Future<void> delete(String modelId) async {
     final model = await getByModelId(modelId);
     if (model != null) {
-      _db.box<DownloadedModelObject>().remove(model.id);
+      _modelBox.remove(model.id);
     }
   }
 
   @override
   Future<void> setSelected(String modelId) async {
-    // Снимаем выбор со всех моделей
-    await clearSelection();
+    _db.runInTransaction(() {
+      // Снимаем выбор с текущей выбранной модели
+      final selectedQuery = _modelBox
+          .query(DownloadedModelObject_.isSelected.equals(true))
+          .build();
+      final selected = selectedQuery.findFirst();
+      selectedQuery.close();
 
-    // Устанавливаем выбранную модель
-    final model = await getByModelId(modelId);
-    if (model != null) {
-      model.isSelected = true;
-      _db.box<DownloadedModelObject>().put(model);
-    }
+      if (selected != null) {
+        selected.isSelected = false;
+        _modelBox.put(selected);
+      }
+
+      // Устанавливаем новую выбранную модель
+      final modelQuery = _modelBox
+          .query(DownloadedModelObject_.modelId.equals(modelId))
+          .build();
+      final model = modelQuery.findFirst();
+      modelQuery.close();
+
+      if (model != null) {
+        model.isSelected = true;
+        _modelBox.put(model);
+      }
+    });
   }
 
   @override
   Future<DownloadedModelObject?> getSelected() async {
-    final query = _db
-        .box<DownloadedModelObject>()
+    final query = _modelBox
         .query(DownloadedModelObject_.isSelected.equals(true))
         .build();
     final result = query.findFirst();
@@ -99,9 +121,10 @@ class ModelLocalDataSourceImpl implements ModelLocalDataSource {
   @override
   Future<void> clearSelection() async {
     final selected = await getSelected();
+
     if (selected != null) {
       selected.isSelected = false;
-      _db.box<DownloadedModelObject>().put(selected);
+      _modelBox.put(selected);
     }
   }
 
@@ -117,5 +140,21 @@ class ModelLocalDataSourceImpl implements ModelLocalDataSource {
     // Проверяем что директория не пустая
     final files = directory.listSync();
     return files.isNotEmpty;
+  }
+
+  @override
+  Stream<List<DownloadedModelObject>> watchAll() {
+    return _modelBox
+        .query()
+        .watch(triggerImmediately: true)
+        .map((query) => query.find());
+  }
+
+  @override
+  Stream<DownloadedModelObject?> watchSelected() {
+    return _modelBox
+        .query(DownloadedModelObject_.isSelected.equals(true))
+        .watch(triggerImmediately: true)
+        .map((query) => query.findFirst());
   }
 }

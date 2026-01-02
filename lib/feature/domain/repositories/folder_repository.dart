@@ -24,4 +24,10 @@ abstract interface class FolderRepository {
 
   /// Удалить папку по UID
   Future<void> delete(String uid);
+
+  /// Стрим всех папок с реактивными обновлениями
+  Stream<List<FolderEntity>> watchAll();
+
+  /// Стрим папки по UID с реактивными обновлениями
+  Stream<FolderEntity?> watchByUid(String uid);
 }

@@ -214,6 +214,37 @@ class ModelRepositoryImpl implements ModelRepository {
   }
 
   @override
+  Stream<List<AsrModelEntity>> watchModelsWithStatus() {
+    return _localDataSource.watchAll().map((downloadedModels) {
+      final downloadedMap = {
+        for (final model in downloadedModels) model.modelId: model,
+      };
+
+      return [
+        for (final model in AsrModelEntity.availableModels)
+          model.copyWith(
+            isDownloaded: downloadedMap.containsKey(model.uuid),
+            isSelected: downloadedMap[model.uuid]?.isSelected ?? false,
+          ),
+      ];
+    });
+  }
+
+  @override
+  Stream<AsrModelEntity?> watchSelectedModel() {
+    return _localDataSource.watchSelected().map((selected) {
+      if (selected == null) return null;
+
+      for (final model in AsrModelEntity.availableModels) {
+        if (model.uuid == selected.modelId) {
+          return model.copyWith(isDownloaded: true, isSelected: true);
+        }
+      }
+      return null;
+    });
+  }
+
+  @override
   Future<void> verifyAllModels() async {
     final downloadedModels = await _localDataSource.getAll();
 

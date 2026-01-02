@@ -72,4 +72,16 @@ class FolderRepositoryImpl implements FolderRepository {
   Future<void> delete(String uid) async {
     await _dataSource.delete(uid);
   }
+
+  @override
+  Stream<List<FolderEntity>> watchAll() {
+    return _dataSource.watchAll().map(FolderMapper.toDomainList);
+  }
+
+  @override
+  Stream<FolderEntity?> watchByUid(String uid) {
+    return _dataSource
+        .watchByUid(uid)
+        .map((obj) => obj != null ? FolderMapper.toDomain(obj) : null);
+  }
 }

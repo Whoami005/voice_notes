@@ -39,6 +39,12 @@ abstract interface class ModelRepository {
   /// Получить выбранную (активную) модель
   Future<AsrModelEntity?> getSelectedModel();
 
+  /// Стрим всех моделей с актуальным статусом
+  Stream<List<AsrModelEntity>> watchModelsWithStatus();
+
+  /// Стрим выбранной модели с реактивными обновлениями
+  Stream<AsrModelEntity?> watchSelectedModel();
+
   /// Проверить все модели на диске и синхронизировать с БД
   ///
   /// Если файлы модели удалены вне приложения - удаляет запись из БД

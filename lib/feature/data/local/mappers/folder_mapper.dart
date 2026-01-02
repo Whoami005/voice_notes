@@ -43,4 +43,8 @@ abstract final class FolderMapper {
       ..iconRef = folder.icon.serialize()
       ..updatedAt = folder.updatedAt;
   }
+
+  static List<FolderEntity> toDomainList(List<FolderObject> objects) => [
+    for (final obj in objects) FolderMapper.toDomain(obj),
+  ];
 }
