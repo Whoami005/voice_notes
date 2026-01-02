@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
-import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 
 class TagChip extends StatelessWidget {
@@ -28,6 +27,7 @@ class TagChip extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppSizes.chipRadius),
         ),
         child: Row(
+          spacing: AppSizes.p4,
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
@@ -36,8 +36,7 @@ class TagChip extends StatelessWidget {
                 color: themeColors.accentPrimary,
               ),
             ),
-            if (hasDelete) ...[
-              AppSpacer.p4,
+            if (hasDelete)
               GestureDetector(
                 onTap: onDelete,
                 behavior: HitTestBehavior.opaque,
@@ -47,7 +46,6 @@ class TagChip extends StatelessWidget {
                   color: themeColors.accentPrimary,
                 ),
               ),
-            ],
           ],
         ),
       ),

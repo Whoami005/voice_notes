@@ -151,6 +151,7 @@ class NoteLocalDataSourceImpl implements NoteLocalDataSource {
     String? folderUid,
     List<String> tagNames = const [],
   }) async {
+    /// TODO: Отрефакторить
     return _db.runInTransactionAsync(
       (Store store, _SaveNoteParams params) {
         final noteBox = store.box<NoteObject>();

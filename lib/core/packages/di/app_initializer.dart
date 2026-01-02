@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_easy_dialogs/flutter_easy_dialogs.dart';
 import 'package:go_router/go_router.dart';
 import 'package:voice_notes/core/packages/app_router/app_router.dart';
 import 'package:voice_notes/core/packages/di/app_initialization_result.dart';
@@ -78,6 +79,7 @@ class VoiceNotesApp extends StatelessWidget {
       darkTheme: AppTheme.dark,
       themeMode: ThemeMode.dark,
       routerConfig: router,
+      builder: FlutterEasyDialogs.builder(),
     );
   }
 }

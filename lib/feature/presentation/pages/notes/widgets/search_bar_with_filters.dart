@@ -10,12 +10,17 @@ class SearchBarWithFilters extends StatelessWidget {
   final SearchFilter activeFilter;
   final ValueChanged<SearchFilter> onFilterChanged;
   final String placeholder;
+  final EdgeInsetsGeometry padding;
 
   const SearchBarWithFilters({
     required this.query,
     required this.onQueryChanged,
     required this.activeFilter,
     required this.onFilterChanged,
+    this.padding = const EdgeInsets.only(
+      left: AppSizes.screenPadding,
+      right: AppSizes.screenPadding,
+    ),
     this.placeholder = 'Поиск...',
     super.key,
   });
@@ -24,42 +29,46 @@ class SearchBarWithFilters extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeColors = context.themeColors;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TextField(
-          onChanged: onQueryChanged,
-          decoration: InputDecoration(
-            hintText: placeholder,
-            prefixIcon: Icon(Icons.search, color: themeColors.textTertiary),
-            suffixIcon: query.isNotEmpty
-                ? IconButton(
-                    icon: Icon(Icons.clear, color: themeColors.textTertiary),
-                    onPressed: () => onQueryChanged(''),
-                  )
-                : null,
+    return Padding(
+      padding: padding,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextFormField(
+            initialValue: query,
+            onChanged: onQueryChanged,
+            decoration: InputDecoration(
+              hintText: placeholder,
+              prefixIcon: Icon(Icons.search, color: themeColors.textTertiary),
+              suffixIcon: query.isNotEmpty
+                  ? IconButton(
+                      icon: Icon(Icons.clear, color: themeColors.textTertiary),
+                      onPressed: () => onQueryChanged(''),
+                    )
+                  : null,
+            ),
           ),
-        ),
-        AppSpacer.p12,
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: List.generate(SearchFilter.values.length, (index) {
-              final filter = SearchFilter.values[index];
-              final isActive = filter == activeFilter;
+          AppSpacer.p12,
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: List.generate(SearchFilter.values.length, (index) {
+                final filter = SearchFilter.values[index];
+                final isActive = filter == activeFilter;
 
-              return Padding(
-                padding: const EdgeInsets.only(right: AppSizes.p8),
-                child: _FilterChip(
-                  label: filter.title,
-                  isActive: isActive,
-                  onTap: () => onFilterChanged(filter),
-                ),
-              );
-            }),
+                return Padding(
+                  padding: const EdgeInsets.only(right: AppSizes.p8),
+                  child: _FilterChip(
+                    label: filter.title,
+                    isActive: isActive,
+                    onTap: () => onFilterChanged(filter),
+                  ),
+                );
+              }),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

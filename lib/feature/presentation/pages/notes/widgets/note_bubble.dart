@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
-import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
 import 'package:voice_notes/feature/presentation/widgets/chips/tag_chip.dart';
@@ -41,17 +40,14 @@ class NoteBubble extends StatelessWidget {
             border: Border.all(color: themeColors.borderPrimary),
           ),
           child: Column(
+            spacing: AppSizes.p8,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 note.text,
-                style: textTheme.bodyMedium?.copyWith(
-                  color: themeColors.textPrimary,
-                  height: 1.5,
-                ),
+                style: textTheme.bodyMedium?.copyWith(height: 1.5),
               ),
-              if (note.tags.isNotEmpty) ...[
-                AppSpacer.p8,
+              if (note.tags.isNotEmpty)
                 Wrap(
                   spacing: AppSizes.p6,
                   runSpacing: AppSizes.p6,
@@ -60,8 +56,6 @@ class NoteBubble extends StatelessWidget {
                     (index) => TagChip(label: note.tags[index].name),
                   ),
                 ),
-              ],
-              AppSpacer.p8,
               _MetaInfo(note: note),
             ],
           ),
@@ -78,19 +72,15 @@ class _MetaInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = context.textTheme;
-    final themeColors = context.themeColors;
-    final metaStyle = textTheme.labelSmall?.copyWith(
-      color: themeColors.textTertiary,
-    );
+    final metaStyle = context.textTheme.labelSmall;
 
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(_formatTime(note.createdAt), style: metaStyle),
-        _Dot(color: themeColors.textTertiary),
+        const _Dot(),
         Text(_formatDuration(note.duration), style: metaStyle),
-        _Dot(color: themeColors.textTertiary),
+        const _Dot(),
         Text(note.language, style: metaStyle),
       ],
     );
@@ -112,22 +102,17 @@ class _MetaInfo extends StatelessWidget {
 }
 
 class _Dot extends StatelessWidget {
-  final Color color;
-
-  const _Dot({required this.color});
+  const _Dot();
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: AppSizes.p6),
-      child: Container(
-        width: 3,
-        height: 3,
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
-        ),
-      ),
+    final color = context.themeColors.textTertiary;
+
+    return Container(
+      width: 3,
+      height: 3,
+      margin: const EdgeInsets.symmetric(horizontal: AppSizes.p6),
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
     );
   }
 }

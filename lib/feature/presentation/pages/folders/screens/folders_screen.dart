@@ -132,7 +132,7 @@ class _FoldersScreenState extends State<FoldersScreen> {
     // TODO: Start quick recording
   }
 
-  void _onFolderTap(FolderEntity folder) {
+  Future<void> _onFolderTap(FolderEntity folder) async {
     context.go('/folders/${folder.uid}');
   }
 

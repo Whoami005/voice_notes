@@ -1,7 +1,7 @@
 part of 'folder_detail_cubit.dart';
 
 class FolderDetailData extends Equatable {
-  final FolderEntity? folder;
+  final FolderEntity folder;
   final List<NoteEntity> notes;
 
   const FolderDetailData({required this.folder, this.notes = const []});
