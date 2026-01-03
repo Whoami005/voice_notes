@@ -16,8 +16,8 @@ abstract final class FolderMapper {
           IconRefEntity.deserialize(e.iconRef) ??
           MaterialIconRefEntity(Icons.folder.codePoint),
       notesCount: e.notes.length,
-      createdAt: e.createdAt,
-      updatedAt: e.updatedAt,
+      createdAt: e.createdAt.toLocal(),
+      updatedAt: e.updatedAt.toLocal(),
     );
   }
 
@@ -29,8 +29,8 @@ abstract final class FolderMapper {
       description: f.description,
       colorValue: f.color.toARGB32(),
       iconRef: f.icon.serialize(),
-      createdAt: f.createdAt,
-      updatedAt: f.updatedAt,
+      createdAt: f.createdAt.toLocal(),
+      updatedAt: f.updatedAt.toLocal(),
     );
   }
 
@@ -41,7 +41,7 @@ abstract final class FolderMapper {
       ..description = folder.description
       ..colorValue = folder.color.toARGB32()
       ..iconRef = folder.icon.serialize()
-      ..updatedAt = folder.updatedAt;
+      ..updatedAt = folder.updatedAt.toLocal();
   }
 
   static List<FolderEntity> toDomainList(List<FolderObject> objects) => [
