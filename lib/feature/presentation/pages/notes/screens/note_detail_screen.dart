@@ -97,44 +97,41 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
               const SizedBox(width: 8),
             ],
           ),
-          body: SingleChildScrollView(
+          body: ListView(
             padding: const EdgeInsets.all(AppSizes.screenPadding),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const _SectionHeader(title: 'Текст'),
-                AppSpacer.p12,
-                _TextSection(
-                  text: data.note.text,
-                  controller: _textController,
-                  isEditing: data.isEditing,
-                ),
-                AppSpacer.p24,
-                const _SectionHeader(title: 'Теги'),
-                AppSpacer.p12,
-                _TagsSection(
-                  tags: data.note.tags,
-                  isEditing: data.isEditing,
-                  tagController: _tagController,
-                  onAddTag: () => _onAddTag(context),
-                  onRemoveTag: (tag) => _onRemoveTag(context, tag),
-                ),
-                AppSpacer.p24,
-                const _SectionHeader(title: 'Информация'),
-                AppSpacer.p12,
-                _InfoSection(note: data.note),
-                AppSpacer.p24,
-                const _SectionHeader(title: 'Действия'),
-                AppSpacer.p12,
-                _ActionsSection(
-                  onCopy: () => _onCopy(data.note),
-                  onShare: _onShare,
-                  onRetranscribe: _onRetranscribe,
-                  onDelete: () => _onDelete(context),
-                ),
-                AppSpacer.p32,
-              ],
-            ),
+            children: [
+              const _SectionHeader(title: 'Текст'),
+              AppSpacer.p12,
+              _TextSection(
+                text: data.note.text,
+                controller: _textController,
+                isEditing: data.isEditing,
+              ),
+              AppSpacer.p24,
+              const _SectionHeader(title: 'Теги'),
+              AppSpacer.p12,
+              _TagsSection(
+                tags: data.note.tags,
+                isEditing: data.isEditing,
+                tagController: _tagController,
+                onAddTag: () => _onAddTag(context),
+                onRemoveTag: (tag) => _onRemoveTag(context, tag),
+              ),
+              AppSpacer.p24,
+              const _SectionHeader(title: 'Информация'),
+              AppSpacer.p12,
+              _InfoSection(note: data.note),
+              AppSpacer.p24,
+              const _SectionHeader(title: 'Действия'),
+              AppSpacer.p12,
+              _ActionsSection(
+                onCopy: () => _onCopy(data.note),
+                onShare: _onShare,
+                onRetranscribe: _onRetranscribe,
+                onDelete: () => _onDelete(context),
+              ),
+              AppSpacer.p32,
+            ],
           ),
         );
       },
@@ -306,6 +303,7 @@ class _TagsSection extends StatelessWidget {
     final themeColors = context.themeColors;
 
     return Column(
+      spacing: AppSizes.p12,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Wrap(
@@ -319,9 +317,9 @@ class _TagsSection extends StatelessWidget {
               ),
           ],
         ),
-        if (isEditing) ...[
-          AppSpacer.p12,
+        if (isEditing)
           Row(
+            spacing: AppSizes.p8,
             children: [
               Expanded(
                 child: TextField(
@@ -337,14 +335,12 @@ class _TagsSection extends StatelessWidget {
                   onSubmitted: (_) => onAddTag(),
                 ),
               ),
-              AppSpacer.p8,
               IconButton(
                 icon: Icon(Icons.add_circle, color: themeColors.accentPrimary),
                 onPressed: onAddTag,
               ),
             ],
           ),
-        ],
       ],
     );
   }

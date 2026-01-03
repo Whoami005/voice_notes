@@ -43,7 +43,7 @@ class NoteDetailCubit extends BaseCubit<NoteDetailData>
       await safeExecute(
         action: () async {
           final savedNote = await _noteRepository.update(updatedNote);
-          emitSuccess(data.copyWith(note: savedNote, isEditing: false));
+          emitSuccess(data.copyWith(note: savedNote, isEditing: text == null));
         },
       );
     });
