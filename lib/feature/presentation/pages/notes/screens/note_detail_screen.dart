@@ -1,16 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
+import 'package:voice_notes/core/packages/app_router/app_route_wrapper.dart';
+import 'package:voice_notes/core/packages/di/injection.dart';
+import 'package:voice_notes/core/state/base_state.dart';
+import 'package:voice_notes/core/state/base_state_builder.dart';
 import 'package:voice_notes/core/theme/app_typography.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
 import 'package:voice_notes/feature/domain/entities/tag_entity.dart';
+import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
+import 'package:voice_notes/feature/presentation/pages/notes/logic/note_detail_cubit.dart';
 import 'package:voice_notes/feature/presentation/widgets/chips/tag_chip.dart';
 import 'package:voice_notes/feature/presentation/widgets/dialogs/confirm_dialog.dart';
 
-class NoteDetailScreen extends StatefulWidget {
+class NoteDetailScreen extends StatefulWidget implements AppRouteWrapper {
   final String folderId;
   final String noteId;
 
@@ -21,45 +28,29 @@ class NoteDetailScreen extends StatefulWidget {
   });
 
   @override
+  Widget wrappedRoute(BuildContext context) {
+    return BlocProvider(
+      create: (_) => NoteDetailCubit(
+        noteRepository: getIt<NoteRepository>(),
+        noteId: noteId,
+      ),
+      child: this,
+    );
+  }
+
+  @override
   State<NoteDetailScreen> createState() => _NoteDetailScreenState();
 }
 
 class _NoteDetailScreenState extends State<NoteDetailScreen> {
-  bool _isEditing = false;
   late TextEditingController _textController;
   late TextEditingController _tagController;
-  late NoteEntity _note;
-  late List<TagEntity> _tags;
 
   @override
   void initState() {
     super.initState();
-    _initMockData();
-    _textController = TextEditingController(text: _note.text);
+    _textController = TextEditingController();
     _tagController = TextEditingController();
-  }
-
-  void _initMockData() {
-    final now = DateTime.now();
-
-    // Mock note data based on ID
-    _note = NoteEntity(
-      uuid: widget.noteId,
-      text:
-          'Обсудили план на следующий спринт. Нужно добавить новый '
-          'функционал для авторизации и интеграцию с внешним API.',
-      createdAt: now.subtract(const Duration(hours: 1)),
-      updatedAt: now.subtract(const Duration(hours: 1)),
-      duration: const Duration(seconds: 45),
-      modelName: 'Whisper Small',
-      language: 'Русский',
-      wordCount: 18,
-      tags: [
-        TagEntity(uid: '1', name: 'работа', createdAt: now),
-        TagEntity(uid: '2', name: 'спринт', createdAt: now),
-      ],
-    );
-    _tags = List.from(_note.tags);
   }
 
   @override
@@ -74,115 +65,118 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     final themeColors = context.themeColors;
     final textTheme = context.textTheme;
 
-    return Scaffold(
-      backgroundColor: themeColors.bgPrimary,
-      appBar: AppBar(
-        backgroundColor: themeColors.bgPrimary,
-        surfaceTintColor: Colors.transparent,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: themeColors.textPrimary),
-          onPressed: () => context.pop(),
-        ),
-        title: Text('Заметка', style: textTheme.titleLarge),
-        actions: [
-          IconButton(
-            icon: Icon(
-              _isEditing ? Icons.check : Icons.edit_outlined,
-              color: _isEditing
-                  ? themeColors.accentPrimary
-                  : themeColors.textSecondary,
+    return BaseStateBuilder<NoteDetailCubit, NoteDetailData>(
+      buildWhen: (prev, curr) => prev != curr,
+      listener: _stateListener,
+      onSuccess: (context, data) {
+        // Sync text controller when note changes (not during editing)
+        if (!data.isEditing && _textController.text != data.note.text) {
+          _textController.text = data.note.text;
+        }
+
+        return Scaffold(
+          backgroundColor: themeColors.bgPrimary,
+          appBar: AppBar(
+            backgroundColor: themeColors.bgPrimary,
+            surfaceTintColor: Colors.transparent,
+            leading: IconButton(
+              icon: Icon(Icons.arrow_back, color: themeColors.textPrimary),
+              onPressed: () => context.pop(),
             ),
-            onPressed: _toggleEditing,
+            title: Text('Заметка', style: textTheme.titleLarge),
+            actions: [
+              IconButton(
+                icon: Icon(
+                  data.isEditing ? Icons.check : Icons.edit_outlined,
+                  color: data.isEditing
+                      ? themeColors.accentPrimary
+                      : themeColors.textSecondary,
+                ),
+                onPressed: () => _toggleEditing(context, data),
+              ),
+              const SizedBox(width: 8),
+            ],
           ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSizes.screenPadding),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const _SectionHeader(title: 'Текст'),
-            AppSpacer.p12,
-            _TextSection(
-              text: _note.text,
-              controller: _textController,
-              isEditing: _isEditing,
+          body: SingleChildScrollView(
+            padding: const EdgeInsets.all(AppSizes.screenPadding),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const _SectionHeader(title: 'Текст'),
+                AppSpacer.p12,
+                _TextSection(
+                  text: data.note.text,
+                  controller: _textController,
+                  isEditing: data.isEditing,
+                ),
+                AppSpacer.p24,
+                const _SectionHeader(title: 'Теги'),
+                AppSpacer.p12,
+                _TagsSection(
+                  tags: data.note.tags,
+                  isEditing: data.isEditing,
+                  tagController: _tagController,
+                  onAddTag: () => _onAddTag(context),
+                  onRemoveTag: (tag) => _onRemoveTag(context, tag),
+                ),
+                AppSpacer.p24,
+                const _SectionHeader(title: 'Информация'),
+                AppSpacer.p12,
+                _InfoSection(note: data.note),
+                AppSpacer.p24,
+                const _SectionHeader(title: 'Действия'),
+                AppSpacer.p12,
+                _ActionsSection(
+                  onCopy: () => _onCopy(data.note),
+                  onShare: _onShare,
+                  onRetranscribe: _onRetranscribe,
+                  onDelete: () => _onDelete(context),
+                ),
+                AppSpacer.p32,
+              ],
             ),
-            AppSpacer.p24,
-            const _SectionHeader(title: 'Теги'),
-            AppSpacer.p12,
-            _TagsSection(
-              tags: _tags,
-              isEditing: _isEditing,
-              tagController: _tagController,
-              onAddTag: _onAddTag,
-              onRemoveTag: _onRemoveTag,
-            ),
-            AppSpacer.p24,
-            const _SectionHeader(title: 'Информация'),
-            AppSpacer.p12,
-            _InfoSection(note: _note),
-            AppSpacer.p24,
-            const _SectionHeader(title: 'Действия'),
-            AppSpacer.p12,
-            _ActionsSection(
-              onCopy: _onCopy,
-              onShare: _onShare,
-              onRetranscribe: _onRetranscribe,
-              onDelete: _onDelete,
-            ),
-            AppSpacer.p32,
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
-  void _toggleEditing() {
-    if (_isEditing) {
-      // Save changes
-      setState(() {
-        _note = _note.copyWith(
-          text: _textController.text,
-          tags: List.from(_tags),
-        );
-        _isEditing = false;
-      });
-    } else {
-      setState(() => _isEditing = true);
+  void _stateListener(BuildContext context, BaseState<NoteDetailData> state) {
+    if (state is ErrorState<NoteDetailData>) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(state.failure.message)));
     }
   }
 
-  void _onAddTag() {
-    final tagName = _tagController.text.trim().toLowerCase();
-    if (tagName.isNotEmpty && !_tags.any((t) => t.name == tagName)) {
-      setState(() {
-        _tags.add(
-          TagEntity(
-            uid: DateTime.now().millisecondsSinceEpoch.toString(),
-            name: tagName,
-            createdAt: DateTime.now(),
-          ),
-        );
-        _tagController.clear();
-      });
+  void _toggleEditing(BuildContext context, NoteDetailData data) {
+    final cubit = context.read<NoteDetailCubit>();
+
+    data.isEditing
+        ? cubit.updateNote(text: _textController.text)
+        : cubit.toggleEditing();
+  }
+
+  void _onAddTag(BuildContext context) {
+    final tagName = _tagController.text.trim();
+
+    if (tagName.isNotEmpty) {
+      context.read<NoteDetailCubit>().addTag(tagName);
+      _tagController.clear();
     }
   }
 
-  void _onRemoveTag(TagEntity tag) {
-    setState(() => _tags.remove(tag));
+  void _onRemoveTag(BuildContext context, TagEntity tag) {
+    context.read<NoteDetailCubit>().removeTag(tag);
   }
 
-  Future<void> _onCopy() async {
-    final c = context;
+  Future<void> _onCopy(NoteEntity note) async {
+    await Clipboard.setData(ClipboardData(text: note.text));
+    if (!mounted) return;
 
-    await Clipboard.setData(ClipboardData(text: _note.text));
-    if (!c.mounted) return;
-
-    ScaffoldMessenger.of(c).showSnackBar(
-      const SnackBar(content: Text('Текст скопирован')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Текст скопирован')));
   }
 
   void _onShare() {
@@ -193,7 +187,9 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     // TODO: Implement retranscribe
   }
 
-  Future<void> _onDelete() async {
+  Future<void> _onDelete(BuildContext context) async {
+    final cubit = context.read<NoteDetailCubit>();
+
     final themeColors = context.themeColors;
     final confirmed = await ConfirmDialog.show(
       context: context,
@@ -203,7 +199,10 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
       confirmColor: themeColors.error,
     );
 
-    if ((confirmed ?? false) && mounted) context.pop();
+    if (confirmed ?? false) {
+      final deleted = await cubit.deleteNote();
+      if (deleted && context.mounted) context.pop();
+    }
   }
 }
 
@@ -218,9 +217,7 @@ class _SectionHeader extends StatelessWidget {
 
     return Text(
       title,
-      style: AppTypography.overline.copyWith(
-        color: themeColors.textSecondary,
-      ),
+      style: AppTypography.overline.copyWith(color: themeColors.textSecondary),
     );
   }
 }
@@ -377,17 +374,9 @@ class _InfoSection extends StatelessWidget {
             value: _formatDuration(note.duration),
           ),
           _Divider(),
-          _InfoRow(
-            icon: Icons.language,
-            label: 'Язык',
-            value: note.language,
-          ),
+          _InfoRow(icon: Icons.language, label: 'Язык', value: note.language),
           _Divider(),
-          _InfoRow(
-            icon: Icons.memory,
-            label: 'Модель',
-            value: note.modelName,
-          ),
+          _InfoRow(icon: Icons.memory, label: 'Модель', value: note.modelName),
           _Divider(),
           _InfoRow(
             icon: Icons.text_fields,

@@ -141,6 +141,20 @@ final class FormatException extends AppException {
   }
 }
 
+final class CustomException extends AppException {
+  final String message;
+
+  const CustomException(this.message);
+
+  // Фабричные конструкторы для частых случаев
+  const CustomException.validation(String field)
+    : this('Проверьте поле: $field');
+
+  const CustomException.empty(String what) : this('$what не может быть пустым');
+
+  const CustomException.notFound(String what) : this('$what не найден');
+}
+
 final class UnknownException extends AppException {
   final Object? originalError;
 

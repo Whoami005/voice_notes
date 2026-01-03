@@ -29,6 +29,7 @@ sealed class AppFailure extends Equatable {
       NetworkException() => NetworkFailure.fromType(e.type),
       FormatException() => FormatFailure(details: e.details),
       UnknownException() => const UnknownFailure(),
+      CustomException() => CustomFailure(e.message),
     };
   }
 }
