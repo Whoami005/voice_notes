@@ -4,8 +4,7 @@ import 'package:equatable/equatable.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:voice_notes/common/utils/date_grouper.dart';
 import 'package:voice_notes/core/error/app_failure.dart';
-import 'package:voice_notes/core/state/base_cubit.dart';
-import 'package:voice_notes/core/state/initializable.dart';
+import 'package:voice_notes/core/state/Initializable_cubit.dart';
 import 'package:voice_notes/feature/domain/entities/folder_entity.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
 import 'package:voice_notes/feature/domain/repositories/folder_repository.dart';
@@ -13,8 +12,7 @@ import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
 
 part 'folder_detail_state.dart';
 
-class FolderDetailCubit extends BaseCubit<FolderDetailData>
-    implements Refreshable {
+class FolderDetailCubit extends RefreshableCubit<FolderDetailData> {
   final NoteRepository _noteRepository;
   final FolderRepository _folderRepository;
   final String folderId;
@@ -46,13 +44,10 @@ class FolderDetailCubit extends BaseCubit<FolderDetailData>
 
   @override
   Future<void> refresh() async {
-    await safeExecute(
+    await execute(
       action: () async {
         final folder = await _folderRepository.getByUid(folderId);
         final notes = await _noteRepository.getByFolderId(folderId);
-
-        print('Folder: $folder');
-        print('Notes: $notes');
 
         emitSuccess(FolderDetailData(folder: folder!, notes: notes));
       },
@@ -60,13 +55,11 @@ class FolderDetailCubit extends BaseCubit<FolderDetailData>
   }
 
   Future<void> deleteNote(String noteUid) async {
-    await safeExecute(action: () => _noteRepository.delete(noteUid));
+    await execute(action: () => _noteRepository.delete(noteUid));
   }
 
   Future<void> deleteFolder() async {
-    await safeExecute(
-      action: () => _folderRepository.deleteWithNotes(folderId),
-    );
+    await execute(action: () => _folderRepository.deleteWithNotes(folderId));
   }
 
   @override

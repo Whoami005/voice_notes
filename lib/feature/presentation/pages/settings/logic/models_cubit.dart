@@ -7,15 +7,14 @@ import 'package:voice_notes/core/packages/downloader/download_manager.dart';
 import 'package:voice_notes/core/packages/downloader/download_status.dart';
 import 'package:voice_notes/core/packages/internet/internet_checker.dart';
 import 'package:voice_notes/core/packages/storage/storage_checker.dart';
-import 'package:voice_notes/core/state/base_cubit.dart';
-import 'package:voice_notes/core/state/initializable.dart';
+import 'package:voice_notes/core/state/Initializable_cubit.dart';
 import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
 import 'package:voice_notes/feature/domain/repositories/model_repository.dart';
 
 part 'models_state.dart';
 
 /// Cubit для управления ASR моделями
-class ModelsCubit extends BaseCubit<ModelsState> implements Refreshable {
+class ModelsCubit extends RefreshableCubit<ModelsState> {
   final ModelRepository _repository;
 
   StreamSubscription<ModelDownloadProgress>? _downloadSubscription;
@@ -24,7 +23,7 @@ class ModelsCubit extends BaseCubit<ModelsState> implements Refreshable {
 
   @override
   Future<void> init() async {
-    await guard(() async {
+    await load(() async {
       // Верифицируем модели на диске
       await _repository.verifyAllModels();
 
@@ -43,21 +42,17 @@ class ModelsCubit extends BaseCubit<ModelsState> implements Refreshable {
 
   @override
   Future<void> refresh() async {
-    await safeExecute(
-      action: () async {
-        await update((current) async {
-          await _repository.verifyAllModels();
-          final models = await _repository.getModelsWithStatus();
-          final selected = await _repository.getSelectedModel();
+    await transform((current) async {
+      await _repository.verifyAllModels();
+      final models = await _repository.getModelsWithStatus();
+      final selected = await _repository.getSelectedModel();
 
-          return current.copyWith(
-            models: models,
-            selectedModelId: selected?.uuid,
-            clearSelectedModelId: selected == null,
-          );
-        });
-      },
-    );
+      return current.copyWith(
+        models: models,
+        selectedModelId: selected?.uuid,
+        clearSelectedModelId: selected == null,
+      );
+    });
   }
 
   /// Подписка на обновления прогресса скачивания
@@ -72,7 +67,7 @@ class ModelsCubit extends BaseCubit<ModelsState> implements Refreshable {
 
   /// Обработка обновления прогресса
   void _handleDownloadProgress(ModelDownloadProgress progress) {
-    withData((current) {
+    whenData((current) {
       // Обновляем map прогресса
       final newDownloads = {...current.downloads, progress.modelId: progress};
 
@@ -89,11 +84,10 @@ class ModelsCubit extends BaseCubit<ModelsState> implements Refreshable {
 
         // Удаляем из downloads через 3 секунды
         Future.delayed(const Duration(seconds: 3), () {
-          update(
-            (state) => state.copyWith(
-              downloads: {...state.downloads}..remove(progress.modelId),
-            ),
-          );
+          whenData((state) {
+            final updated = {...state.downloads}..remove(progress.modelId);
+            emitSuccess(state.copyWith(downloads: updated));
+          });
         });
         return;
       }
@@ -107,7 +101,7 @@ class ModelsCubit extends BaseCubit<ModelsState> implements Refreshable {
     String modelId,
     Map<String, ModelDownloadProgress> currentDownloads,
   ) async {
-    await update((current) async {
+    await transform((current) async {
       final models = await _repository.getModelsWithStatus();
       final newDownloads = {...currentDownloads}..remove(modelId);
 
@@ -143,7 +137,7 @@ class ModelsCubit extends BaseCubit<ModelsState> implements Refreshable {
     }
 
     // Запускаем скачивание
-    await safeExecute(
+    await execute(
       action: () => _repository.downloadModel(model),
       onError: (failure) {
         // Обновляем прогресс с ошибкой
@@ -180,72 +174,48 @@ class ModelsCubit extends BaseCubit<ModelsState> implements Refreshable {
 
   /// Отменить скачивание
   Future<void> cancelDownload(String modelId) async {
-    await safeExecute(action: () => _repository.cancelDownload(modelId));
+    await execute(action: () => _repository.cancelDownload(modelId));
   }
 
   /// Приостановить скачивание
   Future<void> pauseDownload(String modelId) async {
-    await safeExecute(action: () => _repository.pauseDownload(modelId));
+    await execute(action: () => _repository.pauseDownload(modelId));
   }
 
   /// Возобновить скачивание
   Future<void> resumeDownload(String modelId) async {
-    await safeExecute(action: () => _repository.resumeDownload(modelId));
+    await execute(action: () => _repository.resumeDownload(modelId));
   }
 
   /// Удалить модель
   Future<void> deleteModel(String modelId) async {
-    await safeExecute(
-      action: () async {
-        await _repository.deleteModel(modelId);
+    await transform((current) async {
+      await _repository.deleteModel(modelId);
 
-        // Обновляем список
-        final models = await _repository.getModelsWithStatus();
+      // Обновляем список
+      final models = await _repository.getModelsWithStatus();
+      // Если удалили выбранную модель — сбрасываем выбор
+      final clearSelection = current.selectedModelId == modelId;
 
-        update((current) {
-          // Если удалили выбранную модель — сбрасываем выбор
-          final clearSelection = current.selectedModelId == modelId;
-
-          return current.copyWith(
-            models: models,
-            clearSelectedModelId: clearSelection,
-          );
-        });
-      },
-    );
+      return current.copyWith(
+        models: models,
+        clearSelectedModelId: clearSelection,
+      );
+    });
   }
 
   /// Выбрать модель как активную
   Future<void> selectModel(String modelId) async {
-    await safeExecute(
-      action: () async {
-        await _repository.selectModel(modelId);
+    await transform((current) async {
+      await _repository.selectModel(modelId);
 
-        ///TODO
-        // Инициализируем ASR с выбранной моделью
-        // final modelPath = await _repository.getModelPath(modelId);
-        // if (modelPath != null) {
-        //   final model = state.data?.models.firstWhereOrNull(
-        //     (m) => m.id == modelId,
-        //   );
-        //   if (model != null) {
-        //     await SherpaAsrService.instance.switchModel(model, modelPath);
-        //   }
-        // }
+      final updatedModels = <AsrModelEntity>[
+        for (final model in current.models)
+          model.copyWith(isSelected: model.uuid == modelId),
+      ];
 
-        update((current) {
-          final updatedModels = <AsrModelEntity>[
-            for (final model in current.models)
-              model.copyWith(isSelected: model.uuid == modelId),
-          ];
-
-          return current.copyWith(
-            models: updatedModels,
-            selectedModelId: modelId,
-          );
-        });
-      },
-    );
+      return current.copyWith(models: updatedModels, selectedModelId: modelId);
+    });
   }
 
   @override

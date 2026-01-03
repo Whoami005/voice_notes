@@ -115,4 +115,18 @@ extension BaseStateX<T> on BaseState<T> {
     SuccessState(:final data) => success?.call(data) ?? orElse(),
     ErrorState(:final failure) => error?.call(failure) ?? orElse(),
   };
+
+  R? whenOrNull<R>({
+    R Function()? initial,
+    R Function()? loading,
+    R Function(T data)? success,
+    R Function(AppFailure failure)? error,
+  }) {
+    return switch (this) {
+      InitialState() => initial?.call(),
+      LoadingState() => loading?.call(),
+      SuccessState(:final data) => success?.call(data),
+      ErrorState(:final failure) => error?.call(failure),
+    };
+  }
 }
