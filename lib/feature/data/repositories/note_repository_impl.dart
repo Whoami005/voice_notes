@@ -97,18 +97,10 @@ class NoteRepositoryImpl implements NoteRepository {
 
   @override
   Future<void> moveToFolder(String noteUid, String? folderId) async {
-    final note = await _noteDataSource.getByUid(noteUid);
-    if (note == null) throw Exception('Note not found: $noteUid');
-
-    if (folderId != null) {
-      final folder = await _folderDataSource.getByUid(folderId);
-      note.folder.target = folder;
-    } else {
-      note.folder.target = null;
-    }
-
-    note.updatedAt = DateTime.now();
-    await _noteDataSource.update(note);
+    await _noteDataSource.moveToFolder(
+      noteUid: noteUid,
+      targetFolderUid: folderId,
+    );
   }
 
   @override

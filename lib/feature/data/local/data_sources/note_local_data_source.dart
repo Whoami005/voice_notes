@@ -30,6 +30,12 @@ abstract interface class NoteLocalDataSource {
   /// Удалить заметку по UID
   Future<void> delete(String uid);
 
+  /// Переместить заметку в другую папку атомарно (обновляет обе папки)
+  Future<NoteObject> moveToFolder({
+    required String noteUid,
+    String? targetFolderUid,
+  });
+
   /// Стрим всех заметок с реактивными обновлениями
   Stream<List<NoteObject>> watchAll();
 
@@ -113,9 +119,83 @@ class NoteLocalDataSourceImpl implements NoteLocalDataSource {
 
   @override
   Future<void> delete(String uid) async {
-    final note = await getByUid(uid);
+    await _db.runInTransactionAsync((Store store, String noteUid) async {
+      final noteBox = store.box<NoteObject>();
+      final folderBox = store.box<FolderObject>();
 
-    if (note != null) _noteBox.remove(note.id);
+      final query = noteBox.query(NoteObject_.uid.equals(noteUid)).build();
+      final note = query.findFirst();
+      query.close();
+
+      if (note == null) return;
+
+      final folder = note.folder.target;
+      noteBox.remove(note.id);
+
+      // Обновить updatedAt папки для триггера watch()
+      if (folder != null) {
+        folder.updatedAt = DateTime.now();
+        folderBox.put(folder, mode: PutMode.update);
+      }
+    }, param: uid);
+  }
+
+  @override
+  Future<NoteObject> moveToFolder({
+    required String noteUid,
+    String? targetFolderUid,
+  }) async {
+    return _db.runInTransactionAsync(
+      (Store store, _MoveFolderParams params) {
+        final noteBox = store.box<NoteObject>();
+        final folderBox = store.box<FolderObject>();
+
+        final noteQuery = noteBox
+            .query(NoteObject_.uid.equals(params.noteUid))
+            .build();
+        final note = noteQuery.findFirst();
+        noteQuery.close();
+
+        if (note == null) {
+          throw Exception('Note not found: ${params.noteUid}');
+        }
+
+        final oldFolder = note.folder.target;
+        FolderObject? newFolder;
+
+        if (params.targetFolderUid != null) {
+          final folderQuery = folderBox
+              .query(FolderObject_.uid.equals(params.targetFolderUid!))
+              .build();
+          newFolder = folderQuery.findFirst();
+          folderQuery.close();
+        }
+
+        note.folder.target = newFolder;
+        note.updatedAt = DateTime.now();
+        noteBox.put(note, mode: PutMode.update);
+
+        final now = DateTime.now();
+
+        // Обновить старую папку (откуда забрали заметку)
+        if (oldFolder != null) {
+          oldFolder.updatedAt = now;
+          folderBox.put(oldFolder, mode: PutMode.update);
+        }
+
+        // Обновить новую папку (куда переместили заметку)
+        if (newFolder != null) {
+          newFolder.updatedAt = now;
+          folderBox.put(newFolder, mode: PutMode.update);
+        }
+
+        return note;
+      },
+      param: _MoveFolderParams(
+        noteUid: noteUid,
+        targetFolderUid: targetFolderUid,
+      ),
+    );
   }
 
   @override
@@ -159,6 +239,7 @@ class NoteLocalDataSourceImpl implements NoteLocalDataSource {
         final tagBox = store.box<TagObject>();
 
         final note = params.note;
+        FolderObject? targetFolder;
 
         if (params.folderUid != null) {
           final query = folderBox
@@ -166,7 +247,11 @@ class NoteLocalDataSourceImpl implements NoteLocalDataSource {
               .build();
           final folder = query.findFirst();
           query.close();
-          if (folder != null) note.folder.target = folder;
+
+          if (folder != null) {
+            note.folder.target = folder;
+            targetFolder = folder;
+          }
         }
 
         if (params.tagNames.isNotEmpty) {
@@ -180,6 +265,13 @@ class NoteLocalDataSourceImpl implements NoteLocalDataSource {
         }
 
         noteBox.put(note, mode: PutMode.insert);
+
+        // Обновить updatedAt папки для триггера watch()
+        if (targetFolder != null) {
+          targetFolder.updatedAt = DateTime.now();
+          folderBox.put(targetFolder, mode: PutMode.update);
+        }
+
         return note;
       },
       param: _SaveNoteParams(
@@ -201,4 +293,11 @@ class _SaveNoteParams {
     this.folderUid,
     this.tagNames = const [],
   });
+}
+
+class _MoveFolderParams {
+  final String noteUid;
+  final String? targetFolderUid;
+
+  _MoveFolderParams({required this.noteUid, this.targetFolderUid});
 }
