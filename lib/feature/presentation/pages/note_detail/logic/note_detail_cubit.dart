@@ -31,7 +31,7 @@ class NoteDetailCubit extends InitializableCubit<NoteDetailData> {
   Future<void> updateNote({String? text, List<TagEntity>? tags}) async {
     await transform((data) async {
       final updatedNote = data.note.copyWith(
-        text: text,
+        text: text?.trim(),
         tags: tags,
         updatedAt: DateTime.now(),
       );

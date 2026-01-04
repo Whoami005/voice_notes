@@ -62,9 +62,9 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final themeColors = context.themeColors;
-    final textTheme = context.textTheme;
 
-    return BaseStateBody<NoteDetailCubit, NoteDetailData>(
+    return BaseStateScaffold<NoteDetailCubit, NoteDetailData>(
+      title: 'Заметка',
       buildWhen: (prev, curr) => prev != curr,
       listener: _stateListener,
       onSuccess: (context, data) {
@@ -74,11 +74,8 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
         }
 
         return Scaffold(
-          backgroundColor: themeColors.bgPrimary,
           appBar: AppBar(
-            backgroundColor: themeColors.bgPrimary,
-            surfaceTintColor: Colors.transparent,
-            title: Text('Заметка', style: textTheme.titleLarge),
+            title: const Text('Заметка'),
             actionsPadding: const EdgeInsets.symmetric(horizontal: AppSizes.p8),
             actions: [
               IconButton(
@@ -93,6 +90,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
             ],
           ),
           body: ListView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             padding: const EdgeInsets.all(AppSizes.screenPadding),
             children: [
               const _SectionHeader(title: 'Текст'),
@@ -230,48 +228,34 @@ class _TextSection extends StatelessWidget {
     final themeColors = context.themeColors;
     final textTheme = context.textTheme;
 
-    if (isEditing) {
-      return TextField(
-        controller: controller,
-        maxLines: null,
-        minLines: 4,
-        style: textTheme.bodyMedium?.copyWith(
-          color: themeColors.textPrimary,
-          height: 1.5,
-        ),
-        decoration: InputDecoration(
-          hintText: 'Введите текст заметки...',
-          filled: true,
-          fillColor: themeColors.bgSecondary,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppSizes.cardRadius),
-            borderSide: BorderSide(color: themeColors.borderPrimary),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppSizes.cardRadius),
-            borderSide: BorderSide(color: themeColors.borderPrimary),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(AppSizes.cardRadius),
-            borderSide: BorderSide(color: themeColors.accentPrimary),
-          ),
-        ),
-      );
-    }
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSizes.cardPadding),
-      decoration: BoxDecoration(
-        color: themeColors.bgSecondary,
-        borderRadius: BorderRadius.circular(AppSizes.cardRadius),
-        border: Border.all(color: themeColors.borderPrimary),
+    return TextField(
+      readOnly: !isEditing,
+      controller: controller,
+      maxLines: null,
+      minLines: 4,
+      style: textTheme.bodyMedium?.copyWith(
+        color: themeColors.textPrimary,
+        height: 1.5,
       ),
-      child: Text(
-        text,
-        style: textTheme.bodyMedium?.copyWith(
-          color: themeColors.textPrimary,
-          height: 1.5,
+      decoration: InputDecoration(
+        contentPadding: const EdgeInsets.all(AppSizes.cardPadding),
+        hintText: 'Введите текст заметки...',
+        filled: true,
+        fillColor: themeColors.bgSecondary,
+        border: OutlineInputBorder(
+          gapPadding: 1,
+          borderRadius: BorderRadius.circular(AppSizes.cardRadius),
+          borderSide: BorderSide(color: themeColors.borderPrimary),
+        ),
+        enabledBorder: OutlineInputBorder(
+          gapPadding: 1,
+          borderRadius: BorderRadius.circular(AppSizes.cardRadius),
+          borderSide: BorderSide(color: themeColors.borderPrimary),
+        ),
+        focusedBorder: OutlineInputBorder(
+          gapPadding: 1,
+          borderRadius: BorderRadius.circular(AppSizes.cardRadius),
+          borderSide: BorderSide(color: themeColors.accentPrimary),
         ),
       ),
     );

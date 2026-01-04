@@ -46,7 +46,7 @@ class AppTheme {
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
-        titleTextStyle: AppTypography.h2.copyWith(color: colors.textPrimary),
+        titleTextStyle: AppTypography.h3.copyWith(color: colors.textPrimary),
         iconTheme: IconThemeData(
           color: colors.textPrimary,
           size: AppSizes.iconLarge,
@@ -121,9 +121,7 @@ class AppTheme {
       chipTheme: ChipThemeData(
         backgroundColor: colors.accentMuted,
         labelStyle: AppTypography.micro.copyWith(color: colors.accentPrimary),
-        padding: const EdgeInsets.symmetric(
-          horizontal: AppSizes.p8,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: AppSizes.p8),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSizes.chipRadius),
         ),
