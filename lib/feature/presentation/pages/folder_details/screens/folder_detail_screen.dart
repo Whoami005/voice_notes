@@ -12,12 +12,12 @@ import 'package:voice_notes/feature/domain/enums/recording_state.dart'
     show SearchFilter;
 import 'package:voice_notes/feature/domain/repositories/folder_repository.dart';
 import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
-import 'package:voice_notes/feature/presentation/pages/notes/logic/folder_detail_cubit.dart';
-import 'package:voice_notes/feature/presentation/pages/notes/logic/recording_cubit.dart';
-import 'package:voice_notes/feature/presentation/pages/notes/widgets/folder_detail_app_bar.dart';
-import 'package:voice_notes/feature/presentation/pages/notes/widgets/folder_detail_recording_bar.dart';
-import 'package:voice_notes/feature/presentation/pages/notes/widgets/note_details_widget.dart';
-import 'package:voice_notes/feature/presentation/pages/notes/widgets/search_bar_with_filters.dart';
+import 'package:voice_notes/feature/presentation/pages/folder_details/logic/folder_detail_cubit.dart';
+import 'package:voice_notes/feature/presentation/pages/folder_details/logic/recording_cubit.dart';
+import 'package:voice_notes/feature/presentation/pages/folder_details/widgets/folder_detail_app_bar.dart';
+import 'package:voice_notes/feature/presentation/pages/folder_details/widgets/folder_detail_recording_bar.dart';
+import 'package:voice_notes/feature/presentation/pages/folder_details/widgets/note_details_widget.dart';
+import 'package:voice_notes/feature/presentation/pages/folder_details/widgets/search_bar_with_filters.dart';
 import 'package:voice_notes/feature/presentation/widgets/dialogs/confirm_dialog.dart';
 import 'package:voice_notes/feature/presentation/widgets/refresh/refreshable_wrapper.dart';
 

@@ -5,7 +5,7 @@ import 'package:voice_notes/core/packages/app_router/root_screen.dart';
 import 'package:voice_notes/core/packages/app_router/route_builder.dart';
 import 'package:voice_notes/core/packages/app_router/routes.dart';
 import 'package:voice_notes/feature/presentation/pages/folders/screens/folders_screen.dart';
-import 'package:voice_notes/feature/presentation/pages/notes/screens/folder_detail_screen.dart';
+import 'package:voice_notes/feature/presentation/pages/folder_details/screens/folder_detail_screen.dart';
 import 'package:voice_notes/feature/presentation/pages/notes/screens/note_detail_screen.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/screens/settings_screen.dart';
 

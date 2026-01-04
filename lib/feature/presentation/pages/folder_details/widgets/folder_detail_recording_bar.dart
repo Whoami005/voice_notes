@@ -3,9 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/state/base_state.dart';
-import 'package:voice_notes/feature/presentation/pages/notes/logic/folder_detail_cubit.dart';
-import 'package:voice_notes/feature/presentation/pages/notes/logic/recording_cubit.dart';
-import 'package:voice_notes/feature/presentation/pages/notes/widgets/recording_input.dart';
+import 'package:voice_notes/feature/presentation/pages/folder_details/logic/folder_detail_cubit.dart';
+import 'package:voice_notes/feature/presentation/pages/folder_details/logic/recording_cubit.dart';
+import 'package:voice_notes/feature/presentation/pages/folder_details/widgets/recording_input.dart';
 
 /// Recording input bar for folder detail screen.
 ///

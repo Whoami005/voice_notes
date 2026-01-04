@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/state/base_state.dart';
-import 'package:voice_notes/feature/presentation/pages/notes/logic/folder_detail_cubit.dart';
+import 'package:voice_notes/feature/presentation/pages/folder_details/logic/folder_detail_cubit.dart';
 import 'package:voice_notes/feature/presentation/widgets/base_preferred_app_bar.dart';
 import 'package:voice_notes/feature/presentation/widgets/menus/dropdown_menu.dart';
 
