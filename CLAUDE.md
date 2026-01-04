@@ -73,6 +73,30 @@ lib/
 - **State management**: Riverpod or BLoC recommended
 - **Navigation**: go_router for declarative routing
 
+#### List Operations in State Management
+
+For list transformations in state management:
+
+**Simple operations** - Use manual collection-for:
+```dart
+// Update by ID
+folders: [for (final f in folders) if (f.uid == id) updated else f]
+
+// Remove by ID
+folders: [for (final f in folders) if (f.uid != id) f]
+```
+
+**Complex operations** - Use ListUpdater extensions:
+```dart
+// Method chaining
+folders.removeWhere(...).updateBy(...).upsert(...)
+
+// Flexible matching (not just ID)
+notes.updateBy(value: NoteStatus.draft, valueExtractor: (n) => n.status, ...)
+```
+
+See `lib/common/utils/list_updater.dart` for all available methods.
+
 ### Core Data Models
 
 - **Folder**: Contains notes, has color and icon from predefined palette
