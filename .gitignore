@@ -46,6 +46,7 @@ app.*.map.json
 
 .claude/
 .serena
+.agent/
 
 # Auto Claude data directory
 .auto-claude/

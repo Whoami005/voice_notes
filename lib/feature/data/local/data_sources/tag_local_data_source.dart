@@ -1,5 +1,5 @@
 import 'package:injectable/injectable.dart';
-import 'package:voice_notes/core/packages/db/object_box/objectbox.g.dart';
+import 'package:voice_notes/core/packages/db/object_box/dao/dao.dart';
 import 'package:voice_notes/core/packages/db/object_box/objectbox_database.dart';
 import 'package:voice_notes/feature/data/local/models/tag_object.dart';
 
@@ -34,34 +34,22 @@ abstract interface class TagLocalDataSource {
 class TagLocalDataSourceImpl implements TagLocalDataSource {
   final DatabaseClient _db;
 
-  Box<TagObject> get _tagBox => _db.box<TagObject>();
+  static const _tagDao = TagDao();
 
   TagLocalDataSourceImpl(this._db);
 
   @override
-  Future<List<TagObject>> getAll() async {
-    return _tagBox.getAll();
-  }
+  Future<List<TagObject>> getAll() async => _tagDao.findAll(_db.box);
 
   @override
-  Future<TagObject?> getById(int id) async {
-    return _tagBox.get(id);
-  }
+  Future<TagObject?> getById(int id) async => _tagDao.findById(_db.box, id);
 
   @override
-  Future<TagObject?> getByName(String name) async {
-    final normalizedName = name.toLowerCase().trim();
-    final query = _tagBox.query(TagObject_.name.equals(normalizedName)).build();
-    final result = query.findFirst();
-    query.close();
-
-    return result;
-  }
+  Future<TagObject?> getByName(String name) async =>
+      _tagDao.findByName(_db.box, name);
 
   @override
-  Future<TagObject> save(TagObject tag) async {
-    return _tagBox.putAndGetAsync(tag);
-  }
+  Future<TagObject> save(TagObject tag) async => _tagDao.put(_db.box, tag);
 
   @override
   Future<TagObject> getOrCreate(String name, {int? colorValue}) async {
@@ -84,19 +72,17 @@ class TagLocalDataSourceImpl implements TagLocalDataSource {
         TagObject(name: name.toLowerCase().trim(), createdAt: DateTime.now()),
     ];
 
-    return _tagBox.putAndGetManyAsync(tags, mode: PutMode.put);
+    return _tagDao.putMany(_db.box, tags);
   }
 
   @override
-  Future<void> delete(int id) async {
-    _tagBox.remove(id);
-  }
+  Future<void> delete(int id) async => _tagDao.remove(_db.box, id);
 
   @override
   Stream<List<TagObject>> watchAll() {
-    return _tagBox
-        .query()
+    return _tagDao
+        .queryAll(_db.box)
         .watch(triggerImmediately: true)
-        .map((query) => query.find());
+        .map((q) => q.find());
   }
 }

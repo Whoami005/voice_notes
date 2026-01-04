@@ -73,9 +73,7 @@ class ModelLocalDataSourceImpl implements ModelLocalDataSource {
   @override
   Future<void> delete(String modelId) async {
     final model = await getByModelId(modelId);
-    if (model != null) {
-      _modelBox.remove(model.id);
-    }
+    if (model != null) _modelBox.remove(model.id);
   }
 
   @override

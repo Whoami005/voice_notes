@@ -1,9 +1,7 @@
-import 'package:injectable/injectable.dart' hide Order;
-import 'package:objectbox/objectbox.dart' show Order, PutMode;
-import 'package:voice_notes/core/packages/db/object_box/objectbox.g.dart'
-    hide Order;
+import 'package:injectable/injectable.dart';
+import 'package:voice_notes/core/packages/db/object_box/dao/dao.dart';
+import 'package:voice_notes/core/packages/db/object_box/objectbox.g.dart';
 import 'package:voice_notes/core/packages/db/object_box/objectbox_database.dart';
-import 'package:voice_notes/feature/data/local/models/folder_object.dart';
 import 'package:voice_notes/feature/data/local/models/note_object.dart';
 import 'package:voice_notes/feature/data/local/models/tag_object.dart';
 
@@ -58,85 +56,50 @@ abstract interface class NoteLocalDataSource {
 class NoteLocalDataSourceImpl implements NoteLocalDataSource {
   final DatabaseClient _db;
 
-  Box<NoteObject> get _noteBox => _db.box<NoteObject>();
+  static const _noteDao = NoteDao();
+  static const _folderDao = FolderDao();
+  static const _tagDao = TagDao();
 
   NoteLocalDataSourceImpl(this._db);
 
   @override
-  Future<List<NoteObject>> getAll() async {
-    final query = _noteBox
-        .query()
-        .order(NoteObject_.createdAt, flags: Order.descending)
-        .build();
-    final result = query.find();
-    query.close();
-
-    return result;
-  }
+  Future<List<NoteObject>> getAll() async => _noteDao.findAll(_db.box);
 
   @override
   Future<NoteObject?> getByUid(String uid) async {
-    final query = _noteBox.query(NoteObject_.uid.equals(uid)).build();
-    final result = query.findFirst();
-    query.close();
-
-    return result;
+    return _noteDao.findByUid(_db.box, uid);
   }
 
   @override
   Future<List<NoteObject>> getByFolderId(int folderId) async {
-    final query = _noteBox
-        .query(NoteObject_.folder.equals(folderId))
-        .order(NoteObject_.createdAt, flags: Order.descending)
-        .build();
-    final result = query.find();
-    query.close();
-
-    return result;
+    return _noteDao.findByFolderId(_db.box, folderId);
   }
 
   @override
   Future<List<NoteObject>> getWithoutFolder() async {
-    final query = _noteBox
-        .query(NoteObject_.folder.isNull())
-        .order(NoteObject_.createdAt, flags: Order.descending)
-        .build();
-    final result = query.find();
-    query.close();
-
-    return result;
+    return _noteDao.findWithoutFolder(_db.box);
   }
 
   @override
   Future<NoteObject> save(NoteObject note) async {
-    return _noteBox.putAndGetAsync(note, mode: PutMode.insert);
+    return _noteDao.put(_db.box, note, mode: PutMode.insert);
   }
 
   @override
   Future<NoteObject> update(NoteObject note) async {
-    return _noteBox.putAndGetAsync(note, mode: PutMode.update);
+    return _noteDao.put(_db.box, note, mode: PutMode.update);
   }
 
   @override
   Future<void> delete(String uid) async {
-    await _db.runInTransactionAsync((Store store, String noteUid) async {
-      final noteBox = store.box<NoteObject>();
-      final folderBox = store.box<FolderObject>();
-
-      final query = noteBox.query(NoteObject_.uid.equals(noteUid)).build();
-      final note = query.findFirst();
-      query.close();
-
+    await _db.runInTransactionAsync((Store store, String noteUid) {
+      final box = store.box;
+      final note = _noteDao.findByUid(box, noteUid);
       if (note == null) return;
 
       final folder = note.folder.target;
-      noteBox.remove(note.id);
-
-      // Обновить updatedAt папки для триггера watch()
-      if (folder != null) {
-        folder.updatedAt = DateTime.now();
-        folderBox.put(folder, mode: PutMode.update);
-      }
+      _noteDao.remove(box, note.id);
+      _folderDao.touch(box, folder);
     }, param: uid);
   }
 
@@ -145,84 +108,54 @@ class NoteLocalDataSourceImpl implements NoteLocalDataSource {
     required String noteUid,
     String? targetFolderUid,
   }) async {
-    return _db.runInTransactionAsync(
-      (Store store, _MoveFolderParams params) {
-        final noteBox = store.box<NoteObject>();
-        final folderBox = store.box<FolderObject>();
+    return _db.runInTransactionAsync((
+      Store store,
+      ({String noteUid, String? folderUid}) params,
+    ) {
+      final box = store.box;
 
-        final noteQuery = noteBox
-            .query(NoteObject_.uid.equals(params.noteUid))
-            .build();
-        final note = noteQuery.findFirst();
-        noteQuery.close();
+      final note = _noteDao.findByUid(box, params.noteUid);
+      if (note == null) throw Exception('Note not found: ${params.noteUid}');
 
-        if (note == null) {
-          throw Exception('Note not found: ${params.noteUid}');
-        }
+      final oldFolder = note.folder.target;
+      final newFolder = params.folderUid != null
+          ? _folderDao.findByUid(box, params.folderUid!)
+          : null;
 
-        final oldFolder = note.folder.target;
-        FolderObject? newFolder;
+      note.folder.target = newFolder;
+      note.updatedAt = DateTime.now();
+      _noteDao.put(box, note, mode: PutMode.update);
 
-        if (params.targetFolderUid != null) {
-          final folderQuery = folderBox
-              .query(FolderObject_.uid.equals(params.targetFolderUid!))
-              .build();
-          newFolder = folderQuery.findFirst();
-          folderQuery.close();
-        }
+      _folderDao
+        ..touch(box, oldFolder)
+        ..touch(box, newFolder);
 
-        note.folder.target = newFolder;
-        note.updatedAt = DateTime.now();
-        noteBox.put(note, mode: PutMode.update);
-
-        final now = DateTime.now();
-
-        // Обновить старую папку (откуда забрали заметку)
-        if (oldFolder != null) {
-          oldFolder.updatedAt = now;
-          folderBox.put(oldFolder, mode: PutMode.update);
-        }
-
-        // Обновить новую папку (куда переместили заметку)
-        if (newFolder != null) {
-          newFolder.updatedAt = now;
-          folderBox.put(newFolder, mode: PutMode.update);
-        }
-
-        return note;
-      },
-      param: _MoveFolderParams(
-        noteUid: noteUid,
-        targetFolderUid: targetFolderUid,
-      ),
-    );
+      return note;
+    }, param: (noteUid: noteUid, folderUid: targetFolderUid));
   }
 
   @override
   Stream<List<NoteObject>> watchAll() {
-    return _noteBox
-        .query()
-        .order(NoteObject_.createdAt, flags: Order.descending)
+    return _noteDao
+        .queryAll(_db.box)
         .watch(triggerImmediately: true)
-        .map((query) => query.find());
+        .map((q) => q.find());
   }
 
   @override
   Stream<List<NoteObject>> watchByFolderId(int folderId) {
-    return _noteBox
-        .query(NoteObject_.folder.equals(folderId))
-        .order(NoteObject_.createdAt, flags: Order.descending)
+    return _noteDao
+        .queryByFolderId(_db.box, folderId)
         .watch(triggerImmediately: true)
-        .map((query) => query.find());
+        .map((q) => q.find());
   }
 
   @override
   Stream<List<NoteObject>> watchWithoutFolder() {
-    return _noteBox
-        .query(NoteObject_.folder.isNull())
-        .order(NoteObject_.createdAt, flags: Order.descending)
+    return _noteDao
+        .queryWithoutFolder(_db.box)
         .watch(triggerImmediately: true)
-        .map((query) => query.find());
+        .map((q) => q.find());
   }
 
   @override
@@ -231,73 +164,33 @@ class NoteLocalDataSourceImpl implements NoteLocalDataSource {
     String? folderUid,
     List<String> tagNames = const [],
   }) async {
-    /// TODO: Отрефакторить
-    return _db.runInTransactionAsync(
-      (Store store, _SaveNoteParams params) {
-        final noteBox = store.box<NoteObject>();
-        final folderBox = store.box<FolderObject>();
-        final tagBox = store.box<TagObject>();
+    return _db.runInTransactionAsync((
+      Store store,
+      ({NoteObject note, String? folderUid, List<String> tags}) p,
+    ) {
+      final box = store.box;
+      final noteToSave = p.note;
 
-        final note = params.note;
-        FolderObject? targetFolder;
+      final targetFolder = p.folderUid != null
+          ? _folderDao.findByUid(box, p.folderUid!)
+          : null;
 
-        if (params.folderUid != null) {
-          final query = folderBox
-              .query(FolderObject_.uid.equals(params.folderUid!))
-              .build();
-          final folder = query.findFirst();
-          query.close();
+      if (targetFolder != null) noteToSave.folder.target = targetFolder;
 
-          if (folder != null) {
-            note.folder.target = folder;
-            targetFolder = folder;
-          }
-        }
+      if (p.tags.isNotEmpty) {
+        final now = DateTime.now();
+        final tags = [
+          for (final name in p.tags)
+            TagObject(name: name.toLowerCase().trim(), createdAt: now),
+        ];
+        _tagDao.putMany(box, tags);
+        noteToSave.tags.addAll(tags);
+      }
 
-        if (params.tagNames.isNotEmpty) {
-          final now = DateTime.now();
-          final tags = [
-            for (final name in params.tagNames)
-              TagObject(name: name.toLowerCase().trim(), createdAt: now),
-          ];
-          tagBox.putMany(tags, mode: PutMode.put);
-          note.tags.addAll(tags);
-        }
+      _noteDao.put(box, noteToSave, mode: PutMode.insert);
+      _folderDao.touch(box, targetFolder);
 
-        noteBox.put(note, mode: PutMode.insert);
-
-        // Обновить updatedAt папки для триггера watch()
-        if (targetFolder != null) {
-          targetFolder.updatedAt = DateTime.now();
-          folderBox.put(targetFolder, mode: PutMode.update);
-        }
-
-        return note;
-      },
-      param: _SaveNoteParams(
-        note: note,
-        folderUid: folderUid,
-        tagNames: tagNames,
-      ),
-    );
+      return noteToSave;
+    }, param: (note: note, folderUid: folderUid, tags: tagNames));
   }
-}
-
-class _SaveNoteParams {
-  final NoteObject note;
-  final String? folderUid;
-  final List<String> tagNames;
-
-  _SaveNoteParams({
-    required this.note,
-    this.folderUid,
-    this.tagNames = const [],
-  });
-}
-
-class _MoveFolderParams {
-  final String noteUid;
-  final String? targetFolderUid;
-
-  _MoveFolderParams({required this.noteUid, this.targetFolderUid});
 }
