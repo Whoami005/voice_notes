@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:equatable/equatable.dart';
 import 'package:voice_notes/core/state/Initializable_cubit.dart';
 import 'package:voice_notes/feature/domain/entities/folder_entity.dart';
@@ -9,15 +11,26 @@ part 'folders_state.dart';
 class FoldersCubit extends RefreshableCubit<FoldersState> {
   final FolderRepository _repository;
 
+  StreamSubscription<List<FolderEntity>>? _subscription;
+
   FoldersCubit({required FolderRepository repository})
     : _repository = repository;
 
   @override
   Future<void> init() async {
-    await load(() async {
-      final folders = await _repository.getAll();
-      return FoldersState(folders: folders);
-    });
+    try {
+      emitLoading();
+      if (isClosed) return;
+
+      _subscription = _repository.watchAll().listen(
+        (folders) => emitSuccess(FoldersState(folders: folders)),
+        onError: logError,
+        cancelOnError: false,
+      );
+    } catch (e, s) {
+      final failure = logError(e, s);
+      emitError(failure);
+    }
   }
 
   @override
@@ -32,43 +45,39 @@ class FoldersCubit extends RefreshableCubit<FoldersState> {
 
   /// Создать папку из результата CreateFolderSheet
   Future<void> createFolder(CreateFolderResult data) async {
-    await transform((state) async {
-      final folder = await _repository.create(
-        name: data.name,
-        description: data.description,
-        color: data.color,
-        icon: data.icon,
-      );
-
-      return state.copyWith(folders: [folder, ...state.folders]);
-    });
+    await execute(
+      action: () async {
+        await _repository.create(
+          name: data.name,
+          description: data.description,
+          color: data.color,
+          icon: data.icon,
+        );
+      },
+    );
   }
 
   /// Обновить существующую папку
   Future<void> updateFolder(FolderEntity folder) async {
-    await transform((state) async {
-      final updated = await _repository.update(folder);
-
-      return state.copyWith(
-        folders: [
-          for (final f in state.folders)
-            if (f.uid == updated.uid) updated else f,
-        ],
-      );
-    });
+    try {
+      await _repository.update(folder);
+    } catch (e, s) {
+      logError(e, s);
+    }
   }
 
   /// Удалить папку
   Future<void> deleteFolder(String uid) async {
-    await transform((state) async {
+    try {
       await _repository.delete(uid);
+    } catch (e, s) {
+      logError(e, s);
+    }
+  }
 
-      return state.copyWith(
-        folders: [
-          for (final f in state.folders)
-            if (f.uid != uid) f,
-        ],
-      );
-    });
+  @override
+  Future<void> close() {
+    _subscription?.cancel();
+    return super.close();
   }
 }

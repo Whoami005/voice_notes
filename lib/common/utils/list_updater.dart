@@ -79,7 +79,7 @@ class ListUpdater {
   }) {
     return [
       for (final item in items)
-        if (valueExtractor(item) == value) ...[?updater(item)] else item,
+        if (valueExtractor(item) == value) ?updater(item) else item,
     ];
   }
 
@@ -495,8 +495,8 @@ extension ListUpdateExtensions<T> on List<T> {
   /// См. [ListUpdater.updateBy]
   List<T> updateBy<V>({
     required V value,
-    required V Function(T) valueExtractor,
-    required T? Function(T) updater,
+    required V Function(T item) valueExtractor,
+    required T? Function(T item) updater,
   }) => ListUpdater.updateBy(
     items: this,
     value: value,
@@ -506,8 +506,8 @@ extension ListUpdateExtensions<T> on List<T> {
 
   /// См. [ListUpdater.updateWhere]
   List<T> updateWhere({
-    required bool Function(T) predicate,
-    required T? Function(T) updater,
+    required bool Function(T item) predicate,
+    required T? Function(T item) updater,
   }) => ListUpdater.updateWhere(
     items: this,
     predicate: predicate,
@@ -517,8 +517,8 @@ extension ListUpdateExtensions<T> on List<T> {
   /// См. [ListUpdater.updateMany]
   List<T> updateMany<V>({
     required Set<V> values,
-    required V Function(T) valueExtractor,
-    required T? Function(T) updater,
+    required V Function(T item) valueExtractor,
+    required T? Function(T item) updater,
   }) => ListUpdater.updateMany(
     items: this,
     values: values,
@@ -529,7 +529,7 @@ extension ListUpdateExtensions<T> on List<T> {
   /// См. [ListUpdater.removeBy]
   List<T> removeBy<V>({
     required V value,
-    required V Function(T) valueExtractor,
+    required V Function(T item) valueExtractor,
   }) => ListUpdater.removeBy(
     items: this,
     value: value,
@@ -537,25 +537,27 @@ extension ListUpdateExtensions<T> on List<T> {
   );
 
   /// См. [ListUpdater.removeWhere]
-  List<T> removeWhere(bool Function(T) predicate) =>
+  List<T> removeWhere(bool Function(T item) predicate) =>
       ListUpdater.removeWhere(items: this, predicate: predicate);
 
   /// Alias для [ListUpdater.replaceOrAdd] - заменяет существующий элемент или добавляет новый
   ///
   /// См. [ListUpdater.replaceOrAdd]
-  List<T> upsert<V>({required T item, required V Function(T) valueExtractor}) =>
-      ListUpdater.replaceOrAdd(
-        items: this,
-        newItem: item,
-        valueExtractor: valueExtractor,
-      );
+  List<T> upsert<V>({
+    required T item,
+    required V Function(T item) valueExtractor,
+  }) => ListUpdater.replaceOrAdd(
+    items: this,
+    newItem: item,
+    valueExtractor: valueExtractor,
+  );
 
   /// Alias для [ListUpdater.replaceOrAddMultiple] - заменяет/добавляет несколько элементов
   ///
   /// См. [ListUpdater.replaceOrAddMultiple]
   List<T> upsertMany<V>({
     required List<T> items,
-    required V Function(T) valueExtractor,
+    required V Function(T item) valueExtractor,
   }) => ListUpdater.replaceOrAddMultiple(
     items: this,
     newItems: items,
@@ -573,10 +575,10 @@ extension ListUpdateExtensions<T> on List<T> {
   /// См. [ListUpdater.updateByRecursive]
   List<T> updateByRecursive<V>({
     required V value,
-    required V Function(T) valueExtractor,
-    required List<T> Function(T) childrenExtractor,
+    required V Function(T item) valueExtractor,
+    required List<T> Function(T children) childrenExtractor,
     required T Function(T item, List<T> updatedChildren) reconstruct,
-    required T? Function(T) updater,
+    required T? Function(T item) updater,
   }) => ListUpdater.updateByRecursive(
     items: this,
     value: value,

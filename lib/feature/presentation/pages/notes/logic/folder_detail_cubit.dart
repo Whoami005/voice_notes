@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:voice_notes/common/utils/date_grouper.dart';
-import 'package:voice_notes/core/error/app_failure.dart';
 import 'package:voice_notes/core/state/Initializable_cubit.dart';
 import 'package:voice_notes/feature/domain/entities/folder_entity.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
@@ -28,20 +27,20 @@ class FolderDetailCubit extends RefreshableCubit<FolderDetailData> {
 
   @override
   Future<void> init() async {
-    emitLoading();
+    try {
+      emitLoading();
+      if (isClosed) return;
 
-    if (isClosed) return;
-
-    _subscription =
-        Rx.combineLatest2<FolderEntity, List<NoteEntity>, FolderDetailData>(
-          _folderRepository.watchByUid(folderId).whereType<FolderEntity>(),
-          _noteRepository.watchByFolderId(folderId),
-          (folder, notes) => FolderDetailData(folder: folder, notes: notes),
-        ).listen(
-          emitSuccess,
-          onError: (Object e, StackTrace s) => emitError(AppFailure.from(e, s)),
-          cancelOnError: false,
-        );
+      _subscription =
+          Rx.combineLatest2<FolderEntity, List<NoteEntity>, FolderDetailData>(
+            _folderRepository.watchByUid(folderId).whereType<FolderEntity>(),
+            _noteRepository.watchByFolderId(folderId),
+            (folder, notes) => FolderDetailData(folder: folder, notes: notes),
+          ).listen(emitSuccess, onError: logError, cancelOnError: false);
+    } catch (e, s) {
+      final failure = logError(e, s);
+      emitError(failure);
+    }
   }
 
   @override
