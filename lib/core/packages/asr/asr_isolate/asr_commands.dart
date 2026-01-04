@@ -1,3 +1,4 @@
+import 'package:sherpa_onnx/sherpa_onnx.dart';
 import 'package:voice_notes/core/packages/asr/asr_result.dart';
 import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
 
