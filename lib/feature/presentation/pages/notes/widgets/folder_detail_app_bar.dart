@@ -1,51 +1,60 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
-import 'package:voice_notes/feature/domain/entities/folder_entity.dart';
+import 'package:voice_notes/core/state/base_state.dart';
+import 'package:voice_notes/feature/presentation/pages/notes/logic/folder_detail_cubit.dart';
+import 'package:voice_notes/feature/presentation/widgets/base_preferred_app_bar.dart';
 import 'package:voice_notes/feature/presentation/widgets/menus/dropdown_menu.dart';
 
-class FolderDetailAppBar extends StatelessWidget
-    implements PreferredSizeWidget {
-  final FolderEntity folder;
+class FolderDetailAppBar extends BasePreferredAppBar {
   final bool isSearchVisible;
   final VoidCallback onToggleSearch;
   final VoidCallback onEditFolder;
   final VoidCallback onDeleteFolder;
 
   const FolderDetailAppBar({
-    required this.folder,
     required this.isSearchVisible,
     required this.onToggleSearch,
     required this.onEditFolder,
     required this.onDeleteFolder,
     super.key,
+    super.toolbarHeight,
+    super.bottom,
   });
 
   @override
-  Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+  State<FolderDetailAppBar> createState() => _FolderDetailAppBarState();
+}
 
+class _FolderDetailAppBarState extends State<FolderDetailAppBar> {
   @override
   Widget build(BuildContext context) {
     final themeColors = context.themeColors;
     final textTheme = context.textTheme;
+    final state = context.watch<FolderDetailCubit>().state;
+    final folder = state.whenOrNull(success: (data) => data.folder);
 
     return AppBar(
+      bottom: widget.bottom,
+      toolbarHeight: widget.toolbarHeight,
       title: Row(
         spacing: AppSizes.p10,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: folder.color.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(AppSizes.p8),
+          if (folder != null)
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: folder.color.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(AppSizes.p8),
+              ),
+              child: Icon(folder.iconData, color: folder.color, size: 18),
             ),
-            child: Icon(folder.iconData, color: folder.color, size: 18),
-          ),
           Flexible(
             child: Text(
-              folder.name,
+              folder?.name ?? '',
               style: textTheme.titleLarge,
               overflow: TextOverflow.ellipsis,
             ),
@@ -53,30 +62,32 @@ class FolderDetailAppBar extends StatelessWidget
         ],
       ),
       actionsPadding: const EdgeInsets.symmetric(horizontal: 8),
-      actions: [
-        IconButton(
-          icon: Icon(
-            isSearchVisible ? Icons.close : Icons.search,
-            color: themeColors.textSecondary,
-          ),
-          onPressed: onToggleSearch,
-        ),
-        AppDropdownMenu(
-          items: [
-            AppMenuItem(
-              icon: Icons.edit_outlined,
-              label: 'Редактировать',
-              onTap: onEditFolder,
-            ),
-            AppMenuItem(
-              icon: Icons.delete_outline,
-              label: 'Удалить папку',
-              color: themeColors.error,
-              onTap: onDeleteFolder,
-            ),
-          ],
-        ),
-      ],
+      actions: state.isSuccess
+          ? [
+              IconButton(
+                icon: Icon(
+                  widget.isSearchVisible ? Icons.close : Icons.search,
+                  color: themeColors.textSecondary,
+                ),
+                onPressed: widget.onToggleSearch,
+              ),
+              AppDropdownMenu(
+                items: [
+                  AppMenuItem(
+                    icon: Icons.edit_outlined,
+                    label: 'Редактировать',
+                    onTap: widget.onEditFolder,
+                  ),
+                  AppMenuItem(
+                    icon: Icons.delete_outline,
+                    label: 'Удалить папку',
+                    color: themeColors.error,
+                    onTap: widget.onDeleteFolder,
+                  ),
+                ],
+              ),
+            ]
+          : null,
     );
   }
 }

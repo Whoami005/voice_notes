@@ -7,7 +7,6 @@ import 'package:voice_notes/core/packages/app_router/app_route_wrapper.dart';
 import 'package:voice_notes/core/packages/asr/asr_service.dart';
 import 'package:voice_notes/core/packages/audio/audio_recording_service.dart';
 import 'package:voice_notes/core/packages/di/injection.dart';
-import 'package:voice_notes/core/state/base_state.dart';
 import 'package:voice_notes/core/state/base_state_builder.dart';
 import 'package:voice_notes/feature/domain/enums/recording_state.dart'
     show SearchFilter;
@@ -64,25 +63,21 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
   Widget build(BuildContext context) {
     final themeColors = context.themeColors;
 
-    return BaseStateBuilder<FolderDetailCubit, FolderDetailData>(
-      buildWhen: (c, p) =>
-          c.runtimeType != p.runtimeType ||
-          c.dataOrNull?.folder != p.dataOrNull?.folder,
-      onSuccess: (context, data) {
-        return Scaffold(
-          extendBody: true,
-          backgroundColor: themeColors.bgPrimary,
-          appBar: FolderDetailAppBar(
-            folder: data.folder,
-            isSearchVisible: _isSearchVisible,
-            onToggleSearch: _toggleSearch,
-            onEditFolder: _onEditFolder,
-            onDeleteFolder: _onDeleteFolder,
-          ),
-          bottomNavigationBar: FolderDetailRecordingBar(
-            onUploadFile: _onUploadFile,
-          ),
-          body: RefreshableWrapper<FolderDetailCubit>(
+    return Scaffold(
+      extendBody: true,
+      backgroundColor: themeColors.bgPrimary,
+      appBar: FolderDetailAppBar(
+        isSearchVisible: _isSearchVisible,
+        onToggleSearch: _toggleSearch,
+        onEditFolder: _onEditFolder,
+        onDeleteFolder: _onDeleteFolder,
+      ),
+      bottomNavigationBar: FolderDetailRecordingBar(
+        onUploadFile: _onUploadFile,
+      ),
+      body: BaseStateBuilder<FolderDetailCubit, FolderDetailData>(
+        onSuccess: (context, _) {
+          return RefreshableWrapper<FolderDetailCubit>(
             child: CustomScrollView(
               slivers: [
                 if (_isSearchVisible)
@@ -103,9 +98,9 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
                 const NoteDetailsWidget(),
               ],
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 

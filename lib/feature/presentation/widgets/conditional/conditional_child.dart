@@ -40,6 +40,7 @@ import 'package:flutter/material.dart';
 class ConditionalChild extends StatelessWidget {
   /// Условие для выбора отображаемого виджета.
   final bool condition;
+  final bool isSliver;
 
   final Widget? _onTrue;
   final Widget? _onFalse;
@@ -51,6 +52,7 @@ class ConditionalChild extends StatelessWidget {
     required this.condition,
     required Widget onTrue,
     required Widget onFalse,
+    this.isSliver = false,
     super.key,
   }) : _onTrue = onTrue,
        _onFalse = onFalse,
@@ -64,6 +66,7 @@ class ConditionalChild extends StatelessWidget {
     required this.condition,
     required WidgetBuilder onTrue,
     required WidgetBuilder onFalse,
+    this.isSliver = false,
     super.key,
   }) : _onTrueBuilder = onTrue,
        _onFalseBuilder = onFalse,
@@ -76,6 +79,7 @@ class ConditionalChild extends StatelessWidget {
   const ConditionalChild.ifTrue({
     required this.condition,
     required Widget child,
+    this.isSliver = false,
     super.key,
   }) : _onTrue = child,
        _onFalse = null,
@@ -88,6 +92,7 @@ class ConditionalChild extends StatelessWidget {
   const ConditionalChild.ifFalse({
     required this.condition,
     required Widget child,
+    this.isSliver = false,
     super.key,
   }) : _onFalse = child,
        _onTrue = null,
@@ -96,14 +101,14 @@ class ConditionalChild extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final empty = isSliver
+        ? const SliverToBoxAdapter()
+        : const SizedBox.shrink();
+
     if (condition) {
-      return _onTrueBuilder?.call(context) ??
-          _onTrue ??
-          const SizedBox.shrink();
+      return _onTrueBuilder?.call(context) ?? _onTrue ?? empty;
     }
 
-    return _onFalseBuilder?.call(context) ??
-        _onFalse ??
-        const SizedBox.shrink();
+    return _onFalseBuilder?.call(context) ?? _onFalse ?? empty;
   }
 }

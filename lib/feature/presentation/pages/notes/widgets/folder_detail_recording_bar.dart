@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
+import 'package:voice_notes/core/state/base_state.dart';
+import 'package:voice_notes/feature/presentation/pages/notes/logic/folder_detail_cubit.dart';
 import 'package:voice_notes/feature/presentation/pages/notes/logic/recording_cubit.dart';
 import 'package:voice_notes/feature/presentation/pages/notes/widgets/recording_input.dart';
 
@@ -16,28 +18,35 @@ class FolderDetailRecordingBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<RecordingCubit, RecordingState>(
-      listener: _handleRecordingStateChange,
-      builder: (context, state) {
-        final cubit = context.read<RecordingCubit>();
+    return BlocSelector<FolderDetailCubit, BaseState<FolderDetailData>, bool>(
+      selector: (state) => state.isSuccess,
+      builder: (context, isSuccess) {
+        if (!isSuccess) return const SizedBox.shrink();
 
-        return Padding(
-          padding: EdgeInsets.only(
-            left: AppSizes.screenPadding,
-            right: AppSizes.screenPadding,
-            bottom: context.padding.bottom + AppSizes.p16,
-          ),
-          child: RecordingInput(
-            state: state.uiState,
-            recordingDuration: state.durationOrNull ?? Duration.zero,
-            transcribingText: state is RecordingTranscribingState
-                ? state.partialText
-                : null,
-            onStartRecording: cubit.startRecording,
-            onStopRecording: cubit.stopRecording,
-            onCancelRecording: cubit.cancelRecording,
-            onUploadFile: onUploadFile,
-          ),
+        return BlocConsumer<RecordingCubit, RecordingState>(
+          listener: _handleRecordingStateChange,
+          builder: (context, state) {
+            final cubit = context.read<RecordingCubit>();
+
+            return Padding(
+              padding: EdgeInsets.only(
+                left: AppSizes.screenPadding,
+                right: AppSizes.screenPadding,
+                bottom: context.padding.bottom + AppSizes.p16,
+              ),
+              child: RecordingInput(
+                state: state.uiState,
+                recordingDuration: state.durationOrNull ?? Duration.zero,
+                transcribingText: state is RecordingTranscribingState
+                    ? state.partialText
+                    : null,
+                onStartRecording: cubit.startRecording,
+                onStopRecording: cubit.stopRecording,
+                onCancelRecording: cubit.cancelRecording,
+                onUploadFile: onUploadFile,
+              ),
+            );
+          },
         );
       },
     );

@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:voice_notes/common/utils/date_grouper.dart';
@@ -53,8 +52,7 @@ class BlocGroupedSliverList<B extends BlocBase<S>, S, T>
     return BlocBuilder<B, S>(
       buildWhen:
           buildWhen ??
-          (previous, current) =>
-              !listEquals(selector(previous), selector(current)),
+          (previous, current) => selector(previous) != selector(current),
       builder: (context, state) {
         final groups = selector(state);
 
@@ -74,6 +72,7 @@ class BlocGroupedSliverList<B extends BlocBase<S>, S, T>
         return SliverPadding(
           padding: padding,
           sliver: ConditionalChild.builder(
+            isSliver: true,
             condition: separatorBuilder != null,
             onTrue: (context) {
               return SliverList.separated(

@@ -30,6 +30,8 @@ class FolderDetailCubit extends RefreshableCubit<FolderDetailData> {
   Future<void> init() async {
     emitLoading();
 
+    if (isClosed) return;
+
     _subscription =
         Rx.combineLatest2<FolderEntity, List<NoteEntity>, FolderDetailData>(
           _folderRepository.watchByUid(folderId).whereType<FolderEntity>(),
