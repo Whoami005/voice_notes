@@ -61,20 +61,21 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      extendBody: true,
-      appBar: FolderDetailAppBar(
-        isSearchVisible: _isSearchVisible,
-        onToggleSearch: _toggleSearch,
-        onEditFolder: _onEditFolder,
-        onDeleteFolder: _onDeleteFolder,
-      ),
-      bottomNavigationBar: FolderDetailRecordingBar(
-        onUploadFile: _onUploadFile,
-      ),
-      body: BaseStateBody<FolderDetailCubit, FolderDetailData>(
-        onSuccess: (context, _) {
-          return RefreshableWrapper<FolderDetailCubit>(
+    return BaseStateScaffold<FolderDetailCubit, FolderDetailData>(
+      title: 'Папка',
+      onSuccess: (context, _) {
+        return Scaffold(
+          extendBody: true,
+          appBar: FolderDetailAppBar(
+            isSearchVisible: _isSearchVisible,
+            onToggleSearch: _toggleSearch,
+            onEditFolder: _onEditFolder,
+            onDeleteFolder: _onDeleteFolder,
+          ),
+          bottomNavigationBar: FolderDetailRecordingBar(
+            onUploadFile: _onUploadFile,
+          ),
+          body: RefreshableWrapper<FolderDetailCubit>(
             child: CustomScrollView(
               slivers: [
                 if (_isSearchVisible)
@@ -95,9 +96,9 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
                 const NoteDetailsWidget(),
               ],
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 

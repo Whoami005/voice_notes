@@ -149,7 +149,11 @@ class BaseStateScaffold<C extends BlocBase<BaseState<S>>, S>
     return Scaffold(
       appBar:
           appBar ??
-          AppBar(title: title != null ? Text(title!) : null, centerTitle: true),
+          AppBar(
+            title: title != null ? Text(title!) : null,
+            centerTitle: true,
+            elevation: 0,
+          ),
       body: body,
       backgroundColor: backgroundColor,
     );

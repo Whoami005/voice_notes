@@ -33,7 +33,7 @@ class _FolderDetailAppBarState extends State<FolderDetailAppBar> {
     final themeColors = context.themeColors;
     final textTheme = context.textTheme;
     final state = context.watch<FolderDetailCubit>().state;
-    final folder = state.whenOrNull(success: (data) => data.folder);
+    final folder = state.requireData.folder;
 
     return AppBar(
       bottom: widget.bottom,
@@ -42,19 +42,18 @@ class _FolderDetailAppBarState extends State<FolderDetailAppBar> {
         spacing: AppSizes.p10,
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (folder != null)
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: folder.color.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(AppSizes.p8),
-              ),
-              child: Icon(folder.iconData, color: folder.color, size: 18),
+          Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: folder.color.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(AppSizes.p8),
             ),
+            child: Icon(folder.iconData, color: folder.color, size: 18),
+          ),
           Flexible(
             child: Text(
-              folder?.name ?? '',
+              folder.name,
               style: textTheme.titleLarge,
               overflow: TextOverflow.ellipsis,
             ),
@@ -62,32 +61,30 @@ class _FolderDetailAppBarState extends State<FolderDetailAppBar> {
         ],
       ),
       actionsPadding: const EdgeInsets.symmetric(horizontal: 8),
-      actions: state.isSuccess
-          ? [
-              IconButton(
-                icon: Icon(
-                  widget.isSearchVisible ? Icons.close : Icons.search,
-                  color: themeColors.textSecondary,
-                ),
-                onPressed: widget.onToggleSearch,
-              ),
-              AppDropdownMenu(
-                items: [
-                  AppMenuItem(
-                    icon: Icons.edit_outlined,
-                    label: 'Редактировать',
-                    onTap: widget.onEditFolder,
-                  ),
-                  AppMenuItem(
-                    icon: Icons.delete_outline,
-                    label: 'Удалить папку',
-                    color: themeColors.error,
-                    onTap: widget.onDeleteFolder,
-                  ),
-                ],
-              ),
-            ]
-          : null,
+      actions: [
+        IconButton(
+          icon: Icon(
+            widget.isSearchVisible ? Icons.close : Icons.search,
+            color: themeColors.textSecondary,
+          ),
+          onPressed: widget.onToggleSearch,
+        ),
+        AppDropdownMenu(
+          items: [
+            AppMenuItem(
+              icon: Icons.edit_outlined,
+              label: 'Редактировать',
+              onTap: widget.onEditFolder,
+            ),
+            AppMenuItem(
+              icon: Icons.delete_outline,
+              label: 'Удалить папку',
+              color: themeColors.error,
+              onTap: widget.onDeleteFolder,
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

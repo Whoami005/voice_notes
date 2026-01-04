@@ -52,12 +52,16 @@ class _FoldersScreenState extends State<FoldersScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      floatingActionButton: AppFab(icon: Icons.add, onPressed: _onCreateFolder),
-      body: BaseStateBody<FoldersCubit, FoldersState>(
-        buildWhen: (c, p) => true,
-        onSuccess: (context, state) {
-          return SafeArea(
+    return BaseStateScaffold<FoldersCubit, FoldersState>(
+      title: 'Заметки',
+      buildWhen: (c, p) => true,
+      onSuccess: (context, state) {
+        return Scaffold(
+          floatingActionButton: AppFab(
+            icon: Icons.add,
+            onPressed: _onCreateFolder,
+          ),
+          body: SafeArea(
             bottom: false,
             child: RefreshableWrapper<FoldersCubit>(
               child: CustomScrollView(
@@ -105,9 +109,9 @@ class _FoldersScreenState extends State<FoldersScreen> {
                 ],
               ),
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 
