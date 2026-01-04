@@ -27,7 +27,7 @@ class RefreshableWrapper<C extends Cubit<dynamic>> extends StatelessWidget {
 
   const RefreshableWrapper({required this.child, super.key, this.onRefresh});
 
-  RefreshCallback? _resolveRefreshCallback(BuildContext context) {
+  RefreshCallback? _resolveRefreshCallback(BuildContext context)  {
     if (onRefresh != null) return onRefresh;
 
     // Проверяем что generic был указан (не дефолтный Cubit)

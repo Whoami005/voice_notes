@@ -61,11 +61,8 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final themeColors = context.themeColors;
-
     return Scaffold(
       extendBody: true,
-      backgroundColor: themeColors.bgPrimary,
       appBar: FolderDetailAppBar(
         isSearchVisible: _isSearchVisible,
         onToggleSearch: _toggleSearch,

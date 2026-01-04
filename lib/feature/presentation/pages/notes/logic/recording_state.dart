@@ -6,14 +6,14 @@ part of 'recording_cubit.dart';
 /// idle -> recording -> transcribing -> success/error -> idle
 sealed class RecordingState extends Equatable {
   const RecordingState();
-
-  @override
-  List<Object?> get props => [];
 }
 
 /// Idle состояние — готов к записи
 final class RecordingIdleState extends RecordingState {
   const RecordingIdleState();
+
+  @override
+  List<Object?> get props => [];
 }
 
 /// Запись в процессе
@@ -24,10 +24,7 @@ final class RecordingActiveState extends RecordingState {
   /// Амплитуда для визуализации (для будущей анимации waveform)
   final double? amplitude;
 
-  const RecordingActiveState({
-    this.duration = Duration.zero,
-    this.amplitude,
-  });
+  const RecordingActiveState({this.duration = Duration.zero, this.amplitude});
 
   @override
   List<Object?> get props => [duration, amplitude];
@@ -111,9 +108,13 @@ final class RecordingErrorState extends RecordingState {
 /// Extension для удобной проверки состояния
 extension RecordingStateX on RecordingState {
   bool get isIdle => this is RecordingIdleState;
+
   bool get isRecording => this is RecordingActiveState;
+
   bool get isTranscribing => this is RecordingTranscribingState;
+
   bool get isSuccess => this is RecordingSuccessState;
+
   bool get isError => this is RecordingErrorState;
 
   /// Конвертация в UI состояние для RecordingInput виджета
