@@ -153,8 +153,8 @@ class ModelRepositoryImpl implements ModelRepository {
   }
 
   @override
-  Stream<ModelDownloadProgress> watchDownloadProgress(String modelId) {
-    return watchAllDownloads().where((progress) => progress.modelId == modelId);
+  Stream<ModelDownloadProgress> watchDownloadProgress(String uid) {
+    return watchAllDownloads().where((progress) => progress.modelId == uid);
   }
 
   @override
@@ -166,24 +166,24 @@ class ModelRepositoryImpl implements ModelRepository {
   }
 
   @override
-  Future<void> cancelDownload(String modelId) async {
-    await _downloadManager.cancel(modelId);
+  Future<void> cancelDownload(String uid) async {
+    await _downloadManager.cancel(uid);
   }
 
   @override
-  Future<void> pauseDownload(String modelId) async {
-    await _downloadManager.pause(modelId);
+  Future<void> pauseDownload(String uid) async {
+    await _downloadManager.pause(uid);
   }
 
   @override
-  Future<void> resumeDownload(String modelId) async {
-    await _downloadManager.resume(modelId);
+  Future<void> resumeDownload(String uid) async {
+    await _downloadManager.resume(uid);
   }
 
   @override
-  Future<void> deleteModel(String modelId) async {
+  Future<void> deleteModel(String uid) async {
     // Получаем информацию о модели
-    final model = await _localDataSource.getByModelId(modelId);
+    final model = await _localDataSource.getByModelId(uid);
     if (model == null) return;
 
     // Удаляем файлы с диска
@@ -192,12 +192,12 @@ class ModelRepositoryImpl implements ModelRepository {
     if (directory.existsSync()) await directory.delete(recursive: true);
 
     // Удаляем запись из БД
-    await _localDataSource.delete(modelId);
+    await _localDataSource.delete(uid);
   }
 
   @override
-  Future<void> selectModel(String modelId) async {
-    await _localDataSource.setSelected(modelId);
+  Future<void> selectModel(String uid) async {
+    await _localDataSource.setSelected(uid);
   }
 
   @override
@@ -257,24 +257,24 @@ class ModelRepositoryImpl implements ModelRepository {
   }
 
   @override
-  Future<bool> isModelDownloaded(String modelId) async {
-    final model = await _localDataSource.getByModelId(modelId);
+  Future<bool> isModelDownloaded(String uid) async {
+    final model = await _localDataSource.getByModelId(uid);
     if (model == null) return false;
 
     // Дополнительно проверяем наличие файлов
-    return _localDataSource.verifyModelFiles(modelId);
+    return _localDataSource.verifyModelFiles(uid);
   }
 
   @override
-  Future<String?> getModelPath(String modelId) async {
-    final model = await _localDataSource.getByModelId(modelId);
+  Future<String?> getModelPath(String uid) async {
+    final model = await _localDataSource.getByModelId(uid);
     if (model == null) return null;
 
     // Проверяем наличие файлов
-    final exists = await _localDataSource.verifyModelFiles(modelId);
+    final exists = await _localDataSource.verifyModelFiles(uid);
     if (!exists) {
       // Файлы удалены - очищаем БД
-      await _localDataSource.delete(modelId);
+      await _localDataSource.delete(uid);
       return null;
     }
 

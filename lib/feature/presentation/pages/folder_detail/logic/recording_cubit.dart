@@ -200,7 +200,7 @@ class RecordingCubit extends Cubit<RecordingState> {
     await _noteRepository.create(
       text: text,
       duration: duration,
-      folderId: folderId,
+      folderUid: folderId,
       language: language ?? '',
       modelName: _asrService.currentModel?.name ?? 'Unknown',
       wordCount: wordCount,

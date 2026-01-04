@@ -9,7 +9,7 @@ abstract interface class NoteRepository {
   Future<NoteEntity?> getByUid(String uid);
 
   /// Получить заметки по ID папки
-  Future<List<NoteEntity>> getByFolderId(String folderId);
+  Future<List<NoteEntity>> getByFolderId(String folderUid);
 
   /// Получить заметки без папки
   Future<List<NoteEntity>> getWithoutFolder();
@@ -21,7 +21,7 @@ abstract interface class NoteRepository {
     required String modelName,
     required String language,
     required int wordCount,
-    String? folderId,
+    String? folderUid,
     List<String> tagNames = const [],
     bool hasAudio = true,
   });
@@ -33,13 +33,13 @@ abstract interface class NoteRepository {
   Future<void> delete(String uid);
 
   /// Переместить заметку в папку
-  Future<void> moveToFolder(String noteUid, String? folderId);
+  Future<void> moveToFolder(String noteUid, String? folderUid);
 
   /// Стрим всех заметок с реактивными обновлениями
   Stream<List<NoteEntity>> watchAll();
 
   /// Стрим заметок по ID папки с реактивными обновлениями
-  Stream<List<NoteEntity>> watchByFolderId(String folderId);
+  Stream<List<NoteEntity>> watchByFolderId(String folderUid);
 
   /// Стрим заметок без папки с реактивными обновлениями
   Stream<List<NoteEntity>> watchWithoutFolder();

@@ -30,8 +30,8 @@ class NoteRepositoryImpl implements NoteRepository {
   }
 
   @override
-  Future<List<NoteEntity>> getByFolderId(String folderId) async {
-    final obj = await _folderDataSource.getByUid(folderId);
+  Future<List<NoteEntity>> getByFolderId(String folderUid) async {
+    final obj = await _folderDataSource.getByUid(folderUid);
     if (obj == null) return [];
 
     final objects = await _noteDataSource.getByFolderId(obj.id);
@@ -51,7 +51,7 @@ class NoteRepositoryImpl implements NoteRepository {
     required String modelName,
     required String language,
     required int wordCount,
-    String? folderId,
+    String? folderUid,
     List<String> tagNames = const [],
     bool hasAudio = true,
   }) async {
@@ -71,7 +71,7 @@ class NoteRepositoryImpl implements NoteRepository {
 
     final savedNote = await _noteDataSource.saveWithRelations(
       note: noteObject,
-      folderUid: folderId,
+      folderUid: folderUid,
       tagNames: tagNames,
     );
 
@@ -96,10 +96,10 @@ class NoteRepositoryImpl implements NoteRepository {
   }
 
   @override
-  Future<void> moveToFolder(String noteUid, String? folderId) async {
+  Future<void> moveToFolder(String noteUid, String? folderUid) async {
     await _noteDataSource.moveToFolder(
       noteUid: noteUid,
-      targetFolderUid: folderId,
+      targetFolderUid: folderUid,
     );
   }
 
@@ -109,8 +109,8 @@ class NoteRepositoryImpl implements NoteRepository {
   }
 
   @override
-  Stream<List<NoteEntity>> watchByFolderId(String folderUuid) {
-    final folder = _folderDataSource.getByUidSync(folderUuid)!;
+  Stream<List<NoteEntity>> watchByFolderId(String folderUid) {
+    final folder = _folderDataSource.getByUidSync(folderUid)!;
 
     return _noteDataSource
         .watchByFolderId(folder.id)

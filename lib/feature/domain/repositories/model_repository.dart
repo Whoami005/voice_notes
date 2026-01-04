@@ -16,25 +16,25 @@ abstract interface class ModelRepository {
   Future<void> downloadModel(AsrModelEntity model);
 
   /// Стрим прогресса скачивания для конкретной модели
-  Stream<ModelDownloadProgress> watchDownloadProgress(String modelId);
+  Stream<ModelDownloadProgress> watchDownloadProgress(String uid);
 
   /// Стрим прогресса всех скачиваний
   Stream<ModelDownloadProgress> watchAllDownloads();
 
   /// Отменить скачивание
-  Future<void> cancelDownload(String modelId);
+  Future<void> cancelDownload(String uid);
 
   /// Приостановить скачивание
-  Future<void> pauseDownload(String modelId);
+  Future<void> pauseDownload(String uid);
 
   /// Возобновить скачивание
-  Future<void> resumeDownload(String modelId);
+  Future<void> resumeDownload(String uid);
 
   /// Удалить скачанную модель с устройства
-  Future<void> deleteModel(String modelId);
+  Future<void> deleteModel(String uid);
 
   /// Выбрать модель как активную
-  Future<void> selectModel(String modelId);
+  Future<void> selectModel(String uid);
 
   /// Получить выбранную (активную) модель
   Future<AsrModelEntity?> getSelectedModel();
@@ -51,10 +51,10 @@ abstract interface class ModelRepository {
   Future<void> verifyAllModels();
 
   /// Проверить, скачана ли модель
-  Future<bool> isModelDownloaded(String modelId);
+  Future<bool> isModelDownloaded(String uid);
 
   /// Получить путь к директории модели (если скачана)
-  Future<String?> getModelPath(String modelId);
+  Future<String?> getModelPath(String uid);
 
   /// Освободить ресурсы
   Future<void> dispose();
