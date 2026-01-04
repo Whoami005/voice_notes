@@ -7,7 +7,7 @@ import 'package:voice_notes/core/packages/app_router/app_route_wrapper.dart';
 import 'package:voice_notes/core/packages/asr/asr_service.dart';
 import 'package:voice_notes/core/packages/audio/audio_recording_service.dart';
 import 'package:voice_notes/core/packages/di/injection.dart';
-import 'package:voice_notes/core/state/base_state_builder.dart';
+import 'package:voice_notes/core/state/state.dart';
 import 'package:voice_notes/feature/domain/enums/recording_state.dart'
     show SearchFilter;
 import 'package:voice_notes/feature/domain/repositories/folder_repository.dart';

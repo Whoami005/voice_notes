@@ -1,14 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:voice_notes/core/error/app_failure.dart';
 
-/// Базовое состояние для Cubit/BLoC
-///
-/// Пример использования:
-/// ```dart
-/// class FoldersCubit extends Cubit<BaseState<List<Folder>>> {
-///   FoldersCubit() : super(const Initial());
-/// }
-/// ```
+/// Базовое состояние для Cubit/BLoC с 4 вариантами: Initial, Loading, Success, Error
 sealed class BaseState<T> extends Equatable {
   const BaseState();
 
@@ -24,17 +17,14 @@ sealed class BaseState<T> extends Equatable {
   List<Object?> get props => [];
 }
 
-/// Начальное состояние (до первой загрузки)
 final class InitialState<T> extends BaseState<T> {
   const InitialState();
 }
 
-/// Состояние загрузки
 final class LoadingState<T> extends BaseState<T> {
   const LoadingState();
 }
 
-/// Успешная загрузка данных
 final class SuccessState<T> extends BaseState<T> {
   final T data;
 
@@ -44,20 +34,17 @@ final class SuccessState<T> extends BaseState<T> {
   List<Object?> get props => [data];
 }
 
-/// Ошибка с AppFailure
 final class ErrorState<T> extends BaseState<T> {
   final AppFailure failure;
 
   const ErrorState(this.failure);
 
-  /// Сообщение ошибки для UI
   String get message => failure.message;
 
   @override
   List<Object?> get props => [failure];
 }
 
-/// Хелперы для удобной работы с состояниями
 extension BaseStateX<T> on BaseState<T> {
   bool get isInitial => this is InitialState<T>;
 
@@ -67,29 +54,22 @@ extension BaseStateX<T> on BaseState<T> {
 
   bool get isError => this is ErrorState<T>;
 
-  /// Данные или null
   T? get dataOrNull => switch (this) {
     SuccessState(:final data) => data,
     _ => null,
   };
 
-  /// Данные напрямую (выбрасывает StateError если не Success)
-  ///
-  /// Использовать когда состояние гарантированно Success:
-  /// - в методах кубита после успешной загрузки
-  /// - в UI внутри Success-ветки
+  // Throws StateError если не Success
   T get requireData => switch (this) {
     SuccessState(:final data) => data,
     _ => throw StateError('Expected Success state, got $runtimeType'),
   };
 
-  /// Ошибка или null
   AppFailure? get failureOrNull => switch (this) {
     ErrorState(:final failure) => failure,
     _ => null,
   };
 
-  /// Pattern matching с обязательными колбэками
   R when<R>({
     required R Function() initial,
     required R Function() loading,
@@ -102,7 +82,6 @@ extension BaseStateX<T> on BaseState<T> {
     ErrorState(:final failure) => error(failure),
   };
 
-  /// Pattern matching с fallback
   R maybeWhen<R>({
     required R Function() orElse,
     R Function()? initial,

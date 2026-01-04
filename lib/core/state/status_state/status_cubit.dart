@@ -4,42 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:voice_notes/core/error/app_failure.dart';
 import 'package:voice_notes/core/state/status_state/status_state.dart';
 
-/// Упрощенный кубит для StatusState
-///
-/// Отличия от BaseCubit:
-/// - Данные всегда доступны через state
-/// - Упрощенный API: load, guard, transform
-/// - Автоматическое управление status и failure
-///
-/// ## Группы методов
-///
-/// - **emit*** — прямая отправка состояния с автоматическим управлением status/failure
-/// - **load** — полный цикл Loading → Success/Error
-/// - **guard** — Success/Error без показа Loading
-/// - **transform** — трансформация без смены статуса
-///
-/// Пример:
-/// ```dart
-/// class FoldersCubit extends StatusCubit<FoldersState> {
-///   FoldersCubit(this._repository) : super(const FoldersState());
-///
-///   Future<void> loadFolders() async {
-///     await load(() async {
-///       final folders = await _repository.getAll();
-///       return state.copyWith(folders: folders);
-///     });
-///   }
-///
-///   Future<void> createFolder(FolderEntity folder) async {
-///     await guard(() async {
-///       await _repository.create(folder);
-///       return state.copyWith(
-///         folders: [folder, ...state.folders],
-///       );
-///     });
-///   }
-/// }
-/// ```
+/// Кубит для StatusState
 abstract class StatusCubit<T extends StatusState> extends Cubit<T> {
   StatusCubit(super.initialState);
 

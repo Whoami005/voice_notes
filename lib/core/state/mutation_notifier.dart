@@ -39,9 +39,7 @@ class MutationNotifier<T> extends ValueNotifier<MutationState<T>> {
   void reset() => value = const MutationIdle();
 }
 
-// ============================================================
 // BUILDER ДЛЯ УДОБНОЙ ПОДПИСКИ НА СОСТОЯНИЕ
-// ============================================================
 
 class MutationListenableBuilder<T> extends StatelessWidget {
   final Widget? child;
@@ -70,9 +68,7 @@ class MutationListenableBuilder<T> extends StatelessWidget {
   }
 }
 
-// ============================================================
 // СОСТОЯНИЯ МУТАЦИИ (Sealed classes для pattern matching)
-// ============================================================
 
 sealed class MutationState<T> {
   const MutationState();

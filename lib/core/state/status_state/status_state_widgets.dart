@@ -1,52 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:voice_notes/core/error/app_failure.dart';
-import 'package:voice_notes/core/state/initializable.dart';
-import 'package:voice_notes/core/state/state_views.dart';
+import 'package:voice_notes/core/state/shared/initializable.dart';
+import 'package:voice_notes/core/state/shared/state_views.dart';
 import 'package:voice_notes/core/state/status_state/status_state.dart';
 
-/// Виджет для построения UI на основе StatusState
-///
-/// Обёртка над BlocBuilder с дефолтным buildWhen по статусу.
-///
-/// Пример:
-/// ```dart
-/// StatusStateBuilder<FoldersCubit, FoldersState>(
-///   onSuccess: (context, state) {
-///     if (state.folders.isEmpty) {
-///       return const StateEmptyView(message: 'Нет папок');
-///     }
-///
-///     return ListView.builder(
-///       itemCount: state.folders.length,
-///       itemBuilder: (context, index) => FolderTile(state.folders[index]),
-///     );
-///   },
-/// )
-/// ```
+/// Виджет для построения UI на основе StatusState.
 class StatusStateBody<C extends BlocBase<S>, S extends StatusState>
     extends StatelessWidget {
-  /// Кубит (опционально, если не передан — берётся из контекста)
   final C? bloc;
 
-  /// Обязательный колбэк для успешного состояния
   /// Получает полный state (не только данные)
   final Widget Function(BuildContext context, S state) onSuccess;
 
-  /// Колбэк для ошибки (по умолчанию StateErrorView)
   final Widget Function(BuildContext context, S state, AppFailure? failure)?
   onError;
 
-  /// Колбэк для загрузки (по умолчанию StateLoadingView)
   final Widget Function(BuildContext context, S state)? onLoading;
 
-  /// Колбэк для начального состояния (по умолчанию SizedBox.shrink)
   final Widget Function(BuildContext context, S state)? onInitial;
 
-  /// Контроль перестроения (по умолчанию: только при смене статуса)
   final bool Function(S previous, S current)? buildWhen;
 
-  /// Listener для побочных эффектов
   final void Function(BuildContext context, S state)? listener;
 
   const StatusStateBody({
@@ -96,36 +71,26 @@ class StatusStateBody<C extends BlocBase<S>, S extends StatusState>
 
 class StatusStateScaffold<C extends BlocBase<S>, S extends StatusState>
     extends StatelessWidget {
-  /// Кубит (опционально, если не передан — берётся из контекста)
   final C? bloc;
 
-  /// Кастомный AppBar (приоритет)
   final PreferredSizeWidget? appBar;
 
-  /// Заголовок (если appBar не передан)
   final String? title;
 
-  /// Цвет фона Scaffold
   final Color? backgroundColor;
 
-  /// Обязательный колбэк для успешного состояния
   /// Получает полный state (не только данные)
   final Widget Function(BuildContext context, S state) onSuccess;
 
-  /// Колбэк для ошибки (по умолчанию StateErrorView)
   final Widget Function(BuildContext context, S state, AppFailure? failure)?
   onError;
 
-  /// Колбэк для загрузки (по умолчанию StateLoadingView)
   final Widget Function(BuildContext context, S state)? onLoading;
 
-  /// Колбэк для начального состояния (по умолчанию SizedBox.shrink)
   final Widget Function(BuildContext context, S state)? onInitial;
 
-  /// Контроль перестроения (по умолчанию: только при смене статуса)
   final bool Function(S previous, S current)? buildWhen;
 
-  /// Listener для побочных эффектов
   final void Function(BuildContext context, S state)? listener;
 
   const StatusStateScaffold({

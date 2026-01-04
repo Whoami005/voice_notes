@@ -7,7 +7,7 @@ import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/packages/app_router/app_route_wrapper.dart';
 import 'package:voice_notes/core/packages/app_router/routes.dart';
 import 'package:voice_notes/core/packages/di/injection.dart';
-import 'package:voice_notes/core/state/base_state_builder.dart';
+import 'package:voice_notes/core/state/state.dart';
 import 'package:voice_notes/core/theme/app_typography.dart';
 import 'package:voice_notes/feature/domain/entities/folder_entity.dart';
 import 'package:voice_notes/feature/domain/repositories/folder_repository.dart';

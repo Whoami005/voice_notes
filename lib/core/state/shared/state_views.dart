@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 
-/// Индикатор загрузки
 class StateLoadingView extends StatelessWidget {
   const StateLoadingView({super.key});
 
@@ -12,7 +11,6 @@ class StateLoadingView extends StatelessWidget {
   }
 }
 
-/// Виджет пустого состояния
 class StateEmptyView extends StatelessWidget {
   final String message;
 
@@ -36,7 +34,6 @@ class StateEmptyView extends StatelessWidget {
   }
 }
 
-/// Виджет ошибки
 class StateErrorView extends StatelessWidget {
   final String message;
   final VoidCallback? onRetry;

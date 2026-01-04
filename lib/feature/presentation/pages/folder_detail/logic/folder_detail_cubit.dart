@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:voice_notes/common/utils/date_grouper.dart';
-import 'package:voice_notes/core/state/Initializable_cubit.dart';
+import 'package:voice_notes/core/state/state.dart';
 import 'package:voice_notes/feature/domain/entities/folder_entity.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
 import 'package:voice_notes/feature/domain/repositories/folder_repository.dart';

@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:voice_notes/core/error/app_exception.dart';
-import 'package:voice_notes/core/state/Initializable_cubit.dart';
+import 'package:voice_notes/core/state/state.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
 import 'package:voice_notes/feature/domain/entities/tag_entity.dart';
 import 'package:voice_notes/feature/domain/repositories/note_repository.dart';

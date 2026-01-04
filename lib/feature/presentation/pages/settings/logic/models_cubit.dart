@@ -7,7 +7,7 @@ import 'package:voice_notes/core/packages/downloader/download_manager.dart';
 import 'package:voice_notes/core/packages/downloader/download_status.dart';
 import 'package:voice_notes/core/packages/internet/internet_checker.dart';
 import 'package:voice_notes/core/packages/storage/storage_checker.dart';
-import 'package:voice_notes/core/state/Initializable_cubit.dart';
+import 'package:voice_notes/core/state/state.dart';
 import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
 import 'package:voice_notes/feature/domain/repositories/model_repository.dart';
 

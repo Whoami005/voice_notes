@@ -1,7 +1,7 @@
 import 'package:equatable/equatable.dart';
 import 'package:voice_notes/core/error/app_failure.dart';
 
-/// Статус жизненного цикла для StatusState
+/// Статус жизненного цикла: init, loading, success, error
 enum LogicStateStatus {
   /// Начальное состояние (до первой загрузки)
   init,
@@ -24,39 +24,7 @@ enum LogicStateStatus {
   bool get isError => this == LogicStateStatus.error;
 }
 
-/// Базовая модель состояния с enum статусом
-///
-/// В отличие от BaseState< T >, все данные хранятся в одном классе.
-/// Упрощает доступ к данным и уменьшает проверки на null.
-///
-/// Пример использования:
-/// ```dart
-/// class FoldersState extends StatusState {
-///   final List<FolderEntity> folders;
-///
-///   const FoldersState({
-///     super.status,
-///     super.failure,
-///     this.folders = const [],
-///   });
-///
-///   @override
-///   FoldersState copyWith({
-///     StateStatus? status,
-///     AppFailure? failure,
-///     List<FolderEntity>? folders,
-///   }) {
-///     return FoldersState(
-///       status: status ?? this.status,
-///       failure: failure ?? this.failure,
-///       folders: folders ?? this.folders,
-///     );
-///   }
-///
-///   @override
-///   List<Object?> get props => [status, failure, folders];
-/// }
-/// ```
+/// Базовое состояние с enum статусом (все данные в одном классе).
 abstract class StatusState extends Equatable {
   /// Статус жизненного цикла
   final LogicStateStatus status;
