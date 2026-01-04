@@ -1,7 +1,7 @@
 import 'dart:io';
 
 import 'package:injectable/injectable.dart';
-import 'package:voice_notes/core/packages/db/object_box/objectbox.g.dart';
+import 'package:voice_notes/core/packages/db/object_box/dao/dao.dart';
 import 'package:voice_notes/core/packages/db/object_box/objectbox_database.dart';
 import 'package:voice_notes/core/packages/path/asr_model_paths.dart';
 import 'package:voice_notes/feature/data/local/models/downloaded_model_object.dart';
@@ -45,85 +45,43 @@ abstract interface class ModelLocalDataSource {
 class ModelLocalDataSourceImpl implements ModelLocalDataSource {
   final DatabaseClient _db;
 
-  Box<DownloadedModelObject> get _modelBox => _db.box<DownloadedModelObject>();
+  static const _modelDao = ModelDao();
 
   ModelLocalDataSourceImpl(this._db);
 
   @override
-  Future<List<DownloadedModelObject>> getAll() async {
-    return _modelBox.getAll();
-  }
+  Future<List<DownloadedModelObject>> getAll() async =>
+      _modelDao.findAll(_db.box);
 
   @override
   Future<DownloadedModelObject?> getByModelId(String modelId) async {
-    final query = _modelBox
-        .query(DownloadedModelObject_.modelId.equals(modelId))
-        .build();
-    final result = query.findFirst();
-    query.close();
-
-    return result;
+    return _modelDao.findByModelId(_db.box, modelId);
   }
 
   @override
   Future<void> save(DownloadedModelObject model) async {
-    _modelBox.put(model);
+    _modelDao.put(_db.box, model);
   }
 
   @override
   Future<void> delete(String modelId) async {
     final model = await getByModelId(modelId);
-    if (model != null) _modelBox.remove(model.id);
+    if (model != null) _modelDao.remove(_db.box, model.id);
   }
 
   @override
   Future<void> setSelected(String modelId) async {
-    _db.runInTransaction(() {
-      // Снимаем выбор с текущей выбранной модели
-      final selectedQuery = _modelBox
-          .query(DownloadedModelObject_.isSelected.equals(true))
-          .build();
-      final selected = selectedQuery.findFirst();
-      selectedQuery.close();
-
-      if (selected != null) {
-        selected.isSelected = false;
-        _modelBox.put(selected);
-      }
-
-      // Устанавливаем новую выбранную модель
-      final modelQuery = _modelBox
-          .query(DownloadedModelObject_.modelId.equals(modelId))
-          .build();
-      final model = modelQuery.findFirst();
-      modelQuery.close();
-
-      if (model != null) {
-        model.isSelected = true;
-        _modelBox.put(model);
-      }
-    });
+    _db.runInTransaction(() => _modelDao.setSelected(_db.box, modelId));
   }
 
   @override
   Future<DownloadedModelObject?> getSelected() async {
-    final query = _modelBox
-        .query(DownloadedModelObject_.isSelected.equals(true))
-        .build();
-    final result = query.findFirst();
-    query.close();
-
-    return result;
+    return _modelDao.findSelected(_db.box);
   }
 
   @override
   Future<void> clearSelection() async {
-    final selected = await getSelected();
-
-    if (selected != null) {
-      selected.isSelected = false;
-      _modelBox.put(selected);
-    }
+    _modelDao.clearSelection(_db.box);
   }
 
   @override
@@ -142,17 +100,17 @@ class ModelLocalDataSourceImpl implements ModelLocalDataSource {
 
   @override
   Stream<List<DownloadedModelObject>> watchAll() {
-    return _modelBox
-        .query()
+    return _modelDao
+        .queryAll(_db.box)
         .watch(triggerImmediately: true)
-        .map((query) => query.find());
+        .map((q) => q.find());
   }
 
   @override
   Stream<DownloadedModelObject?> watchSelected() {
-    return _modelBox
-        .query(DownloadedModelObject_.isSelected.equals(true))
+    return _modelDao
+        .querySelected(_db.box)
         .watch(triggerImmediately: true)
-        .map((query) => query.findFirst());
+        .map((q) => q.findFirst());
   }
 }
