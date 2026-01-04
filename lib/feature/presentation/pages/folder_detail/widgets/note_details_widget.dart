@@ -5,9 +5,9 @@ import 'package:go_router/go_router.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/state/base_state.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
-import 'package:voice_notes/feature/presentation/pages/folder_details/logic/folder_detail_cubit.dart';
-import 'package:voice_notes/feature/presentation/pages/folder_details/widgets/date_separator.dart';
-import 'package:voice_notes/feature/presentation/pages/folder_details/widgets/note_bubble.dart';
+import 'package:voice_notes/feature/presentation/pages/folder_detail/logic/folder_detail_cubit.dart';
+import 'package:voice_notes/feature/presentation/pages/folder_detail/widgets/date_separator.dart';
+import 'package:voice_notes/feature/presentation/pages/folder_detail/widgets/note_bubble.dart';
 import 'package:voice_notes/feature/presentation/widgets/lists/bloc_grouped_sliver_list.dart';
 
 class NoteDetailsWidget extends StatelessWidget {

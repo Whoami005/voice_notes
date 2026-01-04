@@ -4,9 +4,9 @@ import 'package:injectable/injectable.dart';
 import 'package:voice_notes/core/packages/app_router/root_screen.dart';
 import 'package:voice_notes/core/packages/app_router/route_builder.dart';
 import 'package:voice_notes/core/packages/app_router/routes.dart';
+import 'package:voice_notes/feature/presentation/pages/folder_detail/screens/folder_detail_screen.dart';
 import 'package:voice_notes/feature/presentation/pages/folders/screens/folders_screen.dart';
-import 'package:voice_notes/feature/presentation/pages/folder_details/screens/folder_detail_screen.dart';
-import 'package:voice_notes/feature/presentation/pages/notes/screens/note_detail_screen.dart';
+import 'package:voice_notes/feature/presentation/pages/note_detail/screens/note_detail_screen.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/screens/settings_screen.dart';
 
 ///  AppRouter - класс для управления навигацией в приложении

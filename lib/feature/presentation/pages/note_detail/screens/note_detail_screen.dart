@@ -13,7 +13,7 @@ import 'package:voice_notes/core/theme/app_typography.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
 import 'package:voice_notes/feature/domain/entities/tag_entity.dart';
 import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
-import 'package:voice_notes/feature/presentation/pages/notes/logic/note_detail_cubit.dart';
+import 'package:voice_notes/feature/presentation/pages/note_detail/logic/note_detail_cubit.dart';
 import 'package:voice_notes/feature/presentation/widgets/chips/tag_chip.dart';
 import 'package:voice_notes/feature/presentation/widgets/dialogs/confirm_dialog.dart';
 
