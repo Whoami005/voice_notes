@@ -2,6 +2,8 @@ import 'package:equatable/equatable.dart';
 import 'package:flutter/foundation.dart';
 import 'package:voice_notes/core/error/app_exception.dart';
 
+part 'db_failure.dart';
+
 sealed class AppFailure extends Equatable {
   final String message;
 
@@ -30,6 +32,7 @@ sealed class AppFailure extends Equatable {
       FormatException() => FormatFailure(details: e.details),
       UnknownException() => const UnknownFailure(),
       CustomException() => CustomFailure(e.message),
+      DbException() => DbFailure.from(e),
     };
   }
 }

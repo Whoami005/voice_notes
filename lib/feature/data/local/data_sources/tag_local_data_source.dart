@@ -1,4 +1,5 @@
 import 'package:injectable/injectable.dart';
+import 'package:voice_notes/core/error/app_exception.dart';
 import 'package:voice_notes/core/packages/db/object_box/dao/dao.dart';
 import 'package:voice_notes/core/packages/db/object_box/objectbox_database.dart';
 import 'package:voice_notes/feature/data/local/models/tag_object.dart';
@@ -41,9 +42,12 @@ class TagLocalDataSourceImpl implements TagLocalDataSource {
   @override
   Future<List<TagObject>> getAll() async => _tagDao.findAll(_db.box);
 
-  ///TODO: Позже добавить выброс ошибки "Тег не найден"
   @override
-  Future<TagObject> getById(int id) async => _tagDao.findById(_db.box, id)!;
+  Future<TagObject> getById(int id) async {
+    return _tagDao
+        .findById(_db.box, id)
+        .orThrowNotFound(EntityType.tag, id.toString());
+  }
 
   @override
   Future<TagObject?> getByName(String name) async =>

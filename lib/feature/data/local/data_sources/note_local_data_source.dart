@@ -1,4 +1,5 @@
 import 'package:injectable/injectable.dart';
+import 'package:voice_notes/core/error/app_exception.dart';
 import 'package:voice_notes/core/packages/db/object_box/dao/dao.dart';
 import 'package:voice_notes/core/packages/db/object_box/objectbox.g.dart';
 import 'package:voice_notes/core/packages/db/object_box/objectbox_database.dart';
@@ -67,14 +68,16 @@ class NoteLocalDataSourceImpl implements NoteLocalDataSource {
 
   @override
   Future<NoteObject> getByUid(String uid) async {
-    ///TODO: Позже добавить выброс ошибки "Заметка не найдена"
-    return _noteDao.findByUid(_db.box, uid)!;
+    return _noteDao
+        .findByUid(_db.box, uid)
+        .orThrowNotFound(EntityType.note, uid);
   }
 
   @override
   Future<List<NoteObject>> getByFolderUid(String folderUid) async {
-    ///TODO: Позже добавить выброс ошибки "Заметка не найдена"
-    final folder = _folderDao.findByUid(_db.box, folderUid)!;
+    final folder = _folderDao
+        .findByUid(_db.box, folderUid)
+        .orThrowNotFound(EntityType.folder, folderUid);
 
     return _noteDao.findByFolderId(_db.box, folder.id);
   }
@@ -148,8 +151,9 @@ class NoteLocalDataSourceImpl implements NoteLocalDataSource {
 
   @override
   Stream<List<NoteObject>> watchByFolderUid(String folderUid) {
-    ///TODO: Позже добавить выброс ошибки "Заметка не найдена"
-    final folder = _folderDao.findByUid(_db.box, folderUid)!;
+    final folder = _folderDao
+        .findByUid(_db.box, folderUid)
+        .orThrowNotFound(EntityType.folder, folderUid);
 
     return _noteDao
         .queryByFolderId(_db.box, folder.id)

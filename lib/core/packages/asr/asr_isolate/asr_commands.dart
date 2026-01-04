@@ -57,7 +57,8 @@ final class DisposeCommand extends AsrCommand {
 
 /// Базовый класс ответов от ASR изолята.
 ///
-/// Ответы отправляются из worker isolate обратно в main после выполнения команд.
+/// Ответы отправляются из worker isolate обратно в main после
+/// выполнения команд.
 sealed class AsrResponse {
   const AsrResponse();
 }

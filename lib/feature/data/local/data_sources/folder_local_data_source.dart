@@ -1,4 +1,5 @@
 import 'package:injectable/injectable.dart';
+import 'package:voice_notes/core/error/app_exception.dart';
 import 'package:voice_notes/core/packages/db/object_box/dao/dao.dart';
 import 'package:voice_notes/core/packages/db/object_box/objectbox.g.dart';
 import 'package:voice_notes/core/packages/db/object_box/objectbox_database.dart';
@@ -48,8 +49,9 @@ class FolderLocalDataSourceImpl implements FolderLocalDataSource {
 
   @override
   Future<FolderObject> getByUid(String uid) async {
-    ///TODO: Позже добавить выброс ошибки "Папка не найдена"
-    return _folderDao.findByUid(_db.box, uid)!;
+    return _folderDao
+        .findByUid(_db.box, uid)
+        .orThrowNotFound(EntityType.folder, uid);
   }
 
   @override

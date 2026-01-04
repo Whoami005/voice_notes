@@ -1,5 +1,7 @@
 import 'package:dio/dio.dart';
 
+part 'db_exception.dart';
+
 sealed class AppException implements Exception {
   const AppException();
 
