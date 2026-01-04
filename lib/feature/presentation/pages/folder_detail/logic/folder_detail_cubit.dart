@@ -50,7 +50,7 @@ class FolderDetailCubit extends RefreshableCubit<FolderDetailData> {
         final folder = await _folderRepository.getByUid(folderId);
         final notes = await _noteRepository.getByFolderId(folderId);
 
-        emitSuccess(FolderDetailData(folder: folder!, notes: notes));
+        emitSuccess(FolderDetailData(folder: folder, notes: notes));
       },
     );
   }

@@ -24,9 +24,8 @@ class FolderRepositoryImpl implements FolderRepository {
   }
 
   @override
-  Future<FolderEntity?> getByUid(String uid) async {
+  Future<FolderEntity> getByUid(String uid) async {
     final obj = await _dataSource.getByUid(uid);
-    if (obj == null) return null;
 
     return FolderMapper.toDomain(obj);
   }
@@ -58,7 +57,6 @@ class FolderRepositoryImpl implements FolderRepository {
   @override
   Future<FolderEntity> update(FolderEntity folder) async {
     final existing = await _dataSource.getByUid(folder.uid);
-    if (existing == null) throw Exception('Folder not found: ${folder.uid}');
 
     final updatedFolder = folder.copyWith(updatedAt: DateTime.now());
     FolderMapper.updateEntity(existing, updatedFolder);

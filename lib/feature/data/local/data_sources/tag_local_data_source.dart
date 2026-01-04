@@ -9,7 +9,7 @@ abstract interface class TagLocalDataSource {
   Future<List<TagObject>> getAll();
 
   /// Получить тег по ID
-  Future<TagObject?> getById(int id);
+  Future<TagObject> getById(int id);
 
   /// Получить тег по имени (case-insensitive)
   Future<TagObject?> getByName(String name);
@@ -41,8 +41,9 @@ class TagLocalDataSourceImpl implements TagLocalDataSource {
   @override
   Future<List<TagObject>> getAll() async => _tagDao.findAll(_db.box);
 
+  ///TODO: Позже добавить выброс ошибки "Тег не найден"
   @override
-  Future<TagObject?> getById(int id) async => _tagDao.findById(_db.box, id);
+  Future<TagObject> getById(int id) async => _tagDao.findById(_db.box, id)!;
 
   @override
   Future<TagObject?> getByName(String name) async =>

@@ -57,7 +57,6 @@ class TagRepositoryImpl implements TagRepository {
   }
 
   @override
-  Stream<List<TagEntity>> watchAll() {
-    return _dataSource.watchAll().map(TagMapper.toDomainList);
-  }
+  Stream<List<TagEntity>> watchAll() =>
+      _dataSource.watchAll().map(TagMapper.toDomainList);
 }

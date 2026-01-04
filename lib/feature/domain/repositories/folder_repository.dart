@@ -9,7 +9,7 @@ abstract interface class FolderRepository {
   Future<List<FolderEntity>> getAll();
 
   /// Получить папку по UID
-  Future<FolderEntity?> getByUid(String uid);
+  Future<FolderEntity> getByUid(String uid);
 
   /// Создать новую папку
   Future<FolderEntity> create({

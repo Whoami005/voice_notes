@@ -10,7 +10,7 @@ abstract interface class FolderLocalDataSource {
   Future<List<FolderObject>> getAll();
 
   /// Получить папку по UID
-  Future<FolderObject?> getByUid(String uid);
+  Future<FolderObject> getByUid(String uid);
 
   /// Сохранить новую папку
   Future<FolderObject> save(FolderObject folder);
@@ -47,8 +47,9 @@ class FolderLocalDataSourceImpl implements FolderLocalDataSource {
   Future<List<FolderObject>> getAll() async => _folderDao.findAll(_db.box);
 
   @override
-  Future<FolderObject?> getByUid(String uid) async {
-    return _folderDao.findByUid(_db.box, uid);
+  Future<FolderObject> getByUid(String uid) async {
+    ///TODO: Позже добавить выброс ошибки "Папка не найдена"
+    return _folderDao.findByUid(_db.box, uid)!;
   }
 
   @override
@@ -63,7 +64,7 @@ class FolderLocalDataSourceImpl implements FolderLocalDataSource {
 
   @override
   Future<void> delete(String uid) async {
-    final folder = await getByUid(uid);
+    final folder = _folderDao.findByUid(_db.box, uid);
     if (folder != null) _folderDao.remove(_db.box, folder.id);
   }
 
