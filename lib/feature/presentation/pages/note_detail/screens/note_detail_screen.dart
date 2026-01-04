@@ -65,7 +65,7 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
     final themeColors = context.themeColors;
     final textTheme = context.textTheme;
 
-    return BaseStateBuilder<NoteDetailCubit, NoteDetailData>(
+    return BaseStateBody<NoteDetailCubit, NoteDetailData>(
       buildWhen: (prev, curr) => prev != curr,
       listener: _stateListener,
       onSuccess: (context, data) {
@@ -79,11 +79,8 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
           appBar: AppBar(
             backgroundColor: themeColors.bgPrimary,
             surfaceTintColor: Colors.transparent,
-            leading: IconButton(
-              icon: Icon(Icons.arrow_back, color: themeColors.textPrimary),
-              onPressed: () => context.pop(),
-            ),
             title: Text('Заметка', style: textTheme.titleLarge),
+            actionsPadding: const EdgeInsets.symmetric(horizontal: AppSizes.p8),
             actions: [
               IconButton(
                 icon: Icon(
@@ -94,7 +91,6 @@ class _NoteDetailScreenState extends State<NoteDetailScreen> {
                 ),
                 onPressed: () => _toggleEditing(context, data),
               ),
-              const SizedBox(width: 8),
             ],
           ),
           body: ListView(

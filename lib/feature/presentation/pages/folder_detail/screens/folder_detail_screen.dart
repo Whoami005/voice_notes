@@ -72,7 +72,7 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
       bottomNavigationBar: FolderDetailRecordingBar(
         onUploadFile: _onUploadFile,
       ),
-      body: BaseStateBuilder<FolderDetailCubit, FolderDetailData>(
+      body: BaseStateBody<FolderDetailCubit, FolderDetailData>(
         onSuccess: (context, _) {
           return RefreshableWrapper<FolderDetailCubit>(
             child: CustomScrollView(

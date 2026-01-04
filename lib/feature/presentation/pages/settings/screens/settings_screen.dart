@@ -313,7 +313,7 @@ class _ModelsTabState extends State<_ModelsTab>
   Widget build(BuildContext context) {
     super.build(context);
 
-    return BaseStateBuilder<ModelsCubit, ModelsState>(
+    return BaseStateBody<ModelsCubit, ModelsState>(
       buildWhen: (_, _) => true,
       listener: _handleStateChanges,
       onSuccess: (context, state) {

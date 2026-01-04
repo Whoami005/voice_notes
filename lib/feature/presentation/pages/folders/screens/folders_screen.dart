@@ -54,7 +54,7 @@ class _FoldersScreenState extends State<FoldersScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       floatingActionButton: AppFab(icon: Icons.add, onPressed: _onCreateFolder),
-      body: BaseStateBuilder<FoldersCubit, FoldersState>(
+      body: BaseStateBody<FoldersCubit, FoldersState>(
         buildWhen: (c, p) => true,
         onSuccess: (context, state) {
           return SafeArea(
