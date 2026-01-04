@@ -1,5 +1,4 @@
 import 'package:equatable/equatable.dart';
-import 'package:voice_notes/core/error/app_exception.dart';
 import 'package:voice_notes/core/state/state.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
 import 'package:voice_notes/feature/domain/entities/tag_entity.dart';
@@ -20,7 +19,6 @@ class NoteDetailCubit extends InitializableCubit<NoteDetailData> {
   Future<void> init() async {
     await load(() async {
       final note = await _noteRepository.getByUid(noteId);
-      if (note == null) throw const CustomException('Заметка не найдена');
 
       return NoteDetailData(note: note);
     });

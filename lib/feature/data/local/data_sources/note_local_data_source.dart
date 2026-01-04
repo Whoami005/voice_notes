@@ -11,10 +11,10 @@ abstract interface class NoteLocalDataSource {
   Future<List<NoteObject>> getAll();
 
   /// Получить заметку по UID
-  Future<NoteObject?> getByUid(String uid);
+  Future<NoteObject> getByUid(String uid);
 
-  /// Получить заметки по ID папки
-  Future<List<NoteObject>> getByFolderId(int folderId);
+  /// Получить заметки по UID папки
+  Future<List<NoteObject>> getByFolderUid(String folderUid);
 
   /// Получить заметки без папки
   Future<List<NoteObject>> getWithoutFolder();
@@ -37,8 +37,8 @@ abstract interface class NoteLocalDataSource {
   /// Стрим всех заметок с реактивными обновлениями
   Stream<List<NoteObject>> watchAll();
 
-  /// Стрим заметок по ID папки с реактивными обновлениями
-  Stream<List<NoteObject>> watchByFolderId(int folderId);
+  /// Стрим заметок по UID папки с реактивными обновлениями
+  Stream<List<NoteObject>> watchByFolderUid(String folderUid);
 
   /// Стрим заметок без папки с реактивными обновлениями
   Stream<List<NoteObject>> watchWithoutFolder();
@@ -66,13 +66,17 @@ class NoteLocalDataSourceImpl implements NoteLocalDataSource {
   Future<List<NoteObject>> getAll() async => _noteDao.findAll(_db.box);
 
   @override
-  Future<NoteObject?> getByUid(String uid) async {
-    return _noteDao.findByUid(_db.box, uid);
+  Future<NoteObject> getByUid(String uid) async {
+    ///TODO: Позже добавить выброс ошибки "Заметка не найдена"
+    return _noteDao.findByUid(_db.box, uid)!;
   }
 
   @override
-  Future<List<NoteObject>> getByFolderId(int folderId) async {
-    return _noteDao.findByFolderId(_db.box, folderId);
+  Future<List<NoteObject>> getByFolderUid(String folderUid) async {
+    ///TODO: Позже добавить выброс ошибки "Заметка не найдена"
+    final folder = _folderDao.findByUid(_db.box, folderUid)!;
+
+    return _noteDao.findByFolderId(_db.box, folder.id);
   }
 
   @override
@@ -143,9 +147,12 @@ class NoteLocalDataSourceImpl implements NoteLocalDataSource {
   }
 
   @override
-  Stream<List<NoteObject>> watchByFolderId(int folderId) {
+  Stream<List<NoteObject>> watchByFolderUid(String folderUid) {
+    ///TODO: Позже добавить выброс ошибки "Заметка не найдена"
+    final folder = _folderDao.findByUid(_db.box, folderUid)!;
+
     return _noteDao
-        .queryByFolderId(_db.box, folderId)
+        .queryByFolderId(_db.box, folder.id)
         .watch(triggerImmediately: true)
         .map((q) => q.find());
   }

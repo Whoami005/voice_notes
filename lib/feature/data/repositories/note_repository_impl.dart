@@ -1,6 +1,5 @@
 import 'package:injectable/injectable.dart';
 import 'package:voice_notes/core/packages/uuid/uuid_manager.dart';
-import 'package:voice_notes/feature/data/local/data_sources/folder_local_data_source.dart';
 import 'package:voice_notes/feature/data/local/data_sources/note_local_data_source.dart';
 import 'package:voice_notes/feature/data/local/mappers/note_mapper.dart';
 import 'package:voice_notes/feature/data/local/models/note_object.dart';
@@ -11,30 +10,27 @@ import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
 @Singleton(as: NoteRepository)
 class NoteRepositoryImpl implements NoteRepository {
   final NoteLocalDataSource _noteDataSource;
-  final FolderLocalDataSource _folderDataSource;
 
-  NoteRepositoryImpl(this._noteDataSource, this._folderDataSource);
+  NoteRepositoryImpl(this._noteDataSource);
 
   @override
   Future<List<NoteEntity>> getAll() async {
     final objects = await _noteDataSource.getAll();
+
     return NoteMapper.toDomainList(objects);
   }
 
   @override
-  Future<NoteEntity?> getByUid(String uid) async {
+  Future<NoteEntity> getByUid(String uid) async {
     final obj = await _noteDataSource.getByUid(uid);
-    if (obj == null) return null;
 
     return NoteMapper.toDomain(obj);
   }
 
   @override
   Future<List<NoteEntity>> getByFolderId(String folderUid) async {
-    final obj = await _folderDataSource.getByUid(folderUid);
-    if (obj == null) return [];
+    final objects = await _noteDataSource.getByFolderUid(folderUid);
 
-    final objects = await _noteDataSource.getByFolderId(obj.id);
     return NoteMapper.toDomainList(objects);
   }
 
@@ -81,7 +77,6 @@ class NoteRepositoryImpl implements NoteRepository {
   @override
   Future<NoteEntity> update(NoteEntity note) async {
     final existing = await _noteDataSource.getByUid(note.uuid);
-    if (existing == null) throw Exception('Note not found: ${note.uuid}');
 
     final updatedNote = note.copyWith(updatedAt: DateTime.now());
     NoteMapper.updateEntity(existing, updatedNote);
@@ -110,10 +105,8 @@ class NoteRepositoryImpl implements NoteRepository {
 
   @override
   Stream<List<NoteEntity>> watchByFolderId(String folderUid) {
-    final folder = _folderDataSource.getByUidSync(folderUid)!;
-
     return _noteDataSource
-        .watchByFolderId(folder.id)
+        .watchByFolderUid(folderUid)
         .map(NoteMapper.toDomainList);
   }
 

@@ -22,8 +22,8 @@ abstract interface class TagLocalDataSource {
 
   Future<List<TagObject>> saveMany(List<String> names);
 
-  /// Удалить тег по ID
-  Future<void> delete(int id);
+  /// Удалить тег по имени
+  Future<void> deleteByName(String name);
 
   /// Стрим всех тегов с реактивными обновлениями
   Stream<List<TagObject>> watchAll();
@@ -76,7 +76,10 @@ class TagLocalDataSourceImpl implements TagLocalDataSource {
   }
 
   @override
-  Future<void> delete(int id) async => _tagDao.remove(_db.box, id);
+  Future<void> deleteByName(String name) async {
+    final tag = await getByName(name);
+    if (tag != null) _tagDao.remove(_db.box, tag.id);
+  }
 
   @override
   Stream<List<TagObject>> watchAll() {

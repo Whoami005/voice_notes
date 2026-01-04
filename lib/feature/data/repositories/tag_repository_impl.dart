@@ -53,9 +53,7 @@ class TagRepositoryImpl implements TagRepository {
 
   @override
   Future<void> delete(String name) async {
-    final tag = await _dataSource.getByName(name);
-
-    if (tag != null) await _dataSource.delete(tag.id);
+    await _dataSource.deleteByName(name);
   }
 
   @override

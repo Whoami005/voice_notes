@@ -12,9 +12,6 @@ abstract interface class FolderLocalDataSource {
   /// Получить папку по UID
   Future<FolderObject?> getByUid(String uid);
 
-  /// Получить папку по UID (синхронно, для транзакций)
-  FolderObject? getByUidSync(String uid);
-
   /// Сохранить новую папку
   Future<FolderObject> save(FolderObject folder);
 
@@ -53,9 +50,6 @@ class FolderLocalDataSourceImpl implements FolderLocalDataSource {
   Future<FolderObject?> getByUid(String uid) async {
     return _folderDao.findByUid(_db.box, uid);
   }
-
-  @override
-  FolderObject? getByUidSync(String uid) => _folderDao.findByUid(_db.box, uid);
 
   @override
   Future<FolderObject> save(FolderObject folder) async {

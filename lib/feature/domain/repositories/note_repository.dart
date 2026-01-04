@@ -6,9 +6,9 @@ abstract interface class NoteRepository {
   Future<List<NoteEntity>> getAll();
 
   /// Получить заметку по UID
-  Future<NoteEntity?> getByUid(String uid);
+  Future<NoteEntity> getByUid(String uid);
 
-  /// Получить заметки по ID папки
+  /// Получить заметки по UID папки
   Future<List<NoteEntity>> getByFolderId(String folderUid);
 
   /// Получить заметки без папки
@@ -38,7 +38,7 @@ abstract interface class NoteRepository {
   /// Стрим всех заметок с реактивными обновлениями
   Stream<List<NoteEntity>> watchAll();
 
-  /// Стрим заметок по ID папки с реактивными обновлениями
+  /// Стрим заметок по UID папки (если null - возвращает заметки без папки)
   Stream<List<NoteEntity>> watchByFolderId(String folderUid);
 
   /// Стрим заметок без папки с реактивными обновлениями
