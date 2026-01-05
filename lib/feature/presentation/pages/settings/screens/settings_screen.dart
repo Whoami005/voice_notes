@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/packages/app_router/app_route_wrapper.dart';
+import 'package:voice_notes/core/packages/app_router/routes/app_routes.dart';
 import 'package:voice_notes/core/packages/di/injection.dart';
 import 'package:voice_notes/core/packages/downloader/download_status.dart';
 import 'package:voice_notes/core/state/state.dart';
@@ -18,6 +20,11 @@ import 'package:voice_notes/feature/presentation/widgets/dialogs/error_dialog.da
 
 class SettingsScreen extends StatefulWidget implements AppRouteWrapper {
   const SettingsScreen({super.key});
+
+  /// Навигация на экран настроек
+  static void go(BuildContext context) {
+    context.go(AppRoutes.settings.root);
+  }
 
   @override
   Widget wrappedRoute(BuildContext context) {

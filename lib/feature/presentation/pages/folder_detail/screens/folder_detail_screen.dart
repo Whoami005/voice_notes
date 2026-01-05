@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/packages/app_router/app_route_wrapper.dart';
+import 'package:voice_notes/core/packages/app_router/routes/app_routes.dart';
 import 'package:voice_notes/core/packages/asr/asr_service.dart';
 import 'package:voice_notes/core/packages/audio/audio_recording_service.dart';
 import 'package:voice_notes/core/packages/di/injection.dart';
@@ -25,6 +26,11 @@ class FolderDetailScreen extends StatefulWidget implements AppRouteWrapper {
   final String folderId;
 
   const FolderDetailScreen({required this.folderId, super.key});
+
+  /// Навигация на экран деталей папки
+  static void go(BuildContext context, {required String folderId}) {
+    context.go(AppRoutes.folders.detail(folderId));
+  }
 
   @override
   Widget wrappedRoute(BuildContext context) {

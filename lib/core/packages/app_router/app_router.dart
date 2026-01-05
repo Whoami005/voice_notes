@@ -2,21 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:injectable/injectable.dart';
 import 'package:voice_notes/core/packages/app_router/root_screen.dart';
-import 'package:voice_notes/core/packages/app_router/route_builder.dart';
-import 'package:voice_notes/core/packages/app_router/routes.dart';
-import 'package:voice_notes/feature/presentation/pages/folder_detail/screens/folder_detail_screen.dart';
-import 'package:voice_notes/feature/presentation/pages/folders/screens/folders_screen.dart';
-import 'package:voice_notes/feature/presentation/pages/note_detail/screens/note_detail_screen.dart';
-import 'package:voice_notes/feature/presentation/pages/settings/screens/settings_screen.dart';
+import 'package:voice_notes/core/packages/app_router/routes/app_routes.dart';
+import 'package:voice_notes/core/packages/app_router/routes/folders_routes.dart';
+import 'package:voice_notes/core/packages/app_router/routes/settings_routes.dart';
 
-///  AppRouter - класс для управления навигацией в приложении
+/// AppRouter - класс для управления навигацией в приложении.
+///
+/// Использует модульную структуру с [FoldersRouteModule] и [SettingsRouteModule]
+/// для организации роутов по веткам навигации.
 @singleton
 class AppRouter {
   /// Ключ для доступа к корневому навигатору приложения
   static final rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
-
-  /// Начальный роут приложения
-  static const String initialLocation = AppRoutes.folders;
 
   /// Экземпляр GoRouter
   late final GoRouter router = _createRouter();
@@ -25,68 +22,46 @@ class AppRouter {
   GoRouter _createRouter({NavigatorObserver? observer}) {
     return GoRouter(
       navigatorKey: rootNavigatorKey,
-      initialLocation: initialLocation,
+      initialLocation: AppRoutes.folders.root,
       debugLogDiagnostics: true,
       observers: observer != null ? [observer] : null,
+
+      // Обработка ошибок навигации - редирект на корень ветки
+      onException: (context, state, router) {
+        final path = state.matchedLocation;
+
+        if (path.startsWith('/settings')) {
+          router.go(AppRoutes.settings.root);
+        } else {
+          router.go(AppRoutes.folders.root);
+        }
+      },
+
+      // Редирект для невалидных путей
+      redirect: (context, state) {
+        final path = state.matchedLocation;
+
+        // Проверка параметров для folder detail
+        if (path.startsWith('/folders/') && path != '/folders') {
+          final segments = path.split('/');
+
+          if (segments.length >= 3) {
+            final folderId = segments[2];
+            final isId = folderId.isEmpty || folderId == ':id';
+
+            if (isId) return AppRoutes.folders.root;
+          }
+        }
+
+        return null;
+      },
+
       routes: [
         StatefulShellRoute.indexedStack(
           parentNavigatorKey: rootNavigatorKey,
           builder: (context, state, navigationShell) =>
               RootScreen(navigationShell: navigationShell),
-          branches: [
-            // Branch 0: Folders
-            StatefulShellBranch(
-              routes: [
-                GoRoute(
-                  path: AppRoutes.folders,
-                  builder: (context, state) =>
-                      wrapRoute(context, const FoldersScreen()),
-                  routes: [
-                    GoRoute(
-                      path: ':id',
-                      parentNavigatorKey: rootNavigatorKey,
-                      builder: (context, state) {
-                        final folderId = state.pathParameters['id']!;
-
-                        return wrapRoute(
-                          context,
-                          FolderDetailScreen(folderId: folderId),
-                        );
-                      },
-                      routes: [
-                        GoRoute(
-                          path: 'note/:noteId',
-                          parentNavigatorKey: rootNavigatorKey,
-                          builder: (context, state) {
-                            final folderId = state.pathParameters['id']!;
-                            final noteId = state.pathParameters['noteId']!;
-
-                            return wrapRoute(
-                              context,
-                              NoteDetailScreen(
-                                folderId: folderId,
-                                noteId: noteId,
-                              ),
-                            );
-                          },
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            // Branch 1: Settings
-            StatefulShellBranch(
-              routes: [
-                GoRoute(
-                  path: AppRoutes.settings,
-                  builder: (context, state) =>
-                      wrapRoute(context, const SettingsScreen()),
-                ),
-              ],
-            ),
-          ],
+          branches: [FoldersRouteModule.branch(), SettingsRouteModule.branch()],
         ),
       ],
     );

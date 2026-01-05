@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:voice_notes/core/packages/app_router/app_route_wrapper.dart';
+import 'package:voice_notes/core/packages/app_router/routes/app_routes.dart';
 import 'package:voice_notes/core/packages/di/injection.dart';
 import 'package:voice_notes/core/state/state.dart';
 import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
@@ -20,6 +21,17 @@ class NoteDetailScreen extends StatelessWidget implements AppRouteWrapper {
     required this.noteId,
     super.key,
   });
+
+  /// Навигация на экран деталей заметки
+  static void go(
+    BuildContext context, {
+    required String folderId,
+    required String noteId,
+  }) {
+    context.go(
+      AppRoutes.folders.noteDetail(folderId: folderId, noteId: noteId),
+    );
+  }
 
   @override
   Widget wrappedRoute(BuildContext context) {

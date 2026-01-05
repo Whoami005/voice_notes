@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/state/state.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/logic/folder_detail_cubit.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/widgets/date_separator.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/widgets/note_bubble.dart';
+import 'package:voice_notes/feature/presentation/pages/note_detail/screens/note_detail_screen.dart';
 import 'package:voice_notes/feature/presentation/widgets/lists/bloc_grouped_sliver_list.dart';
 
 class NoteDetailsWidget extends StatelessWidget {
@@ -36,7 +36,7 @@ class NoteDetailsWidget extends StatelessWidget {
           note: note,
           onTap: () {
             final folderId = context.read<FolderDetailCubit>().folderId;
-            context.go('/folders/$folderId/note/${note.uuid}');
+            NoteDetailScreen.go(context, folderId: folderId, noteId: note.uuid);
           },
           onCopy: () async {
             await Clipboard.setData(ClipboardData(text: note.text));

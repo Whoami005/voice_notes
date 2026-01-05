@@ -5,15 +5,17 @@ import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/packages/app_router/app_route_wrapper.dart';
-import 'package:voice_notes/core/packages/app_router/routes.dart';
+import 'package:voice_notes/core/packages/app_router/routes/app_routes.dart';
 import 'package:voice_notes/core/packages/di/injection.dart';
 import 'package:voice_notes/core/state/state.dart';
 import 'package:voice_notes/core/theme/app_typography.dart';
 import 'package:voice_notes/feature/domain/entities/folder_entity.dart';
 import 'package:voice_notes/feature/domain/repositories/folder_repository.dart';
+import 'package:voice_notes/feature/presentation/pages/folder_detail/screens/folder_detail_screen.dart';
 import 'package:voice_notes/feature/presentation/pages/folders/logic/folders_cubit.dart';
 import 'package:voice_notes/feature/presentation/pages/folders/widgets/folder_card.dart';
 import 'package:voice_notes/feature/presentation/pages/folders/widgets/quick_record_card.dart';
+import 'package:voice_notes/feature/presentation/pages/settings/screens/settings_screen.dart';
 import 'package:voice_notes/feature/presentation/widgets/bottom_sheet/create_folder_sheet.dart';
 import 'package:voice_notes/feature/presentation/widgets/buttons/app_fab.dart';
 import 'package:voice_notes/feature/presentation/widgets/dialogs/confirm_dialog.dart';
@@ -21,6 +23,11 @@ import 'package:voice_notes/feature/presentation/widgets/refresh/refreshable_wra
 
 class FoldersScreen extends StatefulWidget implements AppRouteWrapper {
   const FoldersScreen({super.key});
+
+  /// Навигация на главный экран папок
+  static void go(BuildContext context) {
+    context.go(AppRoutes.folders.root);
+  }
 
   @override
   Widget wrappedRoute(BuildContext context) {
@@ -129,7 +136,7 @@ class _FoldersScreenState extends State<FoldersScreen> {
   }
 
   void _onSettingsTap() {
-    context.go(AppRoutes.settings);
+    SettingsScreen.go(context);
   }
 
   void _onQuickRecord() {
@@ -137,7 +144,7 @@ class _FoldersScreenState extends State<FoldersScreen> {
   }
 
   Future<void> _onFolderTap(FolderEntity folder) async {
-    context.go('/folders/${folder.uid}');
+    FolderDetailScreen.go(context, folderId: folder.uid);
   }
 
   Future<void> _onFolderLongPress(FolderEntity folder) async {
