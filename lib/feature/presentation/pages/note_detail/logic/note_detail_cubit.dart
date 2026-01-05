@@ -65,11 +65,7 @@ class NoteDetailCubit extends InitializableCubit<NoteDetailData> {
         return data;
       }
 
-      final newTag = TagEntity(
-        uid: DateTime.now().millisecondsSinceEpoch.toString(),
-        name: normalizedName,
-        createdAt: DateTime.now(),
-      );
+      final newTag = TagEntity(name: normalizedName, createdAt: DateTime.now());
 
       final updatedNote = data.note.modify(
         (note) => note.copyWith(tags: [...note.tags, newTag]),
@@ -84,7 +80,7 @@ class NoteDetailCubit extends InitializableCubit<NoteDetailData> {
     transform((data) {
       final updatedNote = data.note.modify(
         (note) => note.copyWith(
-          tags: note.tags.where((t) => t.uid != tag.uid).toList(),
+          tags: note.tags.where((t) => t.name != tag.name).toList(),
         ),
       );
       return data.copyWith(note: updatedNote);

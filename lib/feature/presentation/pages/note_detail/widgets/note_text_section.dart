@@ -25,7 +25,6 @@ class NoteTextSection extends StatelessWidget {
       readOnly: !isEditing,
       onChanged: onChanged,
       maxLines: null,
-      minLines: 4,
       style: textTheme.bodyMedium?.copyWith(
         color: themeColors.textPrimary,
         height: 1.5,

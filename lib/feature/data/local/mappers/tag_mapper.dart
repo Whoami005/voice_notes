@@ -6,7 +6,6 @@ import 'package:voice_notes/feature/domain/entities/tag_entity.dart';
 abstract final class TagMapper {
   static TagEntity toDomain(TagObject e) {
     return TagEntity(
-      uid: e.id.toString(),
       name: e.name,
       color: e.colorValue != null ? Color(e.colorValue!) : null,
       createdAt: e.createdAt,

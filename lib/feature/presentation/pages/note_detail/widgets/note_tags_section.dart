@@ -60,7 +60,9 @@ class _NoteTagsSectionState extends State<NoteTagsSection> {
             for (final tag in widget.tags)
               TagChip(
                 label: tag.name,
-                onDelete: widget.isEditing ? () => widget.onRemoveTag(tag) : null,
+                onDelete: widget.isEditing
+                    ? () => widget.onRemoveTag(tag)
+                    : null,
               ),
           ],
         ),
