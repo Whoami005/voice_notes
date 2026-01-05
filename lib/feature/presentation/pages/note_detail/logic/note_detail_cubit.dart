@@ -20,32 +20,50 @@ class NoteDetailCubit extends InitializableCubit<NoteDetailData> {
     await load(() async {
       final note = await _noteRepository.getByUid(noteId);
 
-      return NoteDetailData(note: note);
+      return NoteDetailData(note: Editable.fromValue(note));
     });
   }
 
-  void toggleEditing() {
-    transform((data) => data.copyWith(isEditing: !data.isEditing));
+  // ─────────────────────────────────────────────────────────────
+  // Editing mode
+  // ─────────────────────────────────────────────────────────────
+
+  /// Начать редактирование
+  void startEditing() {
+    transform((data) => data.copyWith(note: data.note.startEditing()));
   }
 
-  Future<void> updateNote({String? text, List<TagEntity>? tags}) async {
-    await transform((data) async {
-      final updatedNote = data.note.copyWith(
-        text: text?.trim(),
-        tags: tags,
-        updatedAt: DateTime.now(),
-      );
+  /// Отменить редактирование (откатить к оригиналу)
+  void cancelEditing() {
+    transform((data) => data.copyWith(note: data.note.cancelEditing()));
+  }
 
-      final savedNote = await _noteRepository.update(updatedNote);
-      return data.copyWith(note: savedNote, isEditing: text == null);
+  // ─────────────────────────────────────────────────────────────
+  // Text editing
+  // ─────────────────────────────────────────────────────────────
+
+  /// Обновить текст заметки
+  void updateText(String text) {
+    transform((data) {
+      final updatedNote = data.note.modify((note) => note.copyWith(text: text));
+      return data.copyWith(note: updatedNote);
     });
   }
 
-  Future<void> addTag(String tagName) async {
-    await whenData((data) async {
-      final normalizedName = tagName.trim().toLowerCase();
-      if (normalizedName.isEmpty) return;
-      if (data.note.tags.any((t) => t.name == normalizedName)) return;
+  // ─────────────────────────────────────────────────────────────
+  // Tags
+  // ─────────────────────────────────────────────────────────────
+
+  /// Добавить тег
+  void addTag(String tagName) {
+    final normalizedName = tagName.trim().toLowerCase();
+    if (normalizedName.isEmpty) return;
+
+    transform((data) {
+      // Проверка на дубликат
+      if (data.currentNote.tags.any((t) => t.name == normalizedName)) {
+        return data;
+      }
 
       final newTag = TagEntity(
         uid: DateTime.now().millisecondsSinceEpoch.toString(),
@@ -53,28 +71,59 @@ class NoteDetailCubit extends InitializableCubit<NoteDetailData> {
         createdAt: DateTime.now(),
       );
 
-      final updatedTags = [...data.note.tags, newTag];
-      await updateNote(tags: updatedTags);
+      final updatedNote = data.note.modify(
+        (note) => note.copyWith(tags: [...note.tags, newTag]),
+      );
+
+      return data.copyWith(note: updatedNote);
     });
   }
 
-  Future<void> removeTag(TagEntity tag) async {
-    await whenData((data) async {
-      final updatedTags = data.note.tags
-          .where((t) => t.uid != tag.uid)
-          .toList();
-
-      await updateNote(tags: updatedTags);
+  /// Удалить тег
+  void removeTag(TagEntity tag) {
+    transform((data) {
+      final updatedNote = data.note.modify(
+        (note) => note.copyWith(
+          tags: note.tags.where((t) => t.uid != tag.uid).toList(),
+        ),
+      );
+      return data.copyWith(note: updatedNote);
     });
   }
 
+  // ─────────────────────────────────────────────────────────────
+  // Save & Delete
+  // ─────────────────────────────────────────────────────────────
+
+  /// Сохранить изменения в БД
+  Future<void> saveNote() async {
+    await transform((data) async {
+      // Если нет изменений — просто выйти из редактирования
+      if (data.note.isClean) {
+        return data.copyWith(note: data.note.commit());
+      }
+
+      // Подготовить заметку для сохранения
+      final noteToSave = data.currentNote.copyWith(
+        text: data.currentNote.text.trim(),
+        updatedAt: DateTime.now(),
+      );
+
+      // Сохранить в БД
+      final savedNote = await _noteRepository.update(noteToSave);
+
+      // Зафиксировать с сохранённым значением
+      return data.copyWith(note: data.note.commitWith(savedNote));
+    });
+  }
+
+  /// Удалить заметку
   Future<bool> deleteNote() async {
     try {
       await _noteRepository.delete(noteId);
       return true;
     } catch (e, s) {
       addError(e, s);
-
       return false;
     }
   }

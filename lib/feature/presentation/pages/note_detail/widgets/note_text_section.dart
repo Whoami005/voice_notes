@@ -4,13 +4,13 @@ import 'package:voice_notes/core/extensions/context_extensions.dart';
 
 class NoteTextSection extends StatelessWidget {
   final String text;
-  final TextEditingController controller;
   final bool isEditing;
+  final ValueChanged<String>? onChanged;
 
   const NoteTextSection({
     required this.text,
-    required this.controller,
     required this.isEditing,
+    this.onChanged,
     super.key,
   });
 
@@ -19,9 +19,11 @@ class NoteTextSection extends StatelessWidget {
     final themeColors = context.themeColors;
     final textTheme = context.textTheme;
 
-    return TextField(
+    return TextFormField(
+      key: ValueKey('note_text_$isEditing'),
+      initialValue: text,
       readOnly: !isEditing,
-      controller: controller,
+      onChanged: onChanged,
       maxLines: null,
       minLines: 4,
       style: textTheme.bodyMedium?.copyWith(

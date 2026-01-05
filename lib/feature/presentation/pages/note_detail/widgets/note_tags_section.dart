@@ -4,21 +4,46 @@ import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/feature/domain/entities/tag_entity.dart';
 import 'package:voice_notes/feature/presentation/widgets/chips/tag_chip.dart';
 
-class NoteTagsSection extends StatelessWidget {
+class NoteTagsSection extends StatefulWidget {
   final List<TagEntity> tags;
   final bool isEditing;
-  final TextEditingController tagController;
-  final VoidCallback onAddTag;
+  final ValueChanged<String> onAddTag;
   final ValueChanged<TagEntity> onRemoveTag;
 
   const NoteTagsSection({
     required this.tags,
     required this.isEditing,
-    required this.tagController,
     required this.onAddTag,
     required this.onRemoveTag,
     super.key,
   });
+
+  @override
+  State<NoteTagsSection> createState() => _NoteTagsSectionState();
+}
+
+class _NoteTagsSectionState extends State<NoteTagsSection> {
+  late TextEditingController _tagController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tagController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _tagController.dispose();
+    super.dispose();
+  }
+
+  void _onAddTag() {
+    final tagName = _tagController.text.trim();
+    if (tagName.isNotEmpty) {
+      widget.onAddTag(tagName);
+      _tagController.clear();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,20 +57,20 @@ class NoteTagsSection extends StatelessWidget {
           spacing: AppSizes.p8,
           runSpacing: AppSizes.p8,
           children: [
-            for (final tag in tags)
+            for (final tag in widget.tags)
               TagChip(
                 label: tag.name,
-                onDelete: isEditing ? () => onRemoveTag(tag) : null,
+                onDelete: widget.isEditing ? () => widget.onRemoveTag(tag) : null,
               ),
           ],
         ),
-        if (isEditing)
+        if (widget.isEditing)
           Row(
             spacing: AppSizes.p8,
             children: [
               Expanded(
                 child: TextField(
-                  controller: tagController,
+                  controller: _tagController,
                   decoration: const InputDecoration(
                     hintText: 'Новый тег...',
                     isDense: true,
@@ -54,12 +79,12 @@ class NoteTagsSection extends StatelessWidget {
                       vertical: AppSizes.p10,
                     ),
                   ),
-                  onSubmitted: (_) => onAddTag(),
+                  onSubmitted: (_) => _onAddTag(),
                 ),
               ),
               IconButton(
                 icon: Icon(Icons.add_circle, color: themeColors.accentPrimary),
-                onPressed: onAddTag,
+                onPressed: _onAddTag,
               ),
             ],
           ),
