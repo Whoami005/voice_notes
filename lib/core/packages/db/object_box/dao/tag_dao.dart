@@ -15,10 +15,13 @@ class TagDao {
   /// Найти тег по имени (case-insensitive)
   TagObject? findByName(BoxProvider box, String name) {
     final normalizedName = name.toLowerCase().trim();
-    final query =
-        box<TagObject>().query(TagObject_.name.equals(normalizedName)).build();
+    final query = box<TagObject>()
+        .query(TagObject_.name.equals(normalizedName))
+        .build();
+
     final result = query.findFirst();
     query.close();
+
     return result;
   }
 
@@ -41,4 +44,32 @@ class TagDao {
 
   /// Query builder для всех тегов
   QueryBuilder<TagObject> queryAll(BoxProvider box) => box<TagObject>().query();
+
+  /// Получить или создать теги по именам
+  List<TagObject> getOrCreateMany(BoxProvider box, List<String> names) {
+    if (names.isEmpty) return [];
+
+    final normalizedNames = names.map((n) => n.toLowerCase().trim()).toSet();
+    final now = DateTime.now();
+
+    // Найти существующие
+    final query = box<TagObject>()
+        .query(TagObject_.name.oneOf(normalizedNames.toList()))
+        .build();
+    final existing = query.find();
+    query.close();
+
+    final existingNames = existing.map((t) => t.name).toSet();
+
+    // Создать недостающие
+    final newTags = [
+      for (final name in normalizedNames)
+        if (!existingNames.contains(name))
+          TagObject(name: name, createdAt: now),
+    ];
+
+    if (newTags.isNotEmpty) putMany(box, newTags);
+
+    return [...existing, ...newTags];
+  }
 }

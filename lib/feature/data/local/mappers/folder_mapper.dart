@@ -29,8 +29,8 @@ abstract final class FolderMapper {
       description: f.description,
       colorValue: f.color.toARGB32(),
       iconRef: f.icon.serialize(),
-      createdAt: f.createdAt.toLocal(),
-      updatedAt: f.updatedAt.toLocal(),
+      createdAt: f.createdAt,
+      updatedAt: f.updatedAt,
     );
   }
 
@@ -41,7 +41,7 @@ abstract final class FolderMapper {
       ..description = folder.description
       ..colorValue = folder.color.toARGB32()
       ..iconRef = folder.icon.serialize()
-      ..updatedAt = folder.updatedAt.toLocal();
+      ..updatedAt = folder.updatedAt;
   }
 
   static List<FolderEntity> toDomainList(List<FolderObject> objects) => [

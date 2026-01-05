@@ -76,12 +76,13 @@ class NoteRepositoryImpl implements NoteRepository {
 
   @override
   Future<NoteEntity> update(NoteEntity note) async {
-    final existing = await _noteDataSource.getByUid(note.uuid);
+    final noteObject = NoteMapper.toEntity(note);
+    final tagNames = note.tags.map((t) => t.name).toList();
 
-    final updatedNote = note.copyWith(updatedAt: DateTime.now());
-    NoteMapper.updateEntity(existing, updatedNote);
-
-    final newObj = await _noteDataSource.update(existing);
+    final newObj = await _noteDataSource.updateWithTags(
+      note: noteObject,
+      tagNames: tagNames,
+    );
     return NoteMapper.toDomain(newObj);
   }
 

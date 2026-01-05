@@ -20,7 +20,11 @@ abstract final class TagMapper {
     );
   }
 
-  static List<TagEntity> toDomainList(List<TagObject> entities) {
-    return [for (final e in entities) toDomain(e)];
+  static List<TagEntity> toDomainList(List<TagObject> items) {
+    return [for (final item in items) toDomain(item)];
+  }
+
+  static List<TagObject> toEntityList(List<TagEntity> items) {
+    return [for (final item in items) toEntity(item)];
   }
 }

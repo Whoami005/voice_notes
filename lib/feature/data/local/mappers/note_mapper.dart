@@ -29,8 +29,8 @@ abstract final class NoteMapper {
       language: n.language,
       wordCount: n.wordCount,
       hasAudio: n.hasAudio,
-      createdAt: n.createdAt.toLocal(),
-      updatedAt: n.updatedAt.toLocal(),
+      createdAt: n.createdAt,
+      updatedAt: n.updatedAt,
     );
   }
 

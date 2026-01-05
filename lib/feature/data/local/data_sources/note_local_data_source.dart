@@ -50,6 +50,12 @@ abstract interface class NoteLocalDataSource {
     String? folderUid,
     List<String> tagNames,
   });
+
+  /// Обновить заметку с тегами атомарно
+  Future<NoteObject> updateWithTags({
+    required NoteObject note,
+    required List<String> tagNames,
+  });
 }
 
 /// Реализация на основе ObjectBox
@@ -180,13 +186,13 @@ class NoteLocalDataSourceImpl implements NoteLocalDataSource {
       ({NoteObject note, String? folderUid, List<String> tags}) p,
     ) {
       final box = store.box;
-      final noteToSave = p.note;
+      final note = p.note;
 
       final targetFolder = p.folderUid != null
           ? _folderDao.findByUid(box, p.folderUid!)
           : null;
 
-      if (targetFolder != null) noteToSave.folder.target = targetFolder;
+      if (targetFolder != null) note.folder.target = targetFolder;
 
       if (p.tags.isNotEmpty) {
         final now = DateTime.now();
@@ -195,13 +201,42 @@ class NoteLocalDataSourceImpl implements NoteLocalDataSource {
             TagObject(name: name.toLowerCase().trim(), createdAt: now),
         ];
         _tagDao.putMany(box, tags);
-        noteToSave.tags.addAll(tags);
+        note.tags.addAll(tags);
       }
 
-      _noteDao.put(box, noteToSave, mode: PutMode.insert);
+      _noteDao.put(box, note, mode: PutMode.insert);
       _folderDao.touch(box, targetFolder);
 
-      return noteToSave;
+      return note;
     }, param: (note: note, folderUid: folderUid, tags: tagNames));
+  }
+
+  @override
+  Future<NoteObject> updateWithTags({
+    required NoteObject note,
+    required List<String> tagNames,
+  }) async {
+    return _db.runInTransactionAsync((
+      Store store,
+      ({NoteObject note, List<String> tagNames}) p,
+    ) {
+      final box = store.box;
+
+      final existing = _noteDao
+          .findByUid(box, p.note.uid)
+          .orThrowNotFound(EntityType.note, p.note.uid);
+
+      p.note.id = existing.id;
+      p.note.folder.target = existing.folder.target;
+
+      p.note.tags.clear();
+      if (p.tagNames.isNotEmpty) {
+        final tags = _tagDao.getOrCreateMany(box, p.tagNames);
+        p.note.tags.addAll(tags);
+      }
+
+      _noteDao.put(box, p.note, mode: PutMode.update);
+      return p.note;
+    }, param: (note: note, tagNames: tagNames));
   }
 }
