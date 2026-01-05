@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
-import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 
 class NoteActionsSection extends StatelessWidget {
   final VoidCallback onCopy;
-  final VoidCallback onShare;
-  final VoidCallback onRetranscribe;
+  final VoidCallback? onShare;
+  final VoidCallback? onRetranscribe;
   final VoidCallback onDelete;
 
   const NoteActionsSection({
     required this.onCopy,
-    required this.onShare,
-    required this.onRetranscribe,
     required this.onDelete,
+    this.onShare,
+    this.onRetranscribe,
     super.key,
   });
 
@@ -22,25 +21,23 @@ class NoteActionsSection extends StatelessWidget {
     final themeColors = context.themeColors;
 
     return Column(
+      spacing: AppSizes.p8,
       children: [
         _ActionButton(
           icon: Icons.copy_outlined,
           label: 'Копировать текст',
           onTap: onCopy,
         ),
-        AppSpacer.p8,
-        _ActionButton(
-          icon: Icons.share_outlined,
-          label: 'Поделиться',
-          onTap: onShare,
-        ),
-        AppSpacer.p8,
-        _ActionButton(
-          icon: Icons.refresh,
-          label: 'Перетранскрибировать',
-          onTap: onRetranscribe,
-        ),
-        AppSpacer.p8,
+        // _ActionButton(
+        //   icon: Icons.share_outlined,
+        //   label: 'Поделиться',
+        //   onTap: onShare,
+        // ),
+        // _ActionButton(
+        //   icon: Icons.refresh,
+        //   label: 'Перетранскрибировать',
+        //   onTap: onRetranscribe,
+        // ),
         _ActionButton(
           icon: Icons.delete_outline,
           label: 'Удалить заметку',

@@ -26,14 +26,6 @@ class NoteDetailBody extends StatelessWidget {
     ).showSnackBar(const SnackBar(content: Text('Текст скопирован')));
   }
 
-  void _onShare() {
-    // TODO: Implement share
-  }
-
-  void _onRetranscribe() {
-    // TODO: Implement retranscribe
-  }
-
   Future<void> _onDelete(BuildContext context) async {
     final cubit = context.read<NoteDetailCubit>();
     final themeColors = context.themeColors;
@@ -90,8 +82,6 @@ class NoteDetailBody extends StatelessWidget {
             AppSpacer.p12,
             NoteActionsSection(
               onCopy: () => _onCopy(context, data),
-              onShare: _onShare,
-              onRetranscribe: _onRetranscribe,
               onDelete: () => _onDelete(context),
             ),
             AppSpacer.p32,
