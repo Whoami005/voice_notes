@@ -26,7 +26,7 @@ class AsrIsolateRunner {
   ReceivePort? _responses;
   SendPort? _commands;
 
-  final _isolateReady = Completer<void>.sync();
+  Completer<void> _isolateReady = Completer<void>.sync();
   Completer<AsrResult>? _pendingTranscription;
   Completer<bool>? _pendingInitialization;
 
@@ -39,6 +39,9 @@ class AsrIsolateRunner {
   /// и [transcribeFile].
   Future<void> spawn() async {
     if (_isolate != null) return;
+
+    // Пересоздаём Completer для возможности повторного использования runner
+    _isolateReady = Completer<void>.sync();
 
     _responses = ReceivePort();
     _responses!.listen(_handleResponse);

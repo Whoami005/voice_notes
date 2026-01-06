@@ -6,6 +6,7 @@ import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/packages/app_router/app_route_wrapper.dart';
 import 'package:voice_notes/core/packages/app_router/routes/app_routes.dart';
+import 'package:voice_notes/core/packages/asr/asr_service.dart';
 import 'package:voice_notes/core/packages/di/injection.dart';
 import 'package:voice_notes/core/packages/downloader/download_status.dart';
 import 'package:voice_notes/core/state/state.dart';
@@ -29,7 +30,10 @@ class SettingsScreen extends StatefulWidget implements AppRouteWrapper {
   @override
   Widget wrappedRoute(BuildContext context) {
     return BlocProvider(
-      create: (context) => ModelsCubit(repository: getIt<ModelRepository>()),
+      create: (context) => ModelsCubit(
+        repository: getIt<ModelRepository>(),
+        asrService: getIt<AsrService>(),
+      ),
       child: this,
     );
   }
@@ -405,7 +409,7 @@ class _ModelsTabState extends State<_ModelsTab>
       model: model,
       downloadProgress: downloadProgress,
       onUse: model.isDownloaded && !model.isSelected
-          ? () => cubit.selectModel(model.uuid)
+          ? () => cubit.selectModel(model)
           : null,
       onDownload: !model.isDownloaded && !state.isDownloading(model.uuid)
           ? () => _onDownloadModel(context, model)

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:collection/collection.dart';
 import 'package:equatable/equatable.dart';
 import 'package:voice_notes/core/error/app_failure.dart';
+import 'package:voice_notes/core/packages/asr/asr_service.dart';
 import 'package:voice_notes/core/packages/downloader/download_manager.dart';
 import 'package:voice_notes/core/packages/downloader/download_status.dart';
 import 'package:voice_notes/core/packages/internet/internet_checker.dart';
@@ -16,10 +17,15 @@ part 'models_state.dart';
 /// Cubit для управления ASR моделями
 class ModelsCubit extends RefreshableCubit<ModelsState> {
   final ModelRepository _repository;
+  final AsrService _asrService;
 
   StreamSubscription<ModelDownloadProgress>? _downloadSubscription;
 
-  ModelsCubit({required ModelRepository repository}) : _repository = repository;
+  ModelsCubit({
+    required ModelRepository repository,
+    required AsrService asrService,
+  }) : _repository = repository,
+       _asrService = asrService;
 
   @override
   Future<void> init() async {
@@ -182,6 +188,9 @@ class ModelsCubit extends RefreshableCubit<ModelsState> {
   /// Удалить модель
   Future<void> deleteModel(String modelId) async {
     await transform((current) async {
+      // Если удаляем активную модель — освобождаем ASR сервис
+      await _disposeAsrModel(current.selectedModel, modelId);
+
       await _repository.deleteModel(modelId);
 
       // Обновляем список
@@ -192,17 +201,31 @@ class ModelsCubit extends RefreshableCubit<ModelsState> {
   }
 
   /// Выбрать модель как активную
-  Future<void> selectModel(String modelId) async {
+  Future<void> selectModel(AsrModelEntity newModel) async {
     await transform((current) async {
-      await _repository.selectModel(modelId);
+      // Переинициализируем ASR сервис с новой моделью
+      await _switchAsrModel(newModel);
 
-      final updatedModels = <AsrModelEntity>[
-        for (final model in current.models)
-          model.copyWith(isSelected: model.uuid == modelId),
-      ];
+      await _repository.selectModel(newModel.uuid);
 
-      return current.copyWith(models: updatedModels);
+      // Обновляем список
+      final models = await _repository.getModelsWithStatus();
+
+      return current.copyWith(models: models);
     });
+  }
+
+  Future<void> _switchAsrModel(AsrModelEntity newModel) async {
+    final modelPath = await _repository.getModelPath(newModel.uuid);
+    if (modelPath != null) await _asrService.switchModel(newModel, modelPath);
+  }
+
+  Future<void> _disposeAsrModel(
+    AsrModelEntity? selectedModel,
+    String modelId,
+  ) async {
+    final isSelectedModel = selectedModel?.uuid == modelId;
+    if (isSelectedModel) await _asrService.dispose();
   }
 
   @override
