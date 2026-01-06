@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:isolate';
+import 'dart:typed_data';
 
 import 'package:voice_notes/core/packages/asr/asr_exception.dart';
 import 'package:voice_notes/core/packages/asr/asr_isolate/asr_commands.dart';
@@ -9,47 +10,75 @@ import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
 
 /// Управляет фоновым изолятом для офлайн ASR транскрибации.
 ///
-/// Изолят создаётся один раз при вызове [spawn] и живёт до [close].
+/// Изолят создаётся при вызове [spawn] и живёт до [close].
 /// Это позволяет избежать повторной загрузки модели (~500ms-2s)
 /// при каждой транскрибации.
 ///
+/// Использует паттерн RawReceivePort для разделения логики инициализации
+/// и обработки сообщений. Поддерживает множественные одновременные запросы
+/// через `Map<int, Completer>`.
+///
 /// Пример использования:
 /// ```dart
-/// final runner = AsrIsolateRunner();
-/// await runner.spawn();
+/// final runner = await AsrIsolateRunner.spawn();
 /// await runner.initialize(model, modelPath);
 /// final result = await runner.transcribeFile(filePath);
 /// await runner.close();
 /// ```
 class AsrIsolateRunner {
-  Isolate? _isolate;
-  ReceivePort? _responses;
-  SendPort? _commands;
+  final Isolate _isolate;
+  final ReceivePort _responses;
+  final SendPort _commands;
 
-  Completer<void> _isolateReady = Completer<void>.sync();
-  Completer<AsrResult>? _pendingTranscription;
+  /// Ожидающие ответа запросы: requestId -> Completer.
+  final Map<int, Completer<AsrResult>> _pendingRequests = {};
+
+  /// Счётчик для генерации уникальных ID запросов.
+  int _requestId = 0;
+
+  /// Completer для ожидания инициализации модели.
   Completer<bool>? _pendingInitialization;
 
+  /// Флаг закрытия runner'а.
+  bool _isClosed = false;
+
+  AsrIsolateRunner._(this._isolate, this._responses, this._commands) {
+    _responses.listen(_handleResponse);
+  }
+
   /// Запущен ли изолят и готов ли принимать команды.
-  bool get isRunning => _isolate != null && _isolateReady.isCompleted;
+  bool get isRunning => !_isClosed;
 
   /// Создаёт и запускает фоновый изолят.
   ///
   /// После вызова изолят готов принимать команды через [initialize]
   /// и [transcribeFile].
-  Future<void> spawn() async {
-    if (_isolate != null) return;
+  ///
+  /// Использует RawReceivePort для разделения startup-логики
+  /// и обработки последующих сообщений.
+  static Future<AsrIsolateRunner> spawn() async {
+    final initPort = RawReceivePort();
+    final connection = Completer<(ReceivePort, SendPort)>.sync();
 
-    // Пересоздаём Completer для возможности повторного использования runner
-    _isolateReady = Completer<void>.sync();
+    initPort.handler = (dynamic message) {
+      final commandPort = message as SendPort;
+      connection.complete((
+        ReceivePort.fromRawReceivePort(initPort),
+        commandPort,
+      ));
+    };
 
-    _responses = ReceivePort();
-    _responses!.listen(_handleResponse);
+    late final Isolate isolate;
 
-    _isolate = await Isolate.spawn(startAsrWorker, _responses!.sendPort);
+    try {
+      isolate = await Isolate.spawn(startAsrWorker, initPort.sendPort);
+    } on Object {
+      initPort.close();
+      rethrow;
+    }
 
-    // Ждём пока worker отправит свой SendPort
-    await _isolateReady.future;
+    final (responses, commands) = await connection.future;
+    return AsrIsolateRunner._(isolate, responses, commands);
   }
 
   /// Инициализирует модель в изоляте.
@@ -61,7 +90,7 @@ class AsrIsolateRunner {
 
     _pendingInitialization = Completer<bool>.sync();
 
-    _commands!.send(
+    _commands.send(
       InitializeCommand(
         modelType: model.modelType,
         modelPath: modelPath,
@@ -84,33 +113,65 @@ class AsrIsolateRunner {
   Future<AsrResult> transcribeFile(String filePath) async {
     _ensureRunning();
 
-    _pendingTranscription = Completer<AsrResult>.sync();
+    final requestId = _requestId++;
+    final completer = Completer<AsrResult>.sync();
+    _pendingRequests[requestId] = completer;
 
-    _commands!.send(TranscribeCommand(filePath: filePath));
+    _commands.send(TranscribeCommand(requestId: requestId, filePath: filePath));
 
-    final result = await _pendingTranscription!.future;
-    _pendingTranscription = null;
+    return completer.future;
+  }
 
-    return result;
+  /// Транскрибирует аудио буфер в фоновом изоляте.
+  ///
+  /// [samples] - PCM аудио данные в формате Float32 (-1.0 to 1.0).
+  /// [sampleRate] - частота дискретизации (обычно 16000 Hz).
+  ///
+  /// Должен быть вызван после [initialize].
+  Future<AsrResult> transcribeAudio(Float32List samples, int sampleRate) async {
+    _ensureRunning();
+
+    final requestId = _requestId++;
+    final completer = Completer<AsrResult>.sync();
+    _pendingRequests[requestId] = completer;
+
+    _commands.send(
+      TranscribeAudioCommand(
+        requestId: requestId,
+        // Конвертируем в List<double> для передачи через isolate
+        samples: samples.toList(),
+        sampleRate: sampleRate,
+      ),
+    );
+
+    return completer.future;
   }
 
   /// Завершает работу изолята и освобождает ресурсы.
   ///
-  /// После вызова runner можно переиспользовать, вызвав [spawn] снова.
+  /// После вызова runner нельзя переиспользовать.
+  /// Создайте новый через [spawn].
   Future<void> close() async {
-    if (_isolate == null) return;
+    if (_isClosed) return;
+    _isClosed = true;
 
-    _commands?.send(const DisposeCommand());
+    _commands.send(const DisposeCommand());
 
     // Даём worker'у время освободить ресурсы
     await Future<void>.delayed(const Duration(milliseconds: 50));
 
-    _isolate?.kill(priority: Isolate.immediate);
-    _isolate = null;
-    _commands = null;
+    _isolate.kill(priority: Isolate.immediate);
+    _responses.close();
 
-    _responses?.close();
-    _responses = null;
+    // Отменяем все ожидающие запросы
+    for (final completer in _pendingRequests.values) {
+      if (!completer.isCompleted) {
+        completer.completeError(
+          const AsrProcessingException('Runner was closed'),
+        );
+      }
+    }
+    _pendingRequests.clear();
   }
 
   // ===========================================================================
@@ -119,30 +180,21 @@ class AsrIsolateRunner {
 
   /// Обрабатывает сообщения от worker isolate.
   void _handleResponse(dynamic message) {
-    // Первое сообщение - SendPort для отправки команд
-    if (message is SendPort) {
-      _commands = message;
-      _isolateReady.complete();
-      return;
-    }
-
-    // Остальные - ответы на команды
     if (message is InitializeResponse) {
       _pendingInitialization?.complete(message.success);
     } else if (message is TranscribeResponse) {
+      final completer = _pendingRequests.remove(message.requestId);
+      if (completer == null) return;
+
       if (message.error != null) {
-        _pendingTranscription?.completeError(
-          AsrProcessingException(message.error!),
-        );
+        completer.completeError(AsrProcessingException(message.error!));
       } else {
-        _pendingTranscription?.complete(message.result!);
+        completer.complete(message.result!);
       }
     }
   }
 
   void _ensureRunning() {
-    if (_isolate == null || _commands == null) {
-      throw const AsrNotInitializedException();
-    }
+    if (_isClosed) throw const AsrNotInitializedException();
   }
 }

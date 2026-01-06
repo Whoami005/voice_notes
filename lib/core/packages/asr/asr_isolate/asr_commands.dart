@@ -38,10 +38,34 @@ final class InitializeCommand extends AsrCommand {
 ///
 /// Worker читает WAV файл, декодирует его и возвращает текст.
 final class TranscribeCommand extends AsrCommand {
+  /// ID запроса для сопоставления с ответом.
+  final int requestId;
+
   /// Путь к WAV файлу для транскрибации.
   final String filePath;
 
-  const TranscribeCommand({required this.filePath});
+  const TranscribeCommand({required this.requestId, required this.filePath});
+}
+
+/// Транскрибация аудио буфера.
+///
+/// Worker декодирует переданные PCM сэмплы и возвращает текст.
+/// Используется для транскрибации без создания временного файла.
+final class TranscribeAudioCommand extends AsrCommand {
+  /// ID запроса для сопоставления с ответом.
+  final int requestId;
+
+  /// PCM аудио данные в формате Float32 (-1.0 to 1.0).
+  final List<double> samples;
+
+  /// Частота дискретизации (обычно 16000 Hz).
+  final int sampleRate;
+
+  const TranscribeAudioCommand({
+    required this.requestId,
+    required this.samples,
+    required this.sampleRate,
+  });
 }
 
 /// Завершение работы изолята.
@@ -82,17 +106,21 @@ final class InitializeResponse extends AsrResponse {
 
 /// Результат транскрибации.
 final class TranscribeResponse extends AsrResponse {
+  /// ID запроса для сопоставления с командой.
+  final int requestId;
+
   /// Результат транскрибации (текст, токены, время обработки).
   final AsrResult? result;
 
   /// Текст ошибки, если транскрибация не удалась.
   final String? error;
 
-  const TranscribeResponse({this.result, this.error});
+  const TranscribeResponse({required this.requestId, this.result, this.error});
 
-  const TranscribeResponse.ok(AsrResult this.result) : error = null;
+  const TranscribeResponse.ok(this.requestId, AsrResult this.result)
+    : error = null;
 
-  const TranscribeResponse.failed(String message)
+  const TranscribeResponse.failed(this.requestId, String message)
     : result = null,
       error = message;
 }

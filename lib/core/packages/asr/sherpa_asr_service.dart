@@ -14,19 +14,21 @@ import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
 ///
 /// Сервис для распознавания речи.
 /// Поддерживает Whisper (offline) и Transducer (offline + streaming) модели.
+///
+/// Вся тяжёлая работа (инициализация модели, транскрибация) выполняется
+/// в фоновом изоляте для предотвращения блокировки UI.
+/// Streaming API остаётся на main isolate для минимальной задержки.
 class SherpaAsrService implements AsrService {
   // ==================== Состояние ====================
 
   bool _bindingsInitialized = false;
   AsrModelEntity? _currentModel;
+  String? _currentModelPath;
 
-  // Isolate runner для офлайн транскрибации
-  final AsrIsolateRunner _isolateRunner = AsrIsolateRunner();
+  // Isolate runner для офлайн транскрибации (файлы и буферы)
+  AsrIsolateRunner? _isolateRunner;
 
-  // Offline recognizer (для transcribeAudio - буфер сэмплов)
-  sherpa.OfflineRecognizer? _offlineRecognizer;
-
-  // Streaming (Online) recognizer
+  // Streaming (Online) recognizer - lazy init при первом startStreaming()
   sherpa.OnlineRecognizer? _onlineRecognizer;
   sherpa.OnlineStream? _onlineStream;
   bool _isStreaming = false;
@@ -39,7 +41,7 @@ class SherpaAsrService implements AsrService {
   // ==================== Getters ====================
 
   @override
-  bool get isInitialized => _isolateRunner.isRunning;
+  bool get isInitialized => _isolateRunner?.isRunning ?? false;
 
   @override
   AsrModelEntity? get currentModel => _currentModel;
@@ -58,25 +60,14 @@ class SherpaAsrService implements AsrService {
 
   @override
   Future<void> initialize(AsrModelEntity model, String modelPath) async {
-    // Запускаем изолят для офлайн транскрибации (файлы)
-    // Worker сам инициализирует bindings в своём изоляте
-    await _isolateRunner.spawn();
-    await _isolateRunner.initialize(model, modelPath);
+    // Запускаем изолят для офлайн транскрибации
+    // Worker сам инициализирует bindings и создаёт recognizer в своём изоляте
+    _isolateRunner = await AsrIsolateRunner.spawn();
+    await _isolateRunner!.initialize(model, modelPath);
 
-    // Создаём конфигурацию на основе типа модели
-    final config = _createConfig(model, modelPath);
-
-    // Создаём recognizers на main isolate только если нужно:
-    // - offlineRecognizer для transcribeAudio (буфер сэмплов)
-    // - onlineRecognizer для streaming
-    _initBindingsIfNeeded();
-    _offlineRecognizer = _createOfflineRecognizer(config);
-
-    if (config.supportsStreaming && config is TransducerAsrConfig) {
-      _onlineRecognizer = _createOnlineRecognizer(config);
-    }
-
+    // Сохраняем для lazy init streaming recognizer
     _currentModel = model;
+    _currentModelPath = modelPath;
   }
 
   @override
@@ -86,7 +77,7 @@ class SherpaAsrService implements AsrService {
 
     // Освобождаем текущие ресурсы
     _freeRecognizers();
-    await _isolateRunner.close();
+    await _isolateRunner?.close();
 
     // Инициализируем с новой моделью
     await initialize(newModel, newModelPath);
@@ -97,10 +88,12 @@ class SherpaAsrService implements AsrService {
     if (_isStreaming) await cancelStreaming();
 
     _freeRecognizers();
-    await _isolateRunner.close();
+    await _isolateRunner?.close();
     await _streamingResultsController.close();
 
+    _isolateRunner = null;
     _currentModel = null;
+    _currentModelPath = null;
   }
 
   void _freeRecognizers() {
@@ -109,9 +102,6 @@ class SherpaAsrService implements AsrService {
 
     _onlineRecognizer?.free();
     _onlineRecognizer = null;
-
-    _offlineRecognizer?.free();
-    _offlineRecognizer = null;
   }
 
   // ==================== Offline API ====================
@@ -126,7 +116,7 @@ class SherpaAsrService implements AsrService {
     }
 
     // Делегируем транскрибацию фоновому изоляту
-    return _isolateRunner.transcribeFile(filePath);
+    return _isolateRunner!.transcribeFile(filePath);
   }
 
   @override
@@ -137,28 +127,8 @@ class SherpaAsrService implements AsrService {
       throw const AsrInvalidAudioException('Audio samples are empty');
     }
 
-    final stopwatch = Stopwatch()..start();
-
-    try {
-      final stream = _offlineRecognizer!.createStream()
-        ..acceptWaveform(samples: samples, sampleRate: sampleRate);
-
-      _offlineRecognizer!.decode(stream);
-      final result = _offlineRecognizer!.getResult(stream);
-
-      stream.free();
-      stopwatch.stop();
-
-      return AsrResult(
-        text: result.text.trim(),
-        tokens: result.tokens,
-        timestamps: result.timestamps,
-        detectedLanguage: result.lang.isNotEmpty ? result.lang : null,
-        processingTime: stopwatch.elapsed,
-      );
-    } catch (e) {
-      throw AsrProcessingException('Failed to transcribe audio: $e', e);
-    }
+    // Делегируем транскрибацию фоновому изоляту
+    return _isolateRunner!.transcribeAudio(samples, sampleRate);
   }
 
   // ==================== Streaming API ====================
@@ -167,8 +137,9 @@ class SherpaAsrService implements AsrService {
   Future<void> startStreaming() async {
     _ensureInitialized();
 
+    // Lazy init online recognizer при первом использовании streaming
     if (_onlineRecognizer == null) {
-      throw const AsrStreamingNotSupportedException();
+      _initOnlineRecognizerIfNeeded();
     }
 
     if (_isStreaming) {
@@ -262,13 +233,33 @@ class SherpaAsrService implements AsrService {
 
   /// Инициализирует sherpa bindings на main isolate (lazy).
   ///
-  /// Нужно только для recognizers на main isolate (streaming, transcribeAudio).
+  /// Нужно только для streaming recognizer на main isolate.
   /// Worker isolate инициализирует свои bindings самостоятельно.
   void _initBindingsIfNeeded() {
     if (!_bindingsInitialized) {
       sherpa.initBindings();
       _bindingsInitialized = true;
     }
+  }
+
+  /// Lazy инициализация online recognizer для streaming.
+  ///
+  /// Вызывается при первом startStreaming(), чтобы избежать
+  /// блокировки UI при initialize() если streaming не нужен.
+  void _initOnlineRecognizerIfNeeded() {
+    if (_currentModel == null || _currentModelPath == null) {
+      throw const AsrNotInitializedException();
+    }
+
+    final config = _createConfig(_currentModel!, _currentModelPath!);
+
+    // Только Transducer модели поддерживают streaming
+    if (config is! TransducerAsrConfig) {
+      throw const AsrStreamingNotSupportedException();
+    }
+
+    _initBindingsIfNeeded();
+    _onlineRecognizer = _createOnlineRecognizer(config);
   }
 
   /// Создать конфигурацию на основе модели
@@ -288,45 +279,6 @@ class SherpaAsrService implements AsrService {
         tokensPath: '$modelPath/${fileNames['tokens']}',
       ),
     };
-  }
-
-  /// Создать offline recognizer для конфигурации
-  sherpa.OfflineRecognizer _createOfflineRecognizer(AsrModelConfig config) {
-    final sherpaConfig = switch (config) {
-      WhisperAsrConfig() => sherpa.OfflineRecognizerConfig(
-        model: sherpa.OfflineModelConfig(
-          whisper: sherpa.OfflineWhisperModelConfig(
-            encoder: config.encoderPath,
-            decoder: config.decoderPath,
-            language: config.language ?? '',
-            task: config.task,
-            tailPaddings: config.tailPaddings,
-          ),
-          tokens: config.tokensPath,
-          numThreads: config.numThreads,
-        ),
-      ),
-      TransducerAsrConfig() => sherpa.OfflineRecognizerConfig(
-        model: sherpa.OfflineModelConfig(
-          transducer: sherpa.OfflineTransducerModelConfig(
-            encoder: config.encoderPath,
-            decoder: config.decoderPath,
-            joiner: config.joinerPath,
-          ),
-          tokens: config.tokensPath,
-          numThreads: config.numThreads,
-        ),
-      ),
-    };
-
-    try {
-      return sherpa.OfflineRecognizer(sherpaConfig);
-    } catch (e) {
-      throw AsrProcessingException(
-        'Failed to create offline recognizer: $e',
-        e,
-      );
-    }
   }
 
   /// Создать online (streaming) recognizer для Transducer модели

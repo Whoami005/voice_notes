@@ -1,4 +1,5 @@
 import 'dart:isolate';
+import 'dart:typed_data';
 
 import 'package:sherpa_onnx/sherpa_onnx.dart' as sherpa;
 import 'package:voice_notes/core/packages/asr/asr_config.dart';
@@ -44,6 +45,8 @@ class _AsrWorker {
         _handleInitialize(message);
       case TranscribeCommand():
         _handleTranscribe(message);
+      case TranscribeAudioCommand():
+        _handleTranscribeAudio(message);
       case DisposeCommand():
         _handleDispose();
     }
@@ -67,16 +70,38 @@ class _AsrWorker {
   void _handleTranscribe(TranscribeCommand cmd) {
     if (_recognizer == null) {
       _responses.send(
-        const TranscribeResponse.failed('Recognizer not initialized'),
+        TranscribeResponse.failed(cmd.requestId, 'Recognizer not initialized'),
       );
       return;
     }
 
     try {
-      final result = _transcribe(cmd.filePath);
-      _responses.send(TranscribeResponse.ok(result));
+      final result = _transcribeFile(cmd.filePath);
+      _responses.send(TranscribeResponse.ok(cmd.requestId, result));
     } catch (e) {
-      _responses.send(TranscribeResponse.failed('Transcription failed: $e'));
+      _responses.send(
+        TranscribeResponse.failed(cmd.requestId, 'Transcription failed: $e'),
+      );
+    }
+  }
+
+  /// Транскрибирует аудио буфер и отправляет результат.
+  void _handleTranscribeAudio(TranscribeAudioCommand cmd) {
+    if (_recognizer == null) {
+      _responses.send(
+        TranscribeResponse.failed(cmd.requestId, 'Recognizer not initialized'),
+      );
+      return;
+    }
+
+    try {
+      final samples = Float32List.fromList(cmd.samples);
+      final result = _transcribeAudio(samples, cmd.sampleRate);
+      _responses.send(TranscribeResponse.ok(cmd.requestId, result));
+    } catch (e) {
+      _responses.send(
+        TranscribeResponse.failed(cmd.requestId, 'Transcription failed: $e'),
+      );
     }
   }
 
@@ -99,7 +124,7 @@ class _AsrWorker {
   }
 
   /// Выполняет транскрибацию файла.
-  AsrResult _transcribe(String filePath) {
+  AsrResult _transcribeFile(String filePath) {
     final stopwatch = Stopwatch()..start();
 
     final waveData = sherpa.readWave(filePath);
@@ -109,6 +134,28 @@ class _AsrWorker {
         samples: waveData.samples,
         sampleRate: waveData.sampleRate,
       );
+
+    _recognizer!.decode(stream);
+    final result = _recognizer!.getResult(stream);
+
+    stream.free();
+    stopwatch.stop();
+
+    return AsrResult(
+      text: result.text.trim(),
+      tokens: result.tokens,
+      timestamps: result.timestamps,
+      detectedLanguage: result.lang.isNotEmpty ? result.lang : null,
+      processingTime: stopwatch.elapsed,
+    );
+  }
+
+  /// Выполняет транскрибацию аудио буфера.
+  AsrResult _transcribeAudio(Float32List samples, int sampleRate) {
+    final stopwatch = Stopwatch()..start();
+
+    final stream = _recognizer!.createStream()
+      ..acceptWaveform(samples: samples, sampleRate: sampleRate);
 
     _recognizer!.decode(stream);
     final result = _recognizer!.getResult(stream);
