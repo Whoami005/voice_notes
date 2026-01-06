@@ -1,0 +1,117 @@
+import 'package:flutter/material.dart';
+import 'package:voice_notes/core/constants/app_sizes.dart';
+import 'package:voice_notes/core/extensions/context_extensions.dart';
+
+/// AppBar for folders screen with integrated search functionality.
+///
+/// Manages its own search state internally, including the search visibility
+/// toggle and text controller. The search bar appears as a bottom widget
+/// of the SliverAppBar when visible.
+class FoldersAppBar extends StatefulWidget {
+  final VoidCallback onSettingsTap;
+
+  const FoldersAppBar({required this.onSettingsTap, super.key});
+
+  @override
+  State<FoldersAppBar> createState() => _FoldersAppBarState();
+}
+
+class _FoldersAppBarState extends State<FoldersAppBar> {
+  bool _isSearchVisible = false;
+  late final TextEditingController _searchController;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _toggleSearch() {
+    setState(() {
+      _isSearchVisible = !_isSearchVisible;
+      if (!_isSearchVisible) _searchController.clear();
+    });
+  }
+
+  void _clearSearch() {
+    setState(() {
+      _searchController.clear();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = context.textTheme;
+    final themeColors = context.themeColors;
+
+    return SliverAppBar(
+      floating: true,
+      backgroundColor: themeColors.bgPrimary,
+      surfaceTintColor: Colors.transparent,
+      title: Text('Заметки', style: textTheme.displayLarge),
+      actions: [
+        IconButton(
+          icon: Icon(
+            _isSearchVisible ? Icons.close : Icons.search,
+            color: themeColors.textSecondary,
+          ),
+          onPressed: _toggleSearch,
+        ),
+        IconButton(
+          icon: Icon(Icons.settings_outlined, color: themeColors.textSecondary),
+          onPressed: widget.onSettingsTap,
+        ),
+        const SizedBox(width: 8),
+      ],
+      bottom: _isSearchVisible
+          ? PreferredSize(
+              preferredSize: const Size.fromHeight(64),
+              child: _SearchField(
+                controller: _searchController,
+                onClear: _clearSearch,
+              ),
+            )
+          : null,
+    );
+  }
+}
+
+class _SearchField extends StatelessWidget {
+  final TextEditingController controller;
+  final VoidCallback onClear;
+
+  const _SearchField({required this.controller, required this.onClear});
+
+  @override
+  Widget build(BuildContext context) {
+    final themeColors = context.themeColors;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      curve: Curves.easeOut,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSizes.screenPadding,
+        vertical: AppSizes.p8,
+      ),
+      child: TextField(
+        controller: controller,
+        decoration: InputDecoration(
+          hintText: 'Поиск заметок...',
+          prefixIcon: Icon(Icons.search, color: themeColors.textTertiary),
+          suffixIcon: controller.text.isNotEmpty
+              ? IconButton(
+                  icon: Icon(Icons.clear, color: themeColors.textTertiary),
+                  onPressed: onClear,
+                )
+              : null,
+        ),
+      ),
+    );
+  }
+}

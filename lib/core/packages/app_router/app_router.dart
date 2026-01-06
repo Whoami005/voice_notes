@@ -8,7 +8,8 @@ import 'package:voice_notes/core/packages/app_router/routes/settings_routes.dart
 
 /// AppRouter - класс для управления навигацией в приложении.
 ///
-/// Использует модульную структуру с [FoldersRouteModule] и [SettingsRouteModule]
+/// Использует модульную структуру с [FoldersRouteModule] и
+/// [SettingsRouteModule]
 /// для организации роутов по веткам навигации.
 @singleton
 class AppRouter {
