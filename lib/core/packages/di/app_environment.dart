@@ -1,4 +1,4 @@
-import 'package:injectable/injectable.dart';
+
 
 enum AppEnvironment {
   prod,
@@ -6,10 +6,11 @@ enum AppEnvironment {
   test,
   mock;
 
-  String get name => toString().split('.').last;
-}
+  bool get isProd => this == prod;
 
-const prod = Environment('prod');
-const dev = Environment('dev');
-const test = Environment('test');
-const mock = Environment('mock');
+  bool get isDev => this == dev;
+
+  bool get isTest => this == test;
+
+  bool get isMock => this == mock;
+}
