@@ -8,21 +8,11 @@ class ModelsState extends Equatable {
   /// Прогресс скачивания для каждой модели (modelId -> progress)
   final Map<String, ModelDownloadProgress> downloads;
 
-  /// ID выбранной модели
-  final String? selectedModelId;
-
-  const ModelsState({
-    this.models = const [],
-    this.downloads = const {},
-    this.selectedModelId,
-  });
+  const ModelsState({this.models = const [], this.downloads = const {}});
 
   /// Получить выбранную модель
-  AsrModelEntity? get selectedModel {
-    if (selectedModelId == null) return null;
-
-    return models.firstWhereOrNull((model) => model.uuid == selectedModelId);
-  }
+  AsrModelEntity? get selectedModel =>
+      models.firstWhereOrNull((model) => model.isSelected);
 
   /// Скачанные модели
   List<AsrModelEntity> get downloadedModels => [
@@ -67,18 +57,13 @@ class ModelsState extends Equatable {
   ModelsState copyWith({
     List<AsrModelEntity>? models,
     Map<String, ModelDownloadProgress>? downloads,
-    String? selectedModelId,
-    bool clearSelectedModelId = false,
   }) {
     return ModelsState(
       models: models ?? this.models,
       downloads: downloads ?? this.downloads,
-      selectedModelId: clearSelectedModelId
-          ? null
-          : (selectedModelId ?? this.selectedModelId),
     );
   }
 
   @override
-  List<Object?> get props => [models, downloads, selectedModelId];
+  List<Object?> get props => [models, downloads];
 }

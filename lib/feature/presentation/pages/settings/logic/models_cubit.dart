@@ -30,13 +30,10 @@ class ModelsCubit extends RefreshableCubit<ModelsState> {
       // Загружаем список моделей с актуальным статусом
       final models = await _repository.getModelsWithStatus();
 
-      // Получаем выбранную модель
-      final selected = await _repository.getSelectedModel();
-
       // Подписываемся на обновления прогресса
       _subscribeToDownloads();
 
-      return ModelsState(models: models, selectedModelId: selected?.uuid);
+      return ModelsState(models: models);
     });
   }
 
@@ -45,13 +42,8 @@ class ModelsCubit extends RefreshableCubit<ModelsState> {
     await transform((current) async {
       await _repository.verifyAllModels();
       final models = await _repository.getModelsWithStatus();
-      final selected = await _repository.getSelectedModel();
 
-      return current.copyWith(
-        models: models,
-        selectedModelId: selected?.uuid,
-        clearSelectedModelId: selected == null,
-      );
+      return current.copyWith(models: models);
     });
   }
 
@@ -60,7 +52,7 @@ class ModelsCubit extends RefreshableCubit<ModelsState> {
     _downloadSubscription?.cancel();
     _downloadSubscription = _repository.watchAllDownloads().listen(
       _handleDownloadProgress,
-      onError: logError,
+      onError: addError,
       cancelOnError: false,
     );
   }
@@ -194,13 +186,8 @@ class ModelsCubit extends RefreshableCubit<ModelsState> {
 
       // Обновляем список
       final models = await _repository.getModelsWithStatus();
-      // Если удалили выбранную модель — сбрасываем выбор
-      final clearSelection = current.selectedModelId == modelId;
 
-      return current.copyWith(
-        models: models,
-        clearSelectedModelId: clearSelection,
-      );
+      return current.copyWith(models: models);
     });
   }
 
@@ -214,7 +201,7 @@ class ModelsCubit extends RefreshableCubit<ModelsState> {
           model.copyWith(isSelected: model.uuid == modelId),
       ];
 
-      return current.copyWith(models: updatedModels, selectedModelId: modelId);
+      return current.copyWith(models: updatedModels);
     });
   }
 
