@@ -12,10 +12,12 @@ Future<AppInitializationResult> configureDependencies({
 }) async {
   try {
     if (reset) await getIt.reset();
+
     await getIt.init(environment: environment);
     return const AppInitializationSuccess();
   } catch (e, s) {
     print('configureDependencies: $e\n$s');
+
     await getIt.reset();
     return AppInitializationFailure(error: e, stackTrace: s);
   }

@@ -3,8 +3,7 @@ import 'package:flutter_easy_dialogs/flutter_easy_dialogs.dart';
 import 'package:go_router/go_router.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/packages/app_router/app_router.dart';
-import 'package:voice_notes/core/packages/di/app_initialization_result.dart';
-import 'package:voice_notes/core/packages/di/injection.dart';
+import 'package:voice_notes/core/packages/di/di.dart';
 import 'package:voice_notes/core/theme/app_theme.dart';
 import 'package:voice_notes/feature/presentation/pages/error/initialization_error_screen.dart';
 

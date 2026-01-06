@@ -1,5 +1,3 @@
-
-
 enum AppEnvironment {
   prod,
   dev,
