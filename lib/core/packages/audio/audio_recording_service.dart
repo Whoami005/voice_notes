@@ -100,9 +100,6 @@ class AudioRecordingService {
           numChannels: numChannels,
           bitRate: bitRate,
           autoGain: true,
-          // androidConfig: AndroidRecordConfig(
-          //   audioSource: AndroidAudioSource.mic,
-          // ),
         ),
         path: _currentFilePath!,
       );

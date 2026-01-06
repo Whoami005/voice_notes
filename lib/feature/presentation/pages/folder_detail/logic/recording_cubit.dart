@@ -95,6 +95,9 @@ class RecordingCubit extends Cubit<RecordingState> {
 
       final result = await _recordingService.stopRecording();
 
+      // Если cubit закрылся во время остановки записи — выходим
+      if (isClosed) return;
+
       emit(
         RecordingTranscribingState(
           filePath: result.filePath,
@@ -102,8 +105,12 @@ class RecordingCubit extends Cubit<RecordingState> {
         ),
       );
 
-      await _transcribeAndProcess(result.filePath, result.duration);
+      // Транскрибируем в фоне — заметка сохранится
+      // даже если пользователь выйдет
+      unawaited(_transcribeAndProcess(result.filePath, result.duration));
     } catch (e, s) {
+      if (isClosed) return;
+
       addError(e, s);
       emit(RecordingErrorState(AppFailure.from(e, s)));
       _resetToIdleDelayed();
@@ -119,6 +126,7 @@ class RecordingCubit extends Cubit<RecordingState> {
     try {
       await _durationSubscription?.cancel();
       await _recordingService.cancelRecording();
+
       emit(const RecordingIdleState());
     } catch (e, s) {
       addError(e, s);
@@ -137,8 +145,10 @@ class RecordingCubit extends Cubit<RecordingState> {
     try {
       // Проверяем инициализирован ли ASR сервис
       if (!_asrService.isInitialized) {
-        emit(const RecordingErrorState(RecordingFailure.noModelSelected()));
-        _resetToIdleDelayed();
+        _safeEmit(
+          const RecordingErrorState(RecordingFailure.noModelSelected()),
+        );
+        _safeResetToIdleDelayed();
         return;
       }
 
@@ -148,8 +158,8 @@ class RecordingCubit extends Cubit<RecordingState> {
       // Подсчитываем слова
       final wordCount = _countWords(asrResult.text);
 
+      // Сохраняем заметку всегда (даже если cubit закрыт)
       if (folderId != null) {
-        // Flow записи в папку: создаём заметку
         await _createNote(
           text: asrResult.text,
           duration: duration,
@@ -157,11 +167,10 @@ class RecordingCubit extends Cubit<RecordingState> {
           wordCount: wordCount,
         );
       } else {
-        // Flow Quick Record: копируем в буфер обмена
         await _copyToClipboard(asrResult.text);
       }
 
-      emit(
+      _safeEmit(
         RecordingSuccessState(
           text: asrResult.text,
           duration: duration,
@@ -173,19 +182,21 @@ class RecordingCubit extends Cubit<RecordingState> {
       // Удаляем временный файл
       _deleteTemporaryFile(filePath);
 
-      _resetToIdleDelayed();
+      _safeResetToIdleDelayed();
     } on AsrNotInitializedException catch (e, s) {
-      emit(const RecordingErrorState(RecordingFailure.noModelSelected()));
       addError(e, s);
-      _resetToIdleDelayed();
+      _safeEmit(const RecordingErrorState(RecordingFailure.noModelSelected()));
+      _safeResetToIdleDelayed();
     } on AsrException catch (e, s) {
-      emit(const RecordingErrorState(RecordingFailure.transcriptionFailed()));
       addError(e, s);
-      _resetToIdleDelayed();
+      _safeEmit(
+        const RecordingErrorState(RecordingFailure.transcriptionFailed()),
+      );
+      _safeResetToIdleDelayed();
     } catch (e, s) {
       addError(e, s);
-      emit(RecordingErrorState(AppFailure.from(e, s)));
-      _resetToIdleDelayed();
+      _safeEmit(RecordingErrorState(AppFailure.from(e, s)));
+      _safeResetToIdleDelayed();
     }
   }
 
@@ -232,9 +243,22 @@ class RecordingCubit extends Cubit<RecordingState> {
     });
   }
 
+  /// Безопасный emit — игнорирует если cubit закрыт
+  void _safeEmit(RecordingState state) {
+    if (!isClosed) emit(state);
+  }
+
+  /// Безопасный reset — только если cubit открыт
+  void _safeResetToIdleDelayed() {
+    // if (isClosed) return;
+    _resetToIdleDelayed();
+  }
+
   @override
-  Future<void> close() {
-    _durationSubscription?.cancel();
+  Future<void> close() async {
+    await _durationSubscription?.cancel();
+    // Отменяем активную запись (сбрасывает _isRecording в singleton)
+    await _recordingService.cancelRecording();
     return super.close();
   }
 }
