@@ -26,7 +26,6 @@ import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
 /// await runner.close();
 /// ```
 class AsrIsolateRunner {
-  final Isolate _isolate;
   final ReceivePort _responses;
   final SendPort _commands;
 
@@ -42,7 +41,7 @@ class AsrIsolateRunner {
   /// Флаг закрытия runner'а.
   bool _isClosed = false;
 
-  AsrIsolateRunner._(this._isolate, this._responses, this._commands) {
+  AsrIsolateRunner._(this._responses, this._commands) {
     _responses.listen(_handleResponse);
   }
 
@@ -68,17 +67,19 @@ class AsrIsolateRunner {
       ));
     };
 
-    late final Isolate isolate;
-
     try {
-      isolate = await Isolate.spawn(startAsrWorker, initPort.sendPort);
+      await Isolate.spawn(
+        startAsrWorker,
+        initPort.sendPort,
+        debugName: 'AsrWorker',
+      );
     } on Object {
       initPort.close();
       rethrow;
     }
 
     final (responses, commands) = await connection.future;
-    return AsrIsolateRunner._(isolate, responses, commands);
+    return AsrIsolateRunner._(responses, commands);
   }
 
   /// Инициализирует модель в изоляте.
@@ -157,12 +158,6 @@ class AsrIsolateRunner {
 
     _commands.send(const DisposeCommand());
 
-    // Даём worker'у время освободить ресурсы
-    await Future<void>.delayed(const Duration(milliseconds: 50));
-
-    _isolate.kill(priority: Isolate.immediate);
-    _responses.close();
-
     // Отменяем все ожидающие запросы
     for (final completer in _pendingRequests.values) {
       if (!completer.isCompleted) {
@@ -172,6 +167,8 @@ class AsrIsolateRunner {
       }
     }
     _pendingRequests.clear();
+
+    // Порт закроется после получения #exit от worker
   }
 
   // ===========================================================================
@@ -180,6 +177,12 @@ class AsrIsolateRunner {
 
   /// Обрабатывает сообщения от worker isolate.
   void _handleResponse(dynamic message) {
+    // Worker уведомляет о завершении работы
+    if (message == #exit) {
+      _responses.close();
+      return;
+    }
+
     if (message is InitializeResponse) {
       _pendingInitialization?.complete(message.success);
     } else if (message is TranscribeResponse) {

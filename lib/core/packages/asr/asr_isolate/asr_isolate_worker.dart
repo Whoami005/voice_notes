@@ -4,14 +4,13 @@ import 'dart:typed_data';
 import 'package:sherpa_onnx/sherpa_onnx.dart' as sherpa;
 import 'package:voice_notes/core/packages/asr/asr_config.dart';
 import 'package:voice_notes/core/packages/asr/asr_isolate/asr_commands.dart';
-import 'package:voice_notes/core/packages/asr/asr_isolate/asr_isolate_runner.dart';
 import 'package:voice_notes/core/packages/asr/asr_result.dart';
 import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
 
 /// Точка входа фонового изолята для ASR.
 ///
 /// Создаёт worker и запускает обработку команд.
-/// Вызывается через [Isolate.spawn] из [AsrIsolateRunner].
+/// Вызывается через `Isolate.spawn` из AsrIsolateRunner.
 void startAsrWorker(SendPort mainPort) => _AsrWorker(mainPort)..run();
 
 /// Worker изолята для офлайн ASR транскрибации.
@@ -109,6 +108,7 @@ class _AsrWorker {
   void _handleDispose() {
     _recognizer?.free();
     _recognizer = null;
+    _responses.send(#exit); // Уведомляем main isolate о завершении
     _commands.close();
   }
 
