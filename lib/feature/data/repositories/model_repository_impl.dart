@@ -73,6 +73,9 @@ class ModelRepositoryImpl implements ModelRepository {
     );
 
     if (archivePath == null) {
+      // Очищаем задачу из менеджера загрузок при ошибке
+      _downloadManager.clearTask(model.uuid);
+
       _extractionController.add(
         ModelDownloadProgress(
           modelId: model.uuid,
@@ -140,6 +143,9 @@ class ModelRepositoryImpl implements ModelRepository {
       );
     } catch (e, s) {
       AppFailure.from(e, s);
+
+      // Очищаем задачу из менеджера загрузок при ошибке
+      _downloadManager.clearTask(model.uuid);
 
       // Отправляем статус "ошибка"
       _extractionController.add(

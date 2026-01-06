@@ -60,7 +60,7 @@ class ModelsCubit extends RefreshableCubit<ModelsState> {
     _downloadSubscription?.cancel();
     _downloadSubscription = _repository.watchAllDownloads().listen(
       _handleDownloadProgress,
-      onError: addError,
+      onError: logError,
       cancelOnError: false,
     );
   }
