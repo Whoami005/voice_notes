@@ -53,7 +53,7 @@ EXTERNAL SOURCES:
 SPEC CHECKSUMS:
   background_downloader: 50e91d979067b82081aba359d7d916b3ba5fadad
   connectivity_plus: cb623214f4e1f6ef8fe7403d580fdad517d2f7dd
-  disk_space_2: 2de4ee49f04eaf246d5bc123726977b55d972594
+  disk_space_2: 6679de97ec91ca990d1f22d75ad6bf7f463b8128
   Flutter: cabc95a1d2626b1b06e7179b784ebcf0c0cde467
   ObjectBox: 77adc74799d48a84c344229f6a13ab65131d5752
   objectbox_sync_flutter_libs: f3fab519db5b955fa03fa58921d45f8d8fc64fd2

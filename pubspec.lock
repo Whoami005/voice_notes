@@ -253,10 +253,10 @@ packages:
     dependency: "direct main"
     description:
       name: disk_space_2
-      sha256: "4ea655ac46854f454d902afba61c4df137421513fd015c17bafb2153382369d3"
+      sha256: "3d8662a6ed022defb4205bdc453480f5f1ea4b1494fbc6711d564616c1ff8a68"
       url: "https://pub.dev"
     source: hosted
-    version: "1.0.11"
+    version: "1.0.12"
   equatable:
     dependency: "direct main"
     description:
