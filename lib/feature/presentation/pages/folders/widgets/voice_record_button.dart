@@ -12,12 +12,28 @@ import 'package:voice_notes/feature/presentation/pages/folder_detail/logic/recor
 import 'package:voice_notes/feature/presentation/widgets/dialogs/error_dialog.dart';
 import 'package:voice_notes/feature/presentation/widgets/dialogs/success_dialog.dart';
 
-/// Анимированная FAB-кнопка записи голоса в стиле "Warm Neutral"
-///
-/// Состояния:
-/// - Idle: серый градиент, белая иконка микрофона
-/// - Recording: анимированный градиент, пульсация, ripple-волны, таймер
-/// - Transcribing: индикатор загрузки
+abstract final class _Styles {
+  static const buttonSize = 60.0;
+  static const maxRipples = 4;
+  static const pulseDuration = Duration(milliseconds: 1500);
+  static const gradientDuration = Duration(milliseconds: 2000);
+  static const rippleSpawnInterval = Duration(milliseconds: 600);
+  static const rippleDuration = Duration(milliseconds: 1800);
+
+  static const idleGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFF3A3A3C), Color(0xFF2C2C2E), Color(0xFF1C1C1E)],
+  );
+
+  static const recordingGradientColors = [
+    Color(0xFF5A5A5C),
+    Color(0xFF4A4A4C),
+    Color(0xFF3A3A3C),
+    Color(0xFF5A5A5C),
+  ];
+}
+
 class VoiceRecordButton extends StatelessWidget {
   const VoiceRecordButton({super.key});
 
@@ -58,9 +74,6 @@ class _VoiceRecordButtonContent extends StatefulWidget {
 
 class _VoiceRecordButtonContentState extends State<_VoiceRecordButtonContent>
     with TickerProviderStateMixin {
-  static const _buttonSize = 60.0;
-  static const _maxRipples = 4;
-
   late final AnimationController _pulseController;
   late final AnimationController _gradientController;
   late final Animation<double> _pulseAnimation;
@@ -74,7 +87,7 @@ class _VoiceRecordButtonContentState extends State<_VoiceRecordButtonContent>
     super.initState();
 
     _pulseController = AnimationController(
-      duration: const Duration(milliseconds: 1500),
+      duration: _Styles.pulseDuration,
       vsync: this,
     );
     _pulseAnimation = Tween<double>(begin: 1, end: 1.05).animate(
@@ -82,7 +95,7 @@ class _VoiceRecordButtonContentState extends State<_VoiceRecordButtonContent>
     );
 
     _gradientController = AnimationController(
-      duration: const Duration(milliseconds: 2000),
+      duration: _Styles.gradientDuration,
       vsync: this,
     );
     _gradientAnimation = Tween<double>(begin: 0, end: 1).animate(
@@ -119,7 +132,7 @@ class _VoiceRecordButtonContentState extends State<_VoiceRecordButtonContent>
 
   void _startRipples() {
     _rippleSpawnTimer = Timer.periodic(
-      const Duration(milliseconds: 600),
+      _Styles.rippleSpawnInterval,
       (_) => _spawnRipple(),
     );
   }
@@ -134,10 +147,10 @@ class _VoiceRecordButtonContentState extends State<_VoiceRecordButtonContent>
   }
 
   void _spawnRipple() {
-    if (_ripples.length >= _maxRipples) return;
+    if (_ripples.length >= _Styles.maxRipples) return;
 
     final controller = AnimationController(
-      duration: const Duration(milliseconds: 1800),
+      duration: _Styles.rippleDuration,
       vsync: this,
     );
 
@@ -171,39 +184,27 @@ class _VoiceRecordButtonContentState extends State<_VoiceRecordButtonContent>
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<RecordingCubit, RecordingState>(
-      listenWhen: (prev, curr) =>
-          prev is RecordingActiveState && curr is! RecordingActiveState,
-      listener: (context, state) => _stopAnimations(),
+    return BlocBuilder<RecordingCubit, RecordingState>(
       builder: (context, state) {
-        final isRecording = state is RecordingActiveState;
-        final isTranscribing = state is RecordingTranscribingState;
+        final isRecording = state.isRecording;
+        final isTranscribing = state.isTranscribing;
         final duration = state is RecordingActiveState
             ? state.duration
             : Duration.zero;
 
         return SizedBox(
-          width: _buttonSize,
-          height: _buttonSize,
+          width: _Styles.buttonSize,
+          height: _Styles.buttonSize,
           child: Stack(
             clipBehavior: Clip.none,
             children: [
-              // Ripple волны (центрированы относительно кнопки)
               if (isRecording)
-                ...List.generate(_ripples.length, (index) {
-                  final ripple = _ripples[index];
-
-                  return Positioned.fill(
+                for (final ripple in _ripples)
+                  Positioned.fill(
                     child: Center(
-                      child: _RippleWidget(
-                        animation: ripple.controller,
-                        buttonSize: _buttonSize,
-                      ),
+                      child: _RippleWidget(animation: ripple.controller),
                     ),
-                  );
-                }),
-
-              // Основная кнопка
+                  ),
               AnimatedBuilder(
                 animation: _pulseAnimation,
                 builder: (context, child) {
@@ -212,15 +213,18 @@ class _VoiceRecordButtonContentState extends State<_VoiceRecordButtonContent>
                     child: child,
                   );
                 },
-                child: _buildButton(isRecording, isTranscribing),
+                child: _AnimatedButton(
+                  isRecording: isRecording,
+                  isTranscribing: isTranscribing,
+                  gradientAnimation: _gradientAnimation,
+                  onTap: isTranscribing ? null : _onTap,
+                ),
               ),
-
-              // Таймер (над кнопкой, выходит за bounds)
               if (isRecording)
                 Positioned(
                   left: 0,
                   right: 0,
-                  bottom: _buttonSize + 10,
+                  bottom: _Styles.buttonSize + 10,
                   child: Center(child: _TimerBadge(duration: duration)),
                 ),
             ],
@@ -229,19 +233,34 @@ class _VoiceRecordButtonContentState extends State<_VoiceRecordButtonContent>
       },
     );
   }
+}
 
-  Widget _buildButton(bool isRecording, bool isTranscribing) {
+class _AnimatedButton extends StatelessWidget {
+  final bool isRecording;
+  final bool isTranscribing;
+  final Animation<double> gradientAnimation;
+  final VoidCallback? onTap;
+
+  const _AnimatedButton({
+    required this.isRecording,
+    required this.isTranscribing,
+    required this.gradientAnimation,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: isTranscribing ? null : _onTap,
+      onTap: onTap,
       child: AnimatedBuilder(
-        animation: _gradientAnimation,
+        animation: gradientAnimation,
         builder: (context, child) {
           return Container(
-            width: _buttonSize,
-            height: _buttonSize,
+            width: _Styles.buttonSize,
+            height: _Styles.buttonSize,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: _buildGradient(isRecording),
+              gradient: _buildGradient(),
               border: Border.all(
                 color: Colors.white.withValues(alpha: isRecording ? 0.3 : 0.15),
               ),
@@ -284,26 +303,15 @@ class _VoiceRecordButtonContentState extends State<_VoiceRecordButtonContent>
     );
   }
 
-  LinearGradient _buildGradient(bool isRecording) {
-    if (!isRecording) {
-      return const LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [Color(0xFF3A3A3C), Color(0xFF2C2C2E), Color(0xFF1C1C1E)],
-      );
-    }
+  LinearGradient _buildGradient() {
+    if (!isRecording) return _Styles.idleGradient;
 
-    // Анимированный градиент при записи
-    final shift = _gradientAnimation.value;
+    final shift = gradientAnimation.value;
+
     return LinearGradient(
       begin: Alignment(-1.0 + shift, -1.0 + shift),
       end: Alignment(1.0 + shift, 1.0 + shift),
-      colors: const [
-        Color(0xFF5A5A5C),
-        Color(0xFF4A4A4C),
-        Color(0xFF3A3A3C),
-        Color(0xFF5A5A5C),
-      ],
+      colors: _Styles.recordingGradientColors,
       stops: const [0.0, 0.33, 0.66, 1.0],
     );
   }
@@ -317,16 +325,15 @@ class _RippleData {
 
 class _RippleWidget extends StatelessWidget {
   final Animation<double> animation;
-  final double buttonSize;
 
-  const _RippleWidget({required this.animation, required this.buttonSize});
+  const _RippleWidget({required this.animation});
 
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
       animation: animation,
       builder: (context, child) {
-        final size = buttonSize + (80 * animation.value);
+        final size = _Styles.buttonSize + (80 * animation.value);
 
         return Opacity(
           opacity: 1.0 - animation.value,
