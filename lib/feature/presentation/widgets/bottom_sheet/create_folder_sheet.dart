@@ -44,6 +44,7 @@ class CreateFolderSheet extends StatefulWidget {
   }) {
     return AppBottomSheet.show<CreateFolderResult>(
       context: context,
+      useRootNavigator: true,
       child: CreateFolderSheet(
         initialName: initialName,
         initialDescription: initialDescription,

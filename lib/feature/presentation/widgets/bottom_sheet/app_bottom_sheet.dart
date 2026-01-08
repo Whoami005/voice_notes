@@ -24,6 +24,7 @@ class AppBottomSheet extends StatelessWidget {
     bool enableDrag = true,
     bool isScrollControlled = true,
     bool useSafeArea = true,
+    bool useRootNavigator = false,
   }) {
     return showModalBottomSheet<T>(
       context: context,
@@ -31,6 +32,7 @@ class AppBottomSheet extends StatelessWidget {
       enableDrag: enableDrag,
       isScrollControlled: isScrollControlled,
       useSafeArea: useSafeArea,
+      useRootNavigator: useRootNavigator,
       builder: (context) =>
           AppBottomSheet(title: title, onClose: onClose, child: child),
     );
@@ -43,6 +45,7 @@ class AppBottomSheet extends StatelessWidget {
 
     return CustomScrollView(
       shrinkWrap: true,
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       slivers: [
         SliverPadding(
           padding: EdgeInsets.only(
@@ -56,10 +59,7 @@ class AppBottomSheet extends StatelessWidget {
                 Row(
                   children: [
                     Expanded(
-                      child: Text(
-                        title!,
-                        style: textTheme.headlineMedium,
-                      ),
+                      child: Text(title!, style: textTheme.headlineMedium),
                     ),
                     if (onClose != null)
                       GestureDetector(

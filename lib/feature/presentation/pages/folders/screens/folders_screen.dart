@@ -37,7 +37,7 @@ class _FoldersScreenState extends State<FoldersScreen> {
   Widget build(BuildContext context) {
     return BaseStateScaffold<FoldersCubit, FoldersState>(
       title: 'Заметки',
-      onSuccess: (context, state) {
+      onSuccess: (context, _) {
         return const Scaffold(
           floatingActionButton: VoiceRecordButton(),
           body: SafeArea(
