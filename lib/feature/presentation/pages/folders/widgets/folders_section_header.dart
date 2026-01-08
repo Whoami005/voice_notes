@@ -5,15 +5,17 @@ import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/theme/app_typography.dart';
 
 /// Header widget for folder list section.
-/// 
-/// Displays a title with a count badge.
+///
+/// Displays a title with a count badge and optional trailing widget.
 class FoldersSectionHeader extends StatelessWidget {
   final String title;
   final int count;
+  final Widget? trailing;
 
   const FoldersSectionHeader({
     required this.title,
     required this.count,
+    this.trailing,
     super.key,
   });
 
@@ -32,8 +34,8 @@ class FoldersSectionHeader extends StatelessWidget {
         AppSpacer.p8,
         Container(
           padding: const EdgeInsets.symmetric(
-            horizontal: AppSizes.p8,
             vertical: AppSizes.p2,
+            horizontal: AppSizes.p8,
           ),
           decoration: BoxDecoration(
             color: themeColors.bgTertiary,
@@ -46,6 +48,8 @@ class FoldersSectionHeader extends StatelessWidget {
             ),
           ),
         ),
+        const Spacer(),
+        ?trailing,
       ],
     );
   }
