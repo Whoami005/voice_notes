@@ -58,6 +58,7 @@ class _FoldersAppBarState extends State<FoldersAppBar> {
       backgroundColor: themeColors.bgPrimary,
       surfaceTintColor: Colors.transparent,
       title: Text('Заметки', style: textTheme.displayLarge),
+      actionsPadding: const EdgeInsets.symmetric(horizontal: AppSizes.p8),
       actions: [
         IconButton(
           icon: Icon(
@@ -70,7 +71,6 @@ class _FoldersAppBarState extends State<FoldersAppBar> {
           icon: Icon(Icons.settings_outlined, color: themeColors.textSecondary),
           onPressed: _onSettingsTap,
         ),
-        const SizedBox(width: 8),
       ],
       bottom: _isSearchVisible
           ? PreferredSize(
@@ -99,8 +99,8 @@ class _SearchField extends StatelessWidget {
       duration: const Duration(milliseconds: 200),
       curve: Curves.easeOut,
       padding: const EdgeInsets.symmetric(
-        horizontal: AppSizes.screenPadding,
         vertical: AppSizes.p8,
+        horizontal: AppSizes.screenPadding,
       ),
       child: TextField(
         controller: controller,

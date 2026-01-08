@@ -29,6 +29,7 @@ class FoldersListSection extends StatelessWidget {
     >(
       selector: (state) => state.requireData.folders,
       padding: const EdgeInsets.only(
+        top: AppSizes.p12,
         left: AppSizes.screenPadding,
         right: AppSizes.screenPadding,
         bottom: AppSizes.screenPadding,
