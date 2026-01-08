@@ -10,8 +10,8 @@ import 'package:voice_notes/feature/presentation/pages/folder_detail/widgets/not
 import 'package:voice_notes/feature/presentation/pages/note_detail/screens/note_detail_screen.dart';
 import 'package:voice_notes/feature/presentation/widgets/lists/bloc_grouped_sliver_list.dart';
 
-class NoteDetailsWidget extends StatelessWidget {
-  const NoteDetailsWidget({super.key});
+class NotesListSection extends StatelessWidget {
+  const NotesListSection({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -38,9 +38,7 @@ class NoteDetailsWidget extends StatelessWidget {
             final folderId = context.read<FolderDetailCubit>().folderId;
             NoteDetailScreen.go(context, folderId: folderId, noteId: note.uuid);
           },
-          onCopy: () async {
-            await Clipboard.setData(ClipboardData(text: note.text));
-          },
+          onCopy: () => Clipboard.setData(ClipboardData(text: note.text)),
           onShare: () {},
         ),
       ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
+import 'package:voice_notes/feature/presentation/pages/settings/screens/settings_screen.dart';
 
 /// AppBar for folders screen with integrated search functionality.
 ///
@@ -8,9 +9,7 @@ import 'package:voice_notes/core/extensions/context_extensions.dart';
 /// toggle and text controller. The search bar appears as a bottom widget
 /// of the SliverAppBar when visible.
 class FoldersAppBar extends StatefulWidget {
-  final VoidCallback onSettingsTap;
-
-  const FoldersAppBar({required this.onSettingsTap, super.key});
+  const FoldersAppBar({super.key});
 
   @override
   State<FoldersAppBar> createState() => _FoldersAppBarState();
@@ -45,6 +44,10 @@ class _FoldersAppBarState extends State<FoldersAppBar> {
     });
   }
 
+  void _onSettingsTap() {
+    SettingsScreen.go(context);
+  }
+
   @override
   Widget build(BuildContext context) {
     final textTheme = context.textTheme;
@@ -65,7 +68,7 @@ class _FoldersAppBarState extends State<FoldersAppBar> {
         ),
         IconButton(
           icon: Icon(Icons.settings_outlined, color: themeColors.textSecondary),
-          onPressed: widget.onSettingsTap,
+          onPressed: _onSettingsTap,
         ),
         const SizedBox(width: 8),
       ],

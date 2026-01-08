@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/packages/app_router/app_route_wrapper.dart';
 import 'package:voice_notes/core/packages/app_router/routes/app_routes.dart';
 import 'package:voice_notes/core/packages/di/injection.dart';
@@ -13,8 +12,7 @@ import 'package:voice_notes/feature/presentation/pages/folders/components/folder
 import 'package:voice_notes/feature/presentation/pages/folders/components/folders_list_section.dart';
 import 'package:voice_notes/feature/presentation/pages/folders/logic/folders_cubit.dart';
 import 'package:voice_notes/feature/presentation/pages/folders/widgets/folder_actions_sheet.dart';
-import 'package:voice_notes/feature/presentation/pages/folders/widgets/quick_record_card.dart';
-import 'package:voice_notes/feature/presentation/pages/settings/screens/settings_screen.dart';
+import 'package:voice_notes/feature/presentation/pages/folders/widgets/quick_record_section.dart';
 import 'package:voice_notes/feature/presentation/widgets/bottom_sheet/create_folder_sheet.dart';
 import 'package:voice_notes/feature/presentation/widgets/buttons/app_fab.dart';
 import 'package:voice_notes/feature/presentation/widgets/dialogs/confirm_dialog.dart';
@@ -56,13 +54,8 @@ class _FoldersScreenState extends State<FoldersScreen> {
             child: RefreshableWrapper<FoldersCubit>(
               child: CustomScrollView(
                 slivers: [
-                  FoldersAppBar(onSettingsTap: _onSettingsTap),
-                  SliverPadding(
-                    padding: const EdgeInsets.all(AppSizes.screenPadding),
-                    sliver: SliverToBoxAdapter(
-                      child: QuickRecordCard(onTap: _onQuickRecord),
-                    ),
-                  ),
+                  const FoldersAppBar(),
+                  const SliverToBoxAdapter(child: QuickRecordSection()),
                   FoldersListSection(
                     onFolderTap: _onFolderTap,
                     onFolderLongPress: _onFolderLongPress,
@@ -74,14 +67,6 @@ class _FoldersScreenState extends State<FoldersScreen> {
         );
       },
     );
-  }
-
-  void _onSettingsTap() {
-    SettingsScreen.go(context);
-  }
-
-  void _onQuickRecord() {
-    // TODO: Start quick recording
   }
 
   void _onFolderTap(FolderEntity folder) {

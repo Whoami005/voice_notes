@@ -10,9 +10,7 @@ import 'package:voice_notes/feature/presentation/pages/folder_detail/widgets/rec
 /// Wraps RecordingInput with BlocConsumer to handle recording state
 /// and display success/error toasts.
 class FolderDetailRecordingBar extends StatelessWidget {
-  final VoidCallback? onUploadFile;
-
-  const FolderDetailRecordingBar({super.key, this.onUploadFile});
+  const FolderDetailRecordingBar({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -36,11 +34,15 @@ class FolderDetailRecordingBar extends StatelessWidget {
             onStartRecording: cubit.startRecording,
             onStopRecording: cubit.stopRecording,
             onCancelRecording: cubit.cancelRecording,
-            onUploadFile: onUploadFile,
+            onUploadFile: _onUploadFile,
           ),
         );
       },
     );
+  }
+
+  void _onUploadFile() {
+    // TODO: Open file picker
   }
 
   void _handleRecordingStateChange(BuildContext context, RecordingState state) {

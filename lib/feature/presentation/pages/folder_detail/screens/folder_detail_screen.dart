@@ -13,11 +13,11 @@ import 'package:voice_notes/feature/domain/enums/recording_state.dart'
     show SearchFilter;
 import 'package:voice_notes/feature/domain/repositories/folder_repository.dart';
 import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
+import 'package:voice_notes/feature/presentation/pages/folder_detail/components/notes_list_section.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/logic/folder_detail_cubit.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/logic/recording_cubit.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/widgets/folder_detail_app_bar.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/widgets/folder_detail_recording_bar.dart';
-import 'package:voice_notes/feature/presentation/pages/folder_detail/widgets/note_details_widget.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/widgets/search_bar_with_filters.dart';
 import 'package:voice_notes/feature/presentation/widgets/dialogs/confirm_dialog.dart';
 import 'package:voice_notes/feature/presentation/widgets/refresh/refreshable_wrapper.dart';
@@ -78,9 +78,7 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
             onEditFolder: _onEditFolder,
             onDeleteFolder: _onDeleteFolder,
           ),
-          bottomNavigationBar: FolderDetailRecordingBar(
-            onUploadFile: _onUploadFile,
-          ),
+          bottomNavigationBar: const FolderDetailRecordingBar(),
           body: RefreshableWrapper<FolderDetailCubit>(
             child: CustomScrollView(
               slivers: [
@@ -99,7 +97,7 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
                       placeholder: 'Поиск в папке...',
                     ),
                   ),
-                const NoteDetailsWidget(),
+                const NotesListSection(),
               ],
             ),
           ),
@@ -136,9 +134,5 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
       await context.read<FolderDetailCubit>().deleteFolder();
       if (mounted) context.pop();
     }
-  }
-
-  void _onUploadFile() {
-    // TODO: Open file picker
   }
 }
