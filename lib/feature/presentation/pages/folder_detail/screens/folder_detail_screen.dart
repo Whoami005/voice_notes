@@ -8,7 +8,7 @@ import 'package:voice_notes/core/packages/app_router/routes/app_routes.dart';
 import 'package:voice_notes/core/packages/asr/asr_service.dart';
 import 'package:voice_notes/core/packages/audio/audio_recording_service.dart';
 import 'package:voice_notes/core/packages/di/injection.dart';
-import 'package:voice_notes/core/state/state.dart';
+import 'package:voice_notes/core/state/async/async_state_widgets.dart';
 import 'package:voice_notes/feature/domain/enums/recording_state.dart'
     show SearchFilter;
 import 'package:voice_notes/feature/domain/repositories/folder_repository.dart';
@@ -67,7 +67,7 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BaseStateScaffold<FolderDetailCubit, FolderDetailData>(
+    return AsyncStateScaffold<FolderDetailCubit, FolderDetailData>(
       title: 'Папка',
       onSuccess: (context, _) {
         return Scaffold(

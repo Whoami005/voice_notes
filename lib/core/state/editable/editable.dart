@@ -2,7 +2,8 @@ import 'package:equatable/equatable.dart';
 
 /// Обёртка для отслеживания изменений Equatable-объекта.
 ///
-/// Хранит [original] (snapshot до редактирования) и [current] (текущее значение).
+/// Хранит [original] (snapshot до редактирования) и
+/// [current] (текущее значение).
 /// Позволяет обнаруживать изменения без обращения к БД.
 ///
 /// [T] должен наследоваться от Equatable для корректного сравнения.
@@ -33,9 +34,9 @@ class Editable<T extends Equatable> extends Equatable {
 
   /// Создать из начального значения (original = current, isEditing = false)
   const Editable.fromValue(T value)
-      : original = value,
-        current = value,
-        isEditing = false;
+    : original = value,
+      current = value,
+      isEditing = false;
 
   // ─────────────────────────────────────────────────────────────
   // Getters
@@ -77,7 +78,8 @@ class Editable<T extends Equatable> extends Equatable {
     return update(modifier(current));
   }
 
-  /// Зафиксировать изменения (original = current, выход из режима редактирования)
+  /// Зафиксировать изменения
+  /// (original = current, выход из режима редактирования)
   Editable<T> commit() {
     return Editable.internal(
       original: current,

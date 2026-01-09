@@ -1,14 +1,19 @@
 import 'dart:async';
 
 import 'package:equatable/equatable.dart';
-import 'package:voice_notes/core/state/state.dart';
+import 'package:voice_notes/core/state/async/async_state.dart';
+import 'package:voice_notes/core/state/async/initializable_async_cubits.dart';
+import 'package:voice_notes/core/state/effect/common_effects.dart';
+import 'package:voice_notes/core/state/searchable/local_search_mixin.dart';
+import 'package:voice_notes/core/state/searchable/search_matchers.dart';
 import 'package:voice_notes/feature/domain/entities/folder_entity.dart';
 import 'package:voice_notes/feature/domain/repositories/folder_repository.dart';
 import 'package:voice_notes/feature/presentation/widgets/bottom_sheet/create_folder_sheet.dart';
 
 part 'folders_state.dart';
 
-class FoldersCubit extends RefreshableCubit<FoldersState> {
+class FoldersCubit extends RefreshableAsyncCubit<FoldersState>
+    with LocalSearchMixin<AsyncState<FoldersState>> {
   final FolderRepository _repository;
 
   StreamSubscription<List<FolderEntity>>? _subscription;
@@ -17,13 +22,21 @@ class FoldersCubit extends RefreshableCubit<FoldersState> {
     : _repository = repository;
 
   @override
+  void onSearch(String query) {
+    whenData((data) => emitSuccess(data.copyWith(query: query)));
+  }
+
+  @override
   Future<void> init() async {
     try {
       emitLoading();
       if (isClosed) return;
 
       _subscription = _repository.watchAll().listen(
-        (folders) => emitSuccess(FoldersState(folders: folders)),
+        (folders) => state.maybeWhen(
+          success: (data) => emitSuccess(data.copyWith(folders: folders)),
+          orElse: () => emitSuccess(FoldersState(folders: folders)),
+        ),
         onError: logError,
         cancelOnError: false,
       );
@@ -35,26 +48,28 @@ class FoldersCubit extends RefreshableCubit<FoldersState> {
 
   @override
   Future<void> refresh() async {
-    await execute(
-      action: () async {
-        final folders = await _repository.getAll();
-        emitSuccess(FoldersState(folders: folders));
-      },
-    );
+    try {
+      final folders = await _repository.getAll();
+      emitSuccess(FoldersState(folders: folders));
+    } catch (e, s) {
+      emitEffect(ShowErrorEffect(logError(e, s)));
+    }
   }
 
   /// Создать папку из результата CreateFolderSheet
   Future<void> createFolder(CreateFolderResult data) async {
-    await execute(
-      action: () async {
-        await _repository.create(
-          name: data.name,
-          description: data.description,
-          color: data.color,
-          icon: data.icon,
-        );
-      },
-    );
+    try {
+      await _repository.create(
+        name: data.name,
+        description: data.description,
+        color: data.color,
+        icon: data.icon,
+      );
+
+      emitEffect(const ShowSuccessEffect('Папка создана'));
+    } catch (e, s) {
+      emitEffect(ShowErrorEffect(logError(e, s)));
+    }
   }
 
   /// Обновить существующую папку
@@ -62,7 +77,7 @@ class FoldersCubit extends RefreshableCubit<FoldersState> {
     try {
       await _repository.update(folder);
     } catch (e, s) {
-      logError(e, s);
+      emitEffect(ShowErrorEffect(logError(e, s)));
     }
   }
 
@@ -70,8 +85,10 @@ class FoldersCubit extends RefreshableCubit<FoldersState> {
   Future<void> deleteFolder(String uid) async {
     try {
       await _repository.delete(uid);
+
+      emitEffect(const ShowSuccessEffect('Папка удалена'));
     } catch (e, s) {
-      logError(e, s);
+      emitEffect(ShowErrorEffect(logError(e, s)));
     }
   }
 

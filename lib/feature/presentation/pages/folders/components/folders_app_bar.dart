@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
+import 'package:voice_notes/feature/presentation/pages/folders/logic/folders_cubit.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/screens/settings_screen.dart';
 
 /// AppBar for folders screen with integrated search functionality.
@@ -34,14 +36,17 @@ class _FoldersAppBarState extends State<FoldersAppBar> {
   void _toggleSearch() {
     setState(() {
       _isSearchVisible = !_isSearchVisible;
-      if (!_isSearchVisible) _searchController.clear();
+      if (!_isSearchVisible) {
+        _searchController.clear();
+        context.read<FoldersCubit>().clearSearch();
+      }
     });
   }
 
   void _clearSearch() {
-    setState(() {
-      _searchController.clear();
-    });
+    _searchController.clear();
+    context.read<FoldersCubit>().clearSearch();
+    setState(() {});
   }
 
   void _onSettingsTap() {
@@ -78,6 +83,8 @@ class _FoldersAppBarState extends State<FoldersAppBar> {
               child: _SearchField(
                 controller: _searchController,
                 onClear: _clearSearch,
+                onChanged: (query) =>
+                    context.read<FoldersCubit>().search(query),
               ),
             )
           : null,
@@ -88,8 +95,13 @@ class _FoldersAppBarState extends State<FoldersAppBar> {
 class _SearchField extends StatelessWidget {
   final TextEditingController controller;
   final VoidCallback onClear;
+  final ValueChanged<String> onChanged;
 
-  const _SearchField({required this.controller, required this.onClear});
+  const _SearchField({
+    required this.controller,
+    required this.onClear,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -104,6 +116,7 @@ class _SearchField extends StatelessWidget {
       ),
       child: TextField(
         controller: controller,
+        onChanged: onChanged,
         decoration: InputDecoration(
           hintText: 'Поиск заметок...',
           prefixIcon: Icon(Icons.search, color: themeColors.textTertiary),

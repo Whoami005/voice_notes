@@ -1,7 +1,14 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:voice_notes/core/state/core/base_cubit.dart';
+import 'package:voice_notes/core/state/core/cubit_mixin.dart';
 import 'package:voice_notes/core/state/effect/effect_mixin.dart';
 
 /// Cubit с поддержкой эффектов.
+///
+/// Наследует от [BaseCubit], поэтому имеет доступ к:
+/// - [logError] — логирование ошибок
+/// - [safeEmit] — безопасный emit
+/// - [execute] — выполнение с обработкой ошибок
 ///
 /// ```dart
 /// class MyCubit extends EffectCubit<MyState, MyEffect> {
@@ -12,12 +19,17 @@ import 'package:voice_notes/core/state/effect/effect_mixin.dart';
 ///   }
 /// }
 /// ```
-abstract class EffectCubit<State, Effect> extends Cubit<State>
+abstract class EffectCubit<State, Effect> extends BaseCubit<State>
     with EffectMixin<Effect> {
   EffectCubit(super.initialState);
 }
 
 /// Bloc с поддержкой эффектов.
+///
+/// Имеет доступ к утилитам из [CubitMixin]:
+/// - [logError] — логирование ошибок
+/// - [safeEmit] — безопасный emit
+/// - [execute] — выполнение с обработкой ошибок
 ///
 /// ```dart
 /// class MyBloc extends EffectBloc<MyEvent, MyState, MyEffect> {
@@ -29,6 +41,6 @@ abstract class EffectCubit<State, Effect> extends Cubit<State>
 /// }
 /// ```
 abstract class EffectBloc<Event, State, Effect> extends Bloc<Event, State>
-    with EffectMixin<Effect> {
+    with CubitMixin<State>, EffectMixin<Effect> {
   EffectBloc(super.initialState);
 }

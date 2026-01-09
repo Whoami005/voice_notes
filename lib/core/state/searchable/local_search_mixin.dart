@@ -2,14 +2,14 @@ import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-/// Миксин для добавления поиска с debounce к любому BaseCubit.
+/// Миксин для добавления поиска с debounce к любому Cubit/Bloc.
 ///
 /// Предоставляет поиск с дебаунсом для клиентской фильтрации.
 /// Таймер управляется внутренне.
 ///
 /// Пример:
 /// ```dart
-/// class FoldersCubit extends RefreshableCubit<FoldersState>
+/// class FoldersCubit extends RefreshableAsyncCubit<FoldersState>
 ///     with LocalSearchMixin<FoldersState> {
 ///
 ///   @override
@@ -18,7 +18,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 ///   }
 /// }
 /// ```
-mixin LocalSearchMixin<S> on Cubit<S> {
+mixin LocalSearchMixin<S> on BlocBase<S> {
   Timer? _debounceTimer;
 
   /// Debounce duration for search. Override to customize.

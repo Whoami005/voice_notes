@@ -1,11 +1,11 @@
 import 'package:voice_notes/core/error/app_failure.dart';
-import 'package:voice_notes/core/state/base_state/base_cubit.dart';
+import 'package:voice_notes/core/state/async/async_cubit.dart';
 import 'package:voice_notes/core/state/shared/initializable.dart';
 
-/// BaseCubit с автоматическим вызовом init() в конструкторе.
-abstract class InitializableCubit<T> extends BaseCubit<T>
+/// [AppAsyncCubit] с автоматическим вызовом init() в конструкторе.
+abstract class InitializableAsyncCubit<T> extends AppAsyncCubit<T>
     implements Initializable {
-  InitializableCubit([super.initialState]) {
+  InitializableAsyncCubit([super.initialState]) {
     _autoInit();
   }
 
@@ -19,9 +19,10 @@ abstract class InitializableCubit<T> extends BaseCubit<T>
   }
 }
 
-/// BaseCubit с автоматическим init() и методом refresh().
-abstract class RefreshableCubit<T> extends BaseCubit<T> implements Refreshable {
-  RefreshableCubit([super.initialState]) {
+/// [AppAsyncCubit] с автоматическим init() и методом refresh().
+abstract class RefreshableAsyncCubit<T> extends AppAsyncCubit<T>
+    implements Refreshable {
+  RefreshableAsyncCubit([super.initialState]) {
     _autoInit();
   }
 

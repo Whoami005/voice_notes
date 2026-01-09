@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-/// Вычисляет размер PreferredSizeWidget на основе высоты toolbar и bottom widget
+/// Вычисляет размер PreferredSizeWidget на основе высоты toolbar
+/// и bottom widget
 class PreferredAppBarSize extends Size {
   PreferredAppBarSize(this.toolbarHeight, this.bottomHeight)
     : super.fromHeight((toolbarHeight ?? kToolbarHeight) + (bottomHeight ?? 0));

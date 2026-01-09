@@ -101,7 +101,8 @@ class EasyLoadingDialog {
       content: content,
     );
 
-    // Показываем диалог без await — он должен отображаться пока future выполняется
+    // Показываем диалог без await — он
+    // должен отображаться пока future выполняется
     unawaited(
       draggable ? _dialog!.draggable().show<void>() : _dialog!.show<void>(),
     );

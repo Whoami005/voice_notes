@@ -8,14 +8,14 @@ import 'package:voice_notes/core/packages/downloader/download_manager.dart';
 import 'package:voice_notes/core/packages/downloader/download_status.dart';
 import 'package:voice_notes/core/packages/internet/internet_checker.dart';
 import 'package:voice_notes/core/packages/storage/storage_checker.dart';
-import 'package:voice_notes/core/state/state.dart';
+import 'package:voice_notes/core/state/async/initializable_async_cubits.dart';
 import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
 import 'package:voice_notes/feature/domain/repositories/model_repository.dart';
 
 part 'models_state.dart';
 
 /// Cubit для управления ASR моделями
-class ModelsCubit extends RefreshableCubit<ModelsState> {
+class ModelsCubit extends RefreshableAsyncCubit<ModelsState> {
   final ModelRepository _repository;
   final AsrService _asrService;
 

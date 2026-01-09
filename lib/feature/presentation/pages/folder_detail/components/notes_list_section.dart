@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
-import 'package:voice_notes/core/state/state.dart';
+import 'package:voice_notes/core/state/async/async_state.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/logic/folder_detail_cubit.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/widgets/date_separator.dart';
@@ -17,7 +17,7 @@ class NotesListSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocGroupedSliverList<
       FolderDetailCubit,
-      BaseState<FolderDetailData>,
+      AsyncState<FolderDetailData>,
       NoteEntity
     >(
       selector: (state) => state.requireData.groupedNotes,

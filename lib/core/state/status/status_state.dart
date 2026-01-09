@@ -1,8 +1,8 @@
 import 'package:equatable/equatable.dart';
 import 'package:voice_notes/core/error/app_failure.dart';
 
-/// Статус жизненного цикла: init, loading, success, error
-enum LogicStateStatus {
+/// Статус жизненного цикла: init, loading, success, error.
+enum Status {
   /// Начальное состояние (до первой загрузки)
   init,
 
@@ -15,33 +15,38 @@ enum LogicStateStatus {
   /// Ошибка
   error;
 
-  bool get isInit => this == LogicStateStatus.init;
+  bool get isInit => this == Status.init;
 
-  bool get isLoading => this == LogicStateStatus.loading;
+  bool get isLoading => this == Status.loading;
 
-  bool get isSuccess => this == LogicStateStatus.success;
+  bool get isSuccess => this == Status.success;
 
-  bool get isError => this == LogicStateStatus.error;
+  bool get isError => this == Status.error;
 }
 
 /// Базовое состояние с enum статусом (все данные в одном классе).
+///
+/// Используй когда:
+/// - Нужно хранить много полей в состоянии
+/// - Данные должны сохраняться между loading/error
+/// - Требуется частичное обновление данных
 abstract class StatusState extends Equatable {
   /// Статус жизненного цикла
-  final LogicStateStatus status;
+  final Status status;
 
   /// Ошибка
   final AppFailure? failure;
 
-  const StatusState({this.status = LogicStateStatus.init, this.failure});
+  const StatusState({this.status = Status.init, this.failure});
 
   /// Обязательный copyWith для изменения состояния
-  StatusState copyWith({LogicStateStatus? status, AppFailure? failure});
+  StatusState copyWith({Status? status, AppFailure? failure});
 
   @override
   List<Object?> get props => [status, failure];
 }
 
-/// Хелперы для удобной работы с StatusState
+/// Extension-методы для удобной работы с [StatusState]
 extension StatusStateX on StatusState {
   bool get isInit => status.isInit;
 
@@ -65,10 +70,10 @@ extension StatusStateX on StatusState {
     required R Function(AppFailure? failure) error,
   }) {
     return switch (status) {
-      LogicStateStatus.init => init(),
-      LogicStateStatus.loading => loading(),
-      LogicStateStatus.success => success(),
-      LogicStateStatus.error => error(failure),
+      Status.init => init(),
+      Status.loading => loading(),
+      Status.success => success(),
+      Status.error => error(failure),
     };
   }
 
@@ -81,10 +86,10 @@ extension StatusStateX on StatusState {
     R Function(AppFailure? failure)? error,
   }) {
     return switch (status) {
-      LogicStateStatus.init => init?.call() ?? orElse(),
-      LogicStateStatus.loading => loading?.call() ?? orElse(),
-      LogicStateStatus.success => success?.call() ?? orElse(),
-      LogicStateStatus.error => error?.call(failure) ?? orElse(),
+      Status.init => init?.call() ?? orElse(),
+      Status.loading => loading?.call() ?? orElse(),
+      Status.success => success?.call() ?? orElse(),
+      Status.error => error?.call(failure) ?? orElse(),
     };
   }
 
@@ -96,10 +101,10 @@ extension StatusStateX on StatusState {
     R Function(AppFailure? failure)? error,
   }) {
     return switch (status) {
-      LogicStateStatus.init => init?.call(),
-      LogicStateStatus.loading => loading?.call(),
-      LogicStateStatus.success => success?.call(),
-      LogicStateStatus.error => error?.call(failure),
+      Status.init => init?.call(),
+      Status.loading => loading?.call(),
+      Status.success => success?.call(),
+      Status.error => error?.call(failure),
     };
   }
 }

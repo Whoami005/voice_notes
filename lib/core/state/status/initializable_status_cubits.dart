@@ -1,10 +1,11 @@
+import 'package:voice_notes/core/state/effect/common_effects.dart';
 import 'package:voice_notes/core/state/shared/initializable.dart';
-import 'package:voice_notes/core/state/status_state/status_cubit.dart';
-import 'package:voice_notes/core/state/status_state/status_state.dart';
+import 'package:voice_notes/core/state/status/status_cubit.dart';
+import 'package:voice_notes/core/state/status/status_state.dart';
 
-/// StatusCubit с автоматическим вызовом init() в конструкторе.
-abstract class InitializableStatusCubit<T extends StatusState>
-    extends StatusCubit<T>
+/// [AppStatusCubit] с автоматическим вызовом init() в конструкторе.
+abstract class InitializableStatusCubit<S extends StatusState>
+    extends StatusCubit<S, AppEffect>
     implements Initializable {
   InitializableStatusCubit(super.initialState) {
     _autoInit();
@@ -20,9 +21,9 @@ abstract class InitializableStatusCubit<T extends StatusState>
   }
 }
 
-/// StatusCubit с автоматическим init() и методом refresh().
-abstract class RefreshableStatusCubit<T extends StatusState>
-    extends StatusCubit<T>
+/// [AppStatusCubit] с автоматическим init() и методом refresh().
+abstract class RefreshableStatusCubit<S extends StatusState>
+    extends StatusCubit<S, AppEffect>
     implements Refreshable {
   RefreshableStatusCubit(super.initialState) {
     _autoInit();

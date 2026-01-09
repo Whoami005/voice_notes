@@ -5,7 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
-import 'package:voice_notes/core/state/base_state/base_state.dart';
+import 'package:voice_notes/core/state/async/async_state.dart';
 import 'package:voice_notes/feature/presentation/pages/note_detail/logic/note_detail_cubit.dart';
 import 'package:voice_notes/feature/presentation/pages/note_detail/widgets/note_actions_section.dart';
 import 'package:voice_notes/feature/presentation/pages/note_detail/widgets/note_info_section.dart';
@@ -46,7 +46,7 @@ class NoteDetailBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<NoteDetailCubit, BaseState<NoteDetailData>>(
+    return BlocBuilder<NoteDetailCubit, AsyncState<NoteDetailData>>(
       builder: (context, state) {
         final data = state.requireData;
 

@@ -1,0 +1,307 @@
+import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:voice_notes/core/error/app_failure.dart';
+import 'package:voice_notes/core/state/effect/effect_mixin.dart';
+import 'package:voice_notes/core/state/shared/initializable.dart';
+import 'package:voice_notes/core/state/shared/state_views.dart';
+import 'package:voice_notes/core/state/status/status_state.dart';
+
+/// Виджет для построения UI на основе [StatusState].
+class StatusStateBody<C extends BlocBase<S>, S extends StatusState>
+    extends StatelessWidget {
+  final C? bloc;
+
+  /// Получает полный state (не только данные)
+  final Widget Function(BuildContext context, S state) onSuccess;
+
+  final Widget Function(BuildContext context, S state, AppFailure? failure)?
+  onError;
+
+  final Widget Function(BuildContext context, S state)? onLoading;
+
+  final Widget Function(BuildContext context, S state)? onInitial;
+
+  final bool Function(S previous, S current)? buildWhen;
+
+  final void Function(BuildContext context, S state)? listener;
+
+  const StatusStateBody({
+    required this.onSuccess,
+    super.key,
+    this.bloc,
+    this.onError,
+    this.onLoading,
+    this.onInitial,
+    this.buildWhen,
+    this.listener,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocConsumer<C, S>(
+      bloc: bloc,
+      buildWhen: buildWhen ?? _defaultBuildWhen,
+      listener: listener ?? (_, _) {},
+      builder: (context, state) {
+        return switch (state.status) {
+          Status.init =>
+            onInitial?.call(context, state) ?? const SizedBox.shrink(),
+          Status.loading =>
+            onLoading?.call(context, state) ?? const StateLoadingView(),
+          Status.error =>
+            onError?.call(context, state, state.failure) ??
+                _buildDefaultError(context, state),
+          Status.success => onSuccess(context, state),
+        };
+      },
+    );
+  }
+
+  Widget _buildDefaultError(BuildContext context, S state) {
+    final cubit = bloc ?? context.read<C>();
+    final failure = state.failure;
+
+    return StateErrorView(
+      message: failure?.message ?? 'Неизвестная ошибка',
+      onRetry: cubit is Initializable ? (cubit as Initializable).init : null,
+    );
+  }
+
+  bool _defaultBuildWhen(S prev, S curr) => prev.status != curr.status;
+}
+
+/// Виджет [StatusState] + Scaffold для loading/error состояний.
+class StatusStateScaffold<C extends BlocBase<S>, S extends StatusState>
+    extends StatelessWidget {
+  final C? bloc;
+
+  final PreferredSizeWidget? appBar;
+
+  final String? title;
+
+  final Color? backgroundColor;
+
+  /// Получает полный state (не только данные)
+  final Widget Function(BuildContext context, S state) onSuccess;
+
+  final Widget Function(BuildContext context, S state, AppFailure? failure)?
+  onError;
+
+  final Widget Function(BuildContext context, S state)? onLoading;
+
+  final Widget Function(BuildContext context, S state)? onInitial;
+
+  final bool Function(S previous, S current)? buildWhen;
+
+  final void Function(BuildContext context, S state)? listener;
+
+  const StatusStateScaffold({
+    required this.onSuccess,
+    super.key,
+    this.bloc,
+    this.backgroundColor,
+    this.appBar,
+    this.title,
+    this.onError,
+    this.onLoading,
+    this.onInitial,
+    this.buildWhen,
+    this.listener,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocConsumer<C, S>(
+      bloc: bloc,
+      buildWhen: buildWhen ?? _defaultBuildWhen,
+      listener: listener ?? (_, _) {},
+      builder: (context, state) => switch (state.status) {
+        Status.init =>
+          onInitial?.call(context, state) ??
+              _wrapWithScaffold(context, const SizedBox.shrink()),
+        Status.loading =>
+          onLoading?.call(context, state) ??
+              _wrapWithScaffold(context, const StateLoadingView()),
+        Status.error =>
+          onError?.call(context, state, state.failure) ??
+              _wrapWithScaffold(
+                context,
+                _buildDefaultError(context, state.failure),
+              ),
+        Status.success => onSuccess(context, state),
+      },
+    );
+  }
+
+  Widget _wrapWithScaffold(BuildContext context, Widget body) {
+    return Scaffold(
+      appBar:
+          appBar ??
+          AppBar(title: title != null ? Text(title!) : null, centerTitle: true),
+      body: body,
+      backgroundColor: backgroundColor,
+    );
+  }
+
+  Widget _buildDefaultError(BuildContext context, AppFailure? failure) {
+    final cubit = bloc ?? context.read<C>();
+
+    return StateErrorView(
+      message: failure?.message ?? 'Неизвестная ошибка',
+      onRetry: cubit is Initializable ? (cubit as Initializable).init : null,
+    );
+  }
+
+  bool _defaultBuildWhen(S prev, S curr) =>
+      prev.runtimeType != curr.runtimeType;
+}
+
+/// Consumer для [StatusState] с поддержкой эффектов.
+///
+/// Объединяет функциональность BlocConsumer и EffectListener.
+///
+/// ```dart
+/// StatusStateConsumer<FoldersCubit, FoldersState, AppEffect>(
+///   onSuccess: (context, state) => FoldersList(state.folders),
+///   effectListener: (context, effect) {
+///     if (effect is ShowErrorEffect) showSnackBar(effect.message);
+///   },
+/// )
+/// ```
+class StatusStateConsumer<C extends EffectMixin<E>, S extends StatusState, E>
+    extends StatefulWidget {
+  /// Cubit (если не предоставлен, берётся из контекста)
+  final C? bloc;
+
+  /// Билдер для Success состояния
+  final Widget Function(BuildContext context, S state) onSuccess;
+
+  /// Билдер для Error состояния
+  final Widget Function(BuildContext context, S state, AppFailure? failure)?
+  onError;
+
+  /// Билдер для Loading состояния
+  final Widget Function(BuildContext context, S state)? onLoading;
+
+  /// Билдер для Initial состояния
+  final Widget Function(BuildContext context, S state)? onInitial;
+
+  /// Callback при получении эффекта
+  final void Function(BuildContext context, E effect)? effectListener;
+
+  /// Callback при изменении состояния
+  final void Function(BuildContext context, S state)? listener;
+
+  /// Условие для перестроения виджета
+  final bool Function(S previous, S current)? buildWhen;
+
+  const StatusStateConsumer({
+    required this.onSuccess,
+    super.key,
+    this.bloc,
+    this.onError,
+    this.onLoading,
+    this.onInitial,
+    this.effectListener,
+    this.listener,
+    this.buildWhen,
+  });
+
+  @override
+  State<StatusStateConsumer<C, S, E>> createState() =>
+      _StatusStateConsumerState<C, S, E>();
+}
+
+class _StatusStateConsumerState<
+  C extends EffectMixin<E>,
+  S extends StatusState,
+  E
+>
+    extends State<StatusStateConsumer<C, S, E>> {
+  StreamSubscription<E>? _effectSubscription;
+  late C _bloc;
+
+  @override
+  void initState() {
+    super.initState();
+    _bloc = widget.bloc ?? context.read<C>();
+    _subscribeToEffects();
+  }
+
+  @override
+  void didUpdateWidget(StatusStateConsumer<C, S, E> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final oldCubit = oldWidget.bloc ?? context.read<C>();
+    final newCubit = widget.bloc ?? oldCubit;
+
+    if (oldCubit != newCubit) {
+      _unsubscribeFromEffects();
+      _bloc = newCubit;
+      _subscribeToEffects();
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final cubit = widget.bloc ?? context.read<C>();
+
+    if (_bloc != cubit) {
+      _unsubscribeFromEffects();
+      _bloc = cubit;
+      _subscribeToEffects();
+    }
+  }
+
+  void _subscribeToEffects() {
+    if (widget.effectListener == null) return;
+
+    _effectSubscription = _bloc.effects.listen((effect) {
+      if (mounted) widget.effectListener!(context, effect);
+    });
+  }
+
+  void _unsubscribeFromEffects() {
+    _effectSubscription?.cancel();
+    _effectSubscription = null;
+  }
+
+  @override
+  void dispose() {
+    _unsubscribeFromEffects();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Cast cubit to BlocBase<S> for BlocConsumer
+    final blocBase = _bloc as BlocBase<S>;
+
+    return BlocConsumer<BlocBase<S>, S>(
+      bloc: blocBase,
+      buildWhen: widget.buildWhen ?? _defaultBuildWhen,
+      listener: widget.listener ?? (_, _) {},
+      builder: (context, state) => switch (state.status) {
+        Status.init =>
+          widget.onInitial?.call(context, state) ?? const SizedBox.shrink(),
+        Status.loading =>
+          widget.onLoading?.call(context, state) ?? const StateLoadingView(),
+        Status.error =>
+          widget.onError?.call(context, state, state.failure) ??
+              _buildDefaultError(context, state),
+        Status.success => widget.onSuccess(context, state),
+      },
+    );
+  }
+
+  Widget _buildDefaultError(BuildContext context, S state) {
+    return StateErrorView(
+      message: state.failure?.message ?? 'Неизвестная ошибка',
+      onRetry: _bloc is Initializable ? (_bloc as Initializable).init : null,
+    );
+  }
+
+  bool _defaultBuildWhen(S prev, S curr) => prev.status != curr.status;
+}

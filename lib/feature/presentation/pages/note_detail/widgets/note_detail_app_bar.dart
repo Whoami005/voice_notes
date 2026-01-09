@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
-import 'package:voice_notes/core/state/base_state/base_state.dart';
+import 'package:voice_notes/core/state/async/async_state.dart';
 import 'package:voice_notes/feature/presentation/pages/note_detail/logic/note_detail_cubit.dart';
 import 'package:voice_notes/feature/presentation/widgets/base_preferred_app_bar.dart';
 
@@ -18,7 +18,7 @@ class _NoteDetailAppBarState extends State<NoteDetailAppBar> {
   Widget build(BuildContext context) {
     final themeColors = context.themeColors;
 
-    return BlocBuilder<NoteDetailCubit, BaseState<NoteDetailData>>(
+    return BlocBuilder<NoteDetailCubit, AsyncState<NoteDetailData>>(
       buildWhen: (p, c) =>
           p.requireData.isEditing != c.requireData.isEditing ||
           p.requireData.hasChanges != c.requireData.hasChanges,

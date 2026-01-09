@@ -1,12 +1,14 @@
 import 'package:equatable/equatable.dart';
-import 'package:voice_notes/core/state/state.dart';
+import 'package:voice_notes/core/state/async/initializable_async_cubits.dart';
+import 'package:voice_notes/core/state/editable/editable.dart';
+import 'package:voice_notes/core/state/effect/common_effects.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
 import 'package:voice_notes/feature/domain/entities/tag_entity.dart';
 import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
 
 part 'note_detail_state.dart';
 
-class NoteDetailCubit extends InitializableCubit<NoteDetailData> {
+class NoteDetailCubit extends InitializableAsyncCubit<NoteDetailData> {
   final NoteRepository _noteRepository;
   final String noteId;
 
@@ -93,23 +95,29 @@ class NoteDetailCubit extends InitializableCubit<NoteDetailData> {
 
   /// Сохранить изменения в БД
   Future<void> saveNote() async {
-    await transform((data) async {
-      // Если нет изменений — просто выйти из редактирования
-      if (data.note.isClean) {
-        return data.copyWith(note: data.note.commit());
+    whenData((data) async {
+      try {
+        // Если нет изменений — просто выйти из редактирования
+        if (data.note.isClean) {
+          emitSuccess(data.copyWith(note: data.note.commit()));
+          return;
+        }
+
+        // Подготовить заметку для сохранения
+        final noteToSave = data.currentNote.copyWith(
+          text: data.currentNote.text.trim(),
+          updatedAt: DateTime.now(),
+        );
+
+        // Сохранить в БД
+        final savedNote = await _noteRepository.update(noteToSave);
+
+        // Зафиксировать с сохранённым значением
+        emitSuccess(data.copyWith(note: data.note.commitWith(savedNote)));
+        emitEffect(const ShowSuccessEffect('Заметка сохранена'));
+      } catch (e, s) {
+        emitEffect(ShowErrorEffect(logError(e, s)));
       }
-
-      // Подготовить заметку для сохранения
-      final noteToSave = data.currentNote.copyWith(
-        text: data.currentNote.text.trim(),
-        updatedAt: DateTime.now(),
-      );
-
-      // Сохранить в БД
-      final savedNote = await _noteRepository.update(noteToSave);
-
-      // Зафиксировать с сохранённым значением
-      return data.copyWith(note: data.note.commitWith(savedNote));
     });
   }
 
@@ -117,9 +125,11 @@ class NoteDetailCubit extends InitializableCubit<NoteDetailData> {
   Future<bool> deleteNote() async {
     try {
       await _noteRepository.delete(noteId);
+
+      emitEffect(const ShowSuccessEffect('Заметка удалена'));
       return true;
     } catch (e, s) {
-      addError(e, s);
+      emitEffect(ShowErrorEffect(logError(e, s)));
       return false;
     }
   }

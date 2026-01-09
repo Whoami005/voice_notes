@@ -3,7 +3,8 @@ import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:voice_notes/common/utils/date_grouper.dart';
-import 'package:voice_notes/core/state/state.dart';
+import 'package:voice_notes/core/state/async/initializable_async_cubits.dart';
+import 'package:voice_notes/core/state/effect/common_effects.dart';
 import 'package:voice_notes/feature/domain/entities/folder_entity.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
 import 'package:voice_notes/feature/domain/repositories/folder_repository.dart';
@@ -11,7 +12,7 @@ import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
 
 part 'folder_detail_state.dart';
 
-class FolderDetailCubit extends RefreshableCubit<FolderDetailData> {
+class FolderDetailCubit extends RefreshableAsyncCubit<FolderDetailData> {
   final NoteRepository _noteRepository;
   final FolderRepository _folderRepository;
   final String folderId;
@@ -45,22 +46,32 @@ class FolderDetailCubit extends RefreshableCubit<FolderDetailData> {
 
   @override
   Future<void> refresh() async {
-    await execute(
-      action: () async {
-        final folder = await _folderRepository.getByUid(folderId);
-        final notes = await _noteRepository.getByFolderId(folderId);
+    try {
+      final folder = await _folderRepository.getByUid(folderId);
+      final notes = await _noteRepository.getByFolderId(folderId);
 
-        emitSuccess(FolderDetailData(folder: folder, notes: notes));
-      },
-    );
+      emitSuccess(FolderDetailData(folder: folder, notes: notes));
+    } catch (e, s) {
+      emitEffect(ShowErrorEffect(logError(e, s)));
+    }
   }
 
   Future<void> deleteNote(String noteUid) async {
-    await execute(action: () => _noteRepository.delete(noteUid));
+    try {
+      await _noteRepository.delete(noteUid);
+      emitEffect(const ShowSuccessEffect('Заметка удалена'));
+    } catch (e, s) {
+      emitEffect(ShowErrorEffect(logError(e, s)));
+    }
   }
 
   Future<void> deleteFolder() async {
-    await execute(action: () => _folderRepository.deleteWithNotes(folderId));
+    try {
+      await _folderRepository.deleteWithNotes(folderId);
+      emitEffect(const ShowSuccessEffect('Папка удалена'));
+    } catch (e, s) {
+      emitEffect(ShowErrorEffect(logError(e, s)));
+    }
   }
 
   @override

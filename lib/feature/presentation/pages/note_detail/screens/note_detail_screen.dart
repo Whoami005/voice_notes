@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:voice_notes/core/packages/app_router/app_route_wrapper.dart';
 import 'package:voice_notes/core/packages/app_router/routes/app_routes.dart';
 import 'package:voice_notes/core/packages/di/injection.dart';
-import 'package:voice_notes/core/state/state.dart';
+import 'package:voice_notes/core/state/async/async_state_widgets.dart';
 import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
 import 'package:voice_notes/feature/presentation/pages/note_detail/logic/note_detail_cubit.dart';
 import 'package:voice_notes/feature/presentation/pages/note_detail/widgets/note_detail_app_bar.dart';
@@ -54,12 +54,11 @@ class NoteDetailScreen extends StatelessWidget implements AppRouteWrapper {
 
   @override
   Widget build(BuildContext context) {
-    return BaseStateScaffold<NoteDetailCubit, NoteDetailData>(
+    return AsyncStateScaffold<NoteDetailCubit, NoteDetailData>(
       title: 'Заметка',
-      onSuccess: (context, _) {
+      onSuccess: (context, data) {
         return BasePopScope(
-          canPop: (context) =>
-              !context.select((NoteDetailCubit c) => c.requireData.hasChanges),
+          canPop: (context) => !data.hasChanges,
           onPopInvokedWithResult: () => _showUnsavedChangesDialog(context),
           child: const Scaffold(
             appBar: NoteDetailAppBar(),
@@ -70,3 +69,4 @@ class NoteDetailScreen extends StatelessWidget implements AppRouteWrapper {
     );
   }
 }
+

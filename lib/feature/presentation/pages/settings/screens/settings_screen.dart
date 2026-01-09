@@ -9,7 +9,8 @@ import 'package:voice_notes/core/packages/app_router/routes/app_routes.dart';
 import 'package:voice_notes/core/packages/asr/asr_service.dart';
 import 'package:voice_notes/core/packages/di/injection.dart';
 import 'package:voice_notes/core/packages/downloader/download_status.dart';
-import 'package:voice_notes/core/state/state.dart';
+import 'package:voice_notes/core/state/async/async_state.dart';
+import 'package:voice_notes/core/state/async/async_state_widgets.dart';
 import 'package:voice_notes/core/theme/app_typography.dart';
 import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
 import 'package:voice_notes/feature/domain/repositories/model_repository.dart';
@@ -323,7 +324,7 @@ class _ModelsTabState extends State<_ModelsTab>
   Widget build(BuildContext context) {
     super.build(context);
 
-    return BaseStateBody<ModelsCubit, ModelsState>(
+    return AsyncStateBody<ModelsCubit, ModelsState>(
       buildWhen: (_, _) => true,
       listener: _handleStateChanges,
       onSuccess: (context, state) {
@@ -370,9 +371,9 @@ class _ModelsTabState extends State<_ModelsTab>
 
   void _handleStateChanges(
     BuildContext context,
-    BaseState<ModelsState> baseState,
+    AsyncState<ModelsState> baseState,
   ) {
-    if (baseState is! SuccessState<ModelsState>) return;
+    if (baseState is! AsyncSuccess<ModelsState>) return;
     final state = baseState.data;
 
     // Показываем ошибки скачивания
