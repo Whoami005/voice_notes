@@ -8,6 +8,8 @@ export 'base_state/initializable_base_cubits.dart';
 export 'editable/editable.dart';
 export 'editable/editable_with_history.dart';
 export 'editable/validated_editable.dart';
+// Effect паттерн
+export 'effect/effect.dart';
 // Мутации
 export 'mutation_notifier.dart';
 // Searchable паттерн
