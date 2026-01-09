@@ -5,6 +5,9 @@ import 'package:voice_notes/core/state/effect/common_effects.dart';
 import 'package:voice_notes/core/state/effect/effect_base.dart';
 import 'package:voice_notes/core/state/status/status_state.dart';
 
+/// [StatusCubit] с дефолтным типом эффектов [AppEffect].
+typedef AppStatusCubit<S extends StatusState> = StatusCubit<S, AppEffect>;
+
 /// Cubit для работы с [StatusState] — enum-based состояния.
 ///
 /// Поддерживает generic тип эффектов `E`.
@@ -34,9 +37,8 @@ abstract class StatusCubit<S extends StatusState, E> extends EffectCubit<S, E> {
       emit(newState.copyWith(status: Status.success) as S);
 
   /// Установить статус error с ошибкой
-  void emitError(AppFailure failure) => emit(
-    state.copyWith(status: Status.error, failure: failure) as S,
-  );
+  void emitError(AppFailure failure) =>
+      emit(state.copyWith(status: Status.error, failure: failure) as S);
 
   // ═══════════════════════════════════════════════════════════════════
   // State Operations
@@ -66,6 +68,3 @@ abstract class StatusCubit<S extends StatusState, E> extends EffectCubit<S, E> {
     }
   }
 }
-
-/// [StatusCubit] с дефолтным типом эффектов [AppEffect].
-typedef AppStatusCubit<S extends StatusState> = StatusCubit<S, AppEffect>;

@@ -5,6 +5,9 @@ import 'package:voice_notes/core/state/async/async_state.dart';
 import 'package:voice_notes/core/state/effect/common_effects.dart';
 import 'package:voice_notes/core/state/effect/effect_base.dart';
 
+/// [AsyncCubit] с дефолтным типом эффектов [AppEffect].
+typedef AppAsyncCubit<T> = AsyncCubit<T, AppEffect>;
+
 /// Cubit для работы с [AsyncState] — Initial/Loading/Success/Error.
 ///
 /// Поддерживает generic тип эффектов `E`.
@@ -21,16 +24,6 @@ import 'package:voice_notes/core/state/effect/effect_base.dart';
 abstract class AsyncCubit<T, E> extends EffectCubit<AsyncState<T>, E> {
   AsyncCubit([AsyncState<T>? initialState])
     : super(initialState ?? const AsyncState.initial());
-
-  // ═══════════════════════════════════════════════════════════════════
-  // Getters
-  // ═══════════════════════════════════════════════════════════════════
-
-  /// Данные или null
-  T? get dataOrNull => state.dataOrNull;
-
-  /// Данные или исключение
-  T get requireData => state.requireData;
 
   // ═══════════════════════════════════════════════════════════════════
   // Emitters
@@ -54,6 +47,7 @@ abstract class AsyncCubit<T, E> extends EffectCubit<AsyncState<T>, E> {
   FutureOr<R?> whenData<R>(FutureOr<R> Function(T data) action) {
     final data = state.dataOrNull;
     if (data == null) return null;
+
     return action(data);
   }
 
@@ -101,24 +95,6 @@ abstract class AsyncCubit<T, E> extends EffectCubit<AsyncState<T>, E> {
     }
   }
 
-  /// Модифицировать данные и вернуть результат.
-  ///
-  /// Возвращает null если состояние не Success.
-  FutureOr<R?> modify<R>(
-    FutureOr<R> Function(T current) modifier, {
-    R Function(AppFailure failure)? onError,
-  }) async {
-    final data = state.dataOrNull;
-    if (data == null) return null;
-
-    try {
-      return await modifier(data);
-    } catch (e, s) {
-      final failure = logError(e, s);
-      return onError?.call(failure);
-    }
-  }
-
   /// Подписаться на стрим данных.
   StreamSubscription<T> watchStream(
     Stream<T> stream, {
@@ -134,6 +110,3 @@ abstract class AsyncCubit<T, E> extends EffectCubit<AsyncState<T>, E> {
     );
   }
 }
-
-/// [AsyncCubit] с дефолтным типом эффектов [AppEffect].
-typedef AppAsyncCubit<T> = AsyncCubit<T, AppEffect>;
