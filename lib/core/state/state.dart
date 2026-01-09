@@ -10,6 +10,14 @@ export 'editable/editable_with_history.dart';
 export 'editable/validated_editable.dart';
 // Мутации
 export 'mutation_notifier.dart';
+// Searchable паттерн
+export 'searchable/local_search_mixin.dart';
+export 'searchable/local_searchable.dart';
+export 'searchable/remote_search_mixin.dart';
+export 'searchable/remote_searchable.dart';
+export 'searchable/search_highlighter.dart';
+export 'searchable/search_matchers.dart';
+export 'searchable/searchable.dart';
 export 'shared/initializable.dart';
 export 'shared/state_views.dart';
 // StatusState паттерн
