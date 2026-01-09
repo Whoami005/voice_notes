@@ -12,7 +12,7 @@ import 'package:voice_notes/feature/presentation/widgets/bottom_sheet/create_fol
 
 part 'folders_state.dart';
 
-class FoldersCubit extends RefreshableAsyncCubit<FoldersState>
+class FoldersCubit extends RefreshableAsyncCubit<FoldersState, AppEffect>
     with LocalSearchMixin<AsyncState<FoldersState>> {
   final FolderRepository _repository;
 

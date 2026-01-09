@@ -3,7 +3,7 @@ import 'package:voice_notes/core/state/async/async_cubit.dart';
 import 'package:voice_notes/core/state/shared/initializable.dart';
 
 /// [AppAsyncCubit] с автоматическим вызовом init() в конструкторе.
-abstract class InitializableAsyncCubit<T> extends AppAsyncCubit<T>
+abstract class InitializableAsyncCubit<T, E> extends AsyncCubit<T, E>
     implements Initializable {
   InitializableAsyncCubit([super.initialState]) {
     _autoInit();
@@ -20,7 +20,7 @@ abstract class InitializableAsyncCubit<T> extends AppAsyncCubit<T>
 }
 
 /// [AppAsyncCubit] с автоматическим init() и методом refresh().
-abstract class RefreshableAsyncCubit<T> extends AppAsyncCubit<T>
+abstract class RefreshableAsyncCubit<T, E> extends AsyncCubit<T, E>
     implements Refreshable {
   RefreshableAsyncCubit([super.initialState]) {
     _autoInit();

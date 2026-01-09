@@ -12,7 +12,8 @@ import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
 
 part 'folder_detail_state.dart';
 
-class FolderDetailCubit extends RefreshableAsyncCubit<FolderDetailData> {
+class FolderDetailCubit
+    extends RefreshableAsyncCubit<FolderDetailData, AppEffect> {
   final NoteRepository _noteRepository;
   final FolderRepository _folderRepository;
   final String folderId;
