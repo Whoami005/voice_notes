@@ -131,8 +131,8 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
     );
 
     if ((confirmed ?? false) && mounted) {
-      await context.read<FolderDetailCubit>().deleteFolder();
-      if (mounted) context.pop();
+      final deleted = await context.read<FolderDetailCubit>().deleteFolder();
+      if (deleted && mounted) context.pop();
     }
   }
 }

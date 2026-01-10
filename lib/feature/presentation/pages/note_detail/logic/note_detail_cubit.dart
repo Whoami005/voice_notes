@@ -50,7 +50,7 @@ class NoteDetailCubit extends InitializableAsyncCubit<NoteDetailData> {
 
   /// Обновить текст заметки
   void updateText(String text) {
-    transform((data) {
+    guardAction((data) {
       final updatedNote = data.note.modify((note) => note.copyWith(text: text));
       emitSuccess(data.copyWith(note: updatedNote));
     });
@@ -65,7 +65,7 @@ class NoteDetailCubit extends InitializableAsyncCubit<NoteDetailData> {
     final normalizedName = tagName.trim().toLowerCase();
     if (normalizedName.isEmpty) return;
 
-    transform((data) {
+    guardAction((data) {
       // Проверка на дубликат
       if (data.currentNote.tags.any((t) => t.name == normalizedName)) return;
 
@@ -81,7 +81,7 @@ class NoteDetailCubit extends InitializableAsyncCubit<NoteDetailData> {
 
   /// Удалить тег
   void removeTag(TagEntity tag) {
-    transform((data) {
+    guardAction((data) {
       final updatedNote = data.note.modify(
         (note) => note.copyWith(
           tags: note.tags.where((t) => t.name != tag.name).toList(),
@@ -97,39 +97,31 @@ class NoteDetailCubit extends InitializableAsyncCubit<NoteDetailData> {
   // ─────────────────────────────────────────────────────────────
 
   /// Сохранить изменения в БД
-  Future<void> saveNote() async {
-    whenData((data) async {
-      try {
-        // Если нет изменений — просто выйти из редактирования
-        if (data.note.isClean) {
-          emitSuccess(data.copyWith(note: data.note.commit()));
-          return;
-        }
+  Future<void> saveNote() => guardAction((data) async {
+    // Если нет изменений — просто выйти из редактирования
+    if (data.note.isClean) {
+      emitSuccess(data.copyWith(note: data.note.commit()));
+      return;
+    }
 
-        // Подготовить заметку для сохранения
-        final noteToSave = data.currentNote.copyWith(
-          text: data.currentNote.text.trim(),
-          updatedAt: DateTime.now(),
-        );
+    // Подготовить заметку для сохранения
+    final noteToSave = data.currentNote.copyWith(
+      text: data.currentNote.text.trim(),
+      updatedAt: DateTime.now(),
+    );
 
-        // Сохранить в БД
-        final savedNote = await _noteRepository.update(noteToSave);
+    // Сохранить в БД
+    final savedNote = await _noteRepository.update(noteToSave);
 
-        // Зафиксировать с сохранённым значением
-        emitSuccess(data.copyWith(note: data.note.commitWith(savedNote)));
-        emitEffect(const ShowSuccessEffect('Заметка сохранена'));
-      } catch (e, s) {
-        emitEffect(ShowErrorEffect(logError(e, s)));
-      }
-    });
-  }
+    // Зафиксировать с сохранённым значением
+    emitSuccess(data.copyWith(note: data.note.commitWith(savedNote)));
+  });
 
   /// Удалить заметку
   Future<bool> deleteNote() async {
     try {
       await _noteRepository.delete(noteId);
 
-      emitEffect(const ShowSuccessEffect('Заметка удалена'));
       return true;
     } catch (e, s) {
       emitEffect(ShowErrorEffect(logError(e, s)));

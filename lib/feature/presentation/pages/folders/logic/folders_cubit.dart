@@ -57,40 +57,24 @@ class FoldersCubit extends RefreshableAsyncCubit<FoldersState>
   }
 
   /// Создать папку из результата CreateFolderSheet
-  Future<void> createFolder(CreateFolderResult data) async {
-    try {
-      await _repository.create(
-        name: data.name,
-        description: data.description,
-        color: data.color,
-        icon: data.icon,
-      );
-
-      emitEffect(const ShowSuccessEffect('Папка создана'));
-    } catch (e, s) {
-      emitEffect(ShowErrorEffect(logError(e, s)));
-    }
-  }
+  Future<void> createFolder(CreateFolderResult data) => guardAction((_) async {
+    await _repository.create(
+      name: data.name,
+      description: data.description,
+      color: data.color,
+      icon: data.icon,
+    );
+  });
 
   /// Обновить существующую папку
-  Future<void> updateFolder(FolderEntity folder) async {
-    try {
-      await _repository.update(folder);
-    } catch (e, s) {
-      emitEffect(ShowErrorEffect(logError(e, s)));
-    }
-  }
+  Future<void> updateFolder(FolderEntity folder) => guardAction((_) async {
+    await _repository.update(folder);
+  });
 
   /// Удалить папку
-  Future<void> deleteFolder(String uid) async {
-    try {
-      await _repository.delete(uid);
-
-      emitEffect(const ShowSuccessEffect('Папка удалена'));
-    } catch (e, s) {
-      emitEffect(ShowErrorEffect(logError(e, s)));
-    }
-  }
+  Future<void> deleteFolder(String uid) => guardAction((_) async {
+    await _repository.delete(uid);
+  });
 
   @override
   Future<void> close() {

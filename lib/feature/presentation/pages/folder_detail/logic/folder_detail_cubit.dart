@@ -56,21 +56,18 @@ class FolderDetailCubit extends RefreshableAsyncCubit<FolderDetailData> {
     }
   }
 
-  Future<void> deleteNote(String noteUid) async {
-    try {
-      await _noteRepository.delete(noteUid);
-      emitEffect(const ShowSuccessEffect('Заметка удалена'));
-    } catch (e, s) {
-      emitEffect(ShowErrorEffect(logError(e, s)));
-    }
-  }
+  Future<void> deleteNote(String noteUid) => guardAction((_) async {
+    await _noteRepository.delete(noteUid);
+  });
 
-  Future<void> deleteFolder() async {
+  Future<bool> deleteFolder() async {
     try {
       await _folderRepository.deleteWithNotes(folderId);
-      emitEffect(const ShowSuccessEffect('Папка удалена'));
+
+      return true;
     } catch (e, s) {
       emitEffect(ShowErrorEffect(logError(e, s)));
+      return false;
     }
   }
 

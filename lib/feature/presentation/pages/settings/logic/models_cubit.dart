@@ -45,7 +45,7 @@ class ModelsCubit extends RefreshableAsyncCubit<ModelsState> {
 
   @override
   Future<void> refresh() async {
-    await transform((current) async {
+    await guardAction((current) async {
       await _repository.verifyAllModels();
       final models = await _repository.getModelsWithStatus();
 
@@ -99,7 +99,7 @@ class ModelsCubit extends RefreshableAsyncCubit<ModelsState> {
     String modelId,
     Map<String, ModelDownloadProgress> currentDownloads,
   ) async {
-    await transform((current) async {
+    await guardAction((current) async {
       final models = await _repository.getModelsWithStatus();
       final newDownloads = {...currentDownloads}..remove(modelId);
 
@@ -200,7 +200,7 @@ class ModelsCubit extends RefreshableAsyncCubit<ModelsState> {
 
   /// Удалить модель
   Future<void> deleteModel(String modelId) async {
-    await transform((current) async {
+    await guardAction((current) async {
       // Если удаляем активную модель — освобождаем ASR сервис
       await _disposeAsrModel(current.selectedModel, modelId);
 
@@ -215,7 +215,7 @@ class ModelsCubit extends RefreshableAsyncCubit<ModelsState> {
 
   /// Выбрать модель как активную
   Future<void> selectModel(AsrModelEntity newModel) async {
-    await transform((current) async {
+    await guardAction((current) async {
       // Переинициализируем ASR сервис с новой моделью
       await _switchAsrModel(newModel);
 

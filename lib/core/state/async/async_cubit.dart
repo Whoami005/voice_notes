@@ -49,14 +49,8 @@ abstract class AsyncCubit<T> extends EffectCubit<AsyncState<T>, BaseEffect> {
   ///
   /// Используй для начальной загрузки данных.
   Future<void> load(FutureOr<T> Function() action) async {
-    try {
-      emitLoading();
-
-      emitSuccess(await action());
-    } catch (e, s) {
-      final failure = logError(e, s);
-      emitError(failure);
-    }
+    emitLoading();
+    await guard(action);
   }
 
   /// Success/Error без Loading.
@@ -70,20 +64,30 @@ abstract class AsyncCubit<T> extends EffectCubit<AsyncState<T>, BaseEffect> {
       emitSuccess(await future());
     } catch (e, s) {
       final failure = logError(e, s);
-      onError != null ? onError(failure) : emitError(failure);
+      onError == null ? emitError(failure) : onError(failure);
     }
   }
 
-  /// Трансформировать текущие данные.
-  FutureOr<void> transform(
-    FutureOr<void> Function(T current) transformer, {
+  /// Выполнить действие с обработкой ошибок через effect.
+  ///
+  /// Используй для действий пользователя, требующих error feedback.
+  /// Ничего не делает если state не Success.
+  ///
+  /// ```dart
+  /// Future<void> deleteItem(String id) => guardAction((data) async {
+  ///   await repository.delete(id);
+  ///   emitSuccess(data.copyWith(items: data.items.where((i) => i.id != id)));
+  /// });
+  /// ```
+  Future<void> guardAction(
+    FutureOr<void> Function(T current) action, {
     void Function(AppFailure failure)? onError,
   }) async {
     final data = state.dataOrNull;
     if (data == null) return;
 
     try {
-      await transformer(data);
+      await action(data);
     } catch (e, s) {
       final failure = logError(e, s);
       onError == null ? emitEffect(ShowErrorEffect(failure)) : onError(failure);
