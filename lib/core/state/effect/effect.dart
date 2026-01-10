@@ -12,6 +12,7 @@
 library;
 
 export 'app_effect_listener.dart';
+export 'base_effect.dart';
 export 'common_effects.dart';
 export 'effect_base.dart';
 export 'effect_bloc_observer.dart';

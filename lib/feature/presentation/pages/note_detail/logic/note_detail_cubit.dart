@@ -8,8 +8,7 @@ import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
 
 part 'note_detail_state.dart';
 
-class NoteDetailCubit
-    extends InitializableAsyncCubit<NoteDetailData, AppEffect> {
+class NoteDetailCubit extends InitializableAsyncCubit<NoteDetailData> {
   final NoteRepository _noteRepository;
   final String noteId;
 

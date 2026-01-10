@@ -5,7 +5,6 @@ import 'package:voice_notes/core/packages/app_router/app_route_wrapper.dart';
 import 'package:voice_notes/core/packages/app_router/routes/app_routes.dart';
 import 'package:voice_notes/core/packages/di/injection.dart';
 import 'package:voice_notes/core/state/async/async_state_widgets.dart';
-import 'package:voice_notes/core/state/effect/app_effect_listener.dart';
 import 'package:voice_notes/feature/domain/repositories/folder_repository.dart';
 import 'package:voice_notes/feature/presentation/pages/folders/components/folders_app_bar.dart';
 import 'package:voice_notes/feature/presentation/pages/folders/components/folders_list_section.dart';
@@ -36,23 +35,21 @@ class FoldersScreen extends StatefulWidget implements AppRouteWrapper {
 class _FoldersScreenState extends State<FoldersScreen> {
   @override
   Widget build(BuildContext context) {
-    return AppEffectListener<FoldersCubit>(
-      child: AsyncStateScaffold<FoldersCubit, FoldersState>(
-        title: 'Заметки',
-        onSuccess: (context, _) {
-          return const Scaffold(
-            floatingActionButton: VoiceRecordButton(),
-            body: SafeArea(
-              bottom: false,
-              child: RefreshableWrapper<FoldersCubit>(
-                child: CustomScrollView(
-                  slivers: [FoldersAppBar(), FoldersListSection()],
-                ),
+    return AsyncStateScaffold<FoldersCubit, FoldersState>(
+      title: 'Заметки',
+      onSuccess: (context, _) {
+        return const Scaffold(
+          floatingActionButton: VoiceRecordButton(),
+          body: SafeArea(
+            bottom: false,
+            child: RefreshableWrapper<FoldersCubit>(
+              child: CustomScrollView(
+                slivers: [FoldersAppBar(), FoldersListSection()],
               ),
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }

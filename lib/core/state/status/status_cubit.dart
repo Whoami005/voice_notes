@@ -1,25 +1,21 @@
 import 'dart:async';
 
 import 'package:voice_notes/core/error/app_failure.dart';
-import 'package:voice_notes/core/state/effect/common_effects.dart';
+import 'package:voice_notes/core/state/effect/base_effect.dart';
 import 'package:voice_notes/core/state/effect/effect_base.dart';
 import 'package:voice_notes/core/state/status/status_state.dart';
 
-/// [StatusCubit] с дефолтным типом эффектов [AppEffect].
-typedef AppStatusCubit<S extends StatusState> = StatusCubit<S, AppEffect>;
-
 /// Cubit для работы с [StatusState] — enum-based состояния.
 ///
-/// Поддерживает generic тип эффектов `E`.
-/// Для использования с [AppEffect] используй typedef [AppStatusCubit].
+/// Использует [BaseEffect] для системы эффектов.
 ///
 /// ```dart
-/// class FoldersCubit extends StatusCubit<FoldersState, AppEffect> { ... }
-///
-/// // Или с typedef:
-/// class FoldersCubit extends AppStatusCubit<FoldersState> { ... }
+/// class FoldersCubit extends StatusCubit<FoldersState> {
+///   Future<void> init() => load(() => FoldersState(...));
+/// }
 /// ```
-abstract class StatusCubit<S extends StatusState, E> extends EffectCubit<S, E> {
+abstract class StatusCubit<S extends StatusState>
+    extends EffectCubit<S, BaseEffect> {
   StatusCubit(super.initialState);
 
   // ═══════════════════════════════════════════════════════════════════

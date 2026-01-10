@@ -2,26 +2,19 @@ import 'dart:async';
 
 import 'package:voice_notes/core/error/app_failure.dart';
 import 'package:voice_notes/core/state/async/async_state.dart';
-import 'package:voice_notes/core/state/effect/common_effects.dart';
+import 'package:voice_notes/core/state/effect/base_effect.dart';
 import 'package:voice_notes/core/state/effect/effect_base.dart';
-
-/// [AsyncCubit] с дефолтным типом эффектов [AppEffect].
-typedef AppAsyncCubit<T> = AsyncCubit<T, AppEffect>;
 
 /// Cubit для работы с [AsyncState] — Initial/Loading/Success/Error.
 ///
-/// Поддерживает generic тип эффектов `E`.
-/// Для использования с [AppEffect] используй typedef [AppAsyncCubit].
+/// Использует [BaseEffect] для системы эффектов.
 ///
 /// ```dart
-/// class ModelsCubit extends AsyncCubit<List<Model>, AppEffect> {
+/// class ModelsCubit extends AsyncCubit<List<Model>> {
 ///   Future<void> init() => load(() => repository.getModels());
 /// }
-///
-/// // Или с typedef:
-/// class ModelsCubit extends AppAsyncCubit<List<Model>> { ... }
 /// ```
-abstract class AsyncCubit<T, E> extends EffectCubit<AsyncState<T>, E> {
+abstract class AsyncCubit<T> extends EffectCubit<AsyncState<T>, BaseEffect> {
   AsyncCubit([AsyncState<T>? initialState])
     : super(initialState ?? const AsyncState.initial());
 
