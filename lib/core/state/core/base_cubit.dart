@@ -4,7 +4,7 @@ import 'package:voice_notes/core/state/effect/effect_base.dart';
 
 /// Базовый Cubit с общими утилитами, но БЕЗ поддержки эффектов.
 ///
-/// Используй когда нужен доступ к [logError], [safeEmit], [execute],
+/// Используй когда нужен доступ к [logError], [safeEmit]
 /// но не требуются one-shot эффекты.
 ///
 /// Для cubit'а с эффектами используй [EffectCubit].

@@ -8,7 +8,6 @@ import 'package:voice_notes/core/state/effect/effect_mixin.dart';
 /// Наследует от [BaseCubit], поэтому имеет доступ к:
 /// - [logError] — логирование ошибок
 /// - [safeEmit] — безопасный emit
-/// - [execute] — выполнение с обработкой ошибок
 ///
 /// ```dart
 /// class MyCubit extends EffectCubit<MyState, MyEffect> {
@@ -29,7 +28,6 @@ abstract class EffectCubit<State, Effect> extends BaseCubit<State>
 /// Имеет доступ к утилитам из [CubitMixin]:
 /// - [logError] — логирование ошибок
 /// - [safeEmit] — безопасный emit
-/// - [execute] — выполнение с обработкой ошибок
 ///
 /// ```dart
 /// class MyBloc extends EffectBloc<MyEvent, MyState, MyEffect> {

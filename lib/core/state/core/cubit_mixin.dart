@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:voice_notes/core/error/app_failure.dart';
 
@@ -8,7 +6,6 @@ import 'package:voice_notes/core/error/app_failure.dart';
 /// Предоставляет:
 /// - [logError] — логирование ошибок через addError
 /// - [safeEmit] — безопасный emit (игнорирует если cubit закрыт)
-/// - [execute] — выполнение действия с обработкой ошибок
 mixin CubitMixin<S> on BlocBase<S> {
   /// Логирует ошибку через addError и возвращает AppFailure.
   ///
@@ -24,20 +21,5 @@ mixin CubitMixin<S> on BlocBase<S> {
   /// после закрытия cubit'а.
   void safeEmit(S state) {
     if (!isClosed) emit(state);
-  }
-
-  /// Выполняет действие с автоматической обработкой ошибок.
-  ///
-  /// Не меняет состояние — используй для фоновых операций.
-  Future<void> execute({
-    required FutureOr<void> Function() action,
-    void Function(AppFailure failure)? onError,
-  }) async {
-    try {
-      await action();
-    } catch (e, s) {
-      final failure = logError(e, s);
-      onError?.call(failure);
-    }
   }
 }

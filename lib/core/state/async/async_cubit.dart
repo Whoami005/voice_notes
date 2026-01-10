@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:voice_notes/core/error/app_failure.dart';
 import 'package:voice_notes/core/state/async/async_state.dart';
 import 'package:voice_notes/core/state/effect/base_effect.dart';
+import 'package:voice_notes/core/state/effect/common_effects.dart';
 import 'package:voice_notes/core/state/effect/effect_base.dart';
 
 /// Cubit для работы с [AsyncState] — Initial/Loading/Success/Error.
@@ -48,11 +49,14 @@ abstract class AsyncCubit<T> extends EffectCubit<AsyncState<T>, BaseEffect> {
   ///
   /// Используй для начальной загрузки данных.
   Future<void> load(FutureOr<T> Function() action) async {
-    emitLoading();
-    await execute(
-      action: () async => emitSuccess(await action()),
-      onError: emitError,
-    );
+    try {
+      emitLoading();
+
+      emitSuccess(await action());
+    } catch (e, s) {
+      final failure = logError(e, s);
+      emitError(failure);
+    }
   }
 
   /// Success/Error без Loading.
@@ -71,20 +75,18 @@ abstract class AsyncCubit<T> extends EffectCubit<AsyncState<T>, BaseEffect> {
   }
 
   /// Трансформировать текущие данные.
-  ///
-  /// Ничего не делает если состояние не Success.
   FutureOr<void> transform(
-    FutureOr<T> Function(T current) transformer, {
+    FutureOr<void> Function(T current) transformer, {
     void Function(AppFailure failure)? onError,
   }) async {
     final data = state.dataOrNull;
     if (data == null) return;
 
     try {
-      emitSuccess(await transformer(data));
+      await transformer(data);
     } catch (e, s) {
       final failure = logError(e, s);
-      onError?.call(failure);
+      onError == null ? emitEffect(ShowErrorEffect(failure)) : onError(failure);
     }
   }
 

@@ -49,7 +49,7 @@ class ModelsCubit extends RefreshableAsyncCubit<ModelsState> {
       await _repository.verifyAllModels();
       final models = await _repository.getModelsWithStatus();
 
-      return current.copyWith(models: models);
+      emitSuccess(current.copyWith(models: models));
     });
   }
 
@@ -103,7 +103,7 @@ class ModelsCubit extends RefreshableAsyncCubit<ModelsState> {
       final models = await _repository.getModelsWithStatus();
       final newDownloads = {...currentDownloads}..remove(modelId);
 
-      return current.copyWith(models: models, downloads: newDownloads);
+      emitSuccess(current.copyWith(models: models, downloads: newDownloads));
     });
   }
 
@@ -135,19 +135,20 @@ class ModelsCubit extends RefreshableAsyncCubit<ModelsState> {
     }
 
     // Запускаем скачивание
-    await execute(
-      action: () => _repository.downloadModel(model),
-      onError: (failure) {
-        // Обновляем прогресс с ошибкой
-        _handleDownloadProgress(
-          ModelDownloadProgress(
-            modelId: model.uuid,
-            status: DownloadStatus.failed,
-            errorMessage: failure.message,
-          ),
-        );
-      },
-    );
+    try {
+      await _repository.downloadModel(model);
+    } catch (e, s) {
+      final failure = logError(e, s);
+
+      // Обновляем прогресс с ошибкой
+      _handleDownloadProgress(
+        ModelDownloadProgress(
+          modelId: model.uuid,
+          status: DownloadStatus.failed,
+          errorMessage: failure.message,
+        ),
+      );
+    }
 
     return null;
   }
@@ -172,17 +173,29 @@ class ModelsCubit extends RefreshableAsyncCubit<ModelsState> {
 
   /// Отменить скачивание
   Future<void> cancelDownload(String modelId) async {
-    await execute(action: () => _repository.cancelDownload(modelId));
+    try {
+      await _repository.cancelDownload(modelId);
+    } catch (e, s) {
+      logError(e, s);
+    }
   }
 
   /// Приостановить скачивание
   Future<void> pauseDownload(String modelId) async {
-    await execute(action: () => _repository.pauseDownload(modelId));
+    try {
+      await _repository.pauseDownload(modelId);
+    } catch (e, s) {
+      logError(e, s);
+    }
   }
 
   /// Возобновить скачивание
   Future<void> resumeDownload(String modelId) async {
-    await execute(action: () => _repository.resumeDownload(modelId));
+    try {
+      await _repository.resumeDownload(modelId);
+    } catch (e, s) {
+      logError(e, s);
+    }
   }
 
   /// Удалить модель
@@ -196,7 +209,7 @@ class ModelsCubit extends RefreshableAsyncCubit<ModelsState> {
       // Обновляем список
       final models = await _repository.getModelsWithStatus();
 
-      return current.copyWith(models: models);
+      emitSuccess(current.copyWith(models: models));
     });
   }
 
@@ -211,7 +224,7 @@ class ModelsCubit extends RefreshableAsyncCubit<ModelsState> {
       // Обновляем список
       final models = await _repository.getModelsWithStatus();
 
-      return current.copyWith(models: models);
+      emitSuccess(current.copyWith(models: models));
     });
   }
 

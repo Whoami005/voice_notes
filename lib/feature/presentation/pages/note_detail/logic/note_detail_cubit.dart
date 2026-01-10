@@ -32,12 +32,16 @@ class NoteDetailCubit extends InitializableAsyncCubit<NoteDetailData> {
 
   /// Начать редактирование
   void startEditing() {
-    transform((data) => data.copyWith(note: data.note.startEditing()));
+    whenData(
+      (data) => emitSuccess(data.copyWith(note: data.note.startEditing())),
+    );
   }
 
   /// Отменить редактирование (откатить к оригиналу)
   void cancelEditing() {
-    transform((data) => data.copyWith(note: data.note.cancelEditing()));
+    whenData(
+      (data) => emitSuccess(data.copyWith(note: data.note.cancelEditing())),
+    );
   }
 
   // ─────────────────────────────────────────────────────────────
@@ -48,7 +52,7 @@ class NoteDetailCubit extends InitializableAsyncCubit<NoteDetailData> {
   void updateText(String text) {
     transform((data) {
       final updatedNote = data.note.modify((note) => note.copyWith(text: text));
-      return data.copyWith(note: updatedNote);
+      emitSuccess(data.copyWith(note: updatedNote));
     });
   }
 
@@ -63,9 +67,7 @@ class NoteDetailCubit extends InitializableAsyncCubit<NoteDetailData> {
 
     transform((data) {
       // Проверка на дубликат
-      if (data.currentNote.tags.any((t) => t.name == normalizedName)) {
-        return data;
-      }
+      if (data.currentNote.tags.any((t) => t.name == normalizedName)) return;
 
       final newTag = TagEntity(name: normalizedName, createdAt: DateTime.now());
 
@@ -73,7 +75,7 @@ class NoteDetailCubit extends InitializableAsyncCubit<NoteDetailData> {
         (note) => note.copyWith(tags: [...note.tags, newTag]),
       );
 
-      return data.copyWith(note: updatedNote);
+      emitSuccess(data.copyWith(note: updatedNote));
     });
   }
 
@@ -85,7 +87,8 @@ class NoteDetailCubit extends InitializableAsyncCubit<NoteDetailData> {
           tags: note.tags.where((t) => t.name != tag.name).toList(),
         ),
       );
-      return data.copyWith(note: updatedNote);
+
+      emitSuccess(data.copyWith(note: updatedNote));
     });
   }
 
