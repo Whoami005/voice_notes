@@ -139,6 +139,45 @@ class RecordingCubit extends Cubit<RecordingState> {
     emit(const RecordingIdleState());
   }
 
+  /// Создать заметку из текста (без аудио)
+  ///
+  /// Используется для текстового ввода вместо голосовой записи.
+  /// Эмитит [RecordingSuccessState] при успехе или
+  /// [RecordingErrorState] при ошибке.
+  Future<void> createTextNote(String text) async {
+    final trimmedText = text.trim();
+    if (trimmedText.isEmpty || state is! RecordingIdleState) return;
+    if (folderId == null) return;
+
+    try {
+      final wordCount = _countWords(trimmedText);
+
+      await _noteRepository.create(
+        text: trimmedText,
+        duration: Duration.zero,
+        folderUid: folderId,
+        language: '',
+        modelName: 'TextInput',
+        wordCount: wordCount,
+        hasAudio: false,
+      );
+
+      emit(
+        RecordingSuccessState(
+          text: trimmedText,
+          duration: Duration.zero,
+          wordCount: wordCount,
+        ),
+      );
+
+      _resetToIdleDelayed();
+    } catch (e, s) {
+      addError(e, s);
+      emit(RecordingErrorState(AppFailure.from(e, s)));
+      _resetToIdleDelayed();
+    }
+  }
+
   // ==================== Private методы ====================
 
   Future<void> _transcribeAndProcess(String filePath, Duration duration) async {

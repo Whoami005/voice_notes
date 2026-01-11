@@ -14,7 +14,11 @@ extension BuildContextExtensions on BuildContext {
 
   EdgeInsets get padding => MediaQuery.paddingOf(this);
 
+  EdgeInsets get viewInsets => MediaQuery.viewInsetsOf(this);
+
   double get bottomInset => padding.bottom;
+
+  double get bottomKeyboardInsets => viewInsets.bottom;
 
   bool get isDarkMode => theme.brightness == Brightness.dark;
 }

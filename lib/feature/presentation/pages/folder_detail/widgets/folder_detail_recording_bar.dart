@@ -23,7 +23,10 @@ class FolderDetailRecordingBar extends StatelessWidget {
           padding: EdgeInsets.only(
             left: AppSizes.screenPadding,
             right: AppSizes.screenPadding,
-            bottom: context.padding.bottom + AppSizes.p16,
+            bottom:
+                context.bottomInset +
+                context.bottomKeyboardInsets +
+                AppSizes.p16,
           ),
           child: RecordingInput(
             state: state.uiState,
@@ -35,6 +38,7 @@ class FolderDetailRecordingBar extends StatelessWidget {
             onStopRecording: cubit.stopRecording,
             onCancelRecording: cubit.cancelRecording,
             onUploadFile: _onUploadFile,
+            onTextSubmit: cubit.createTextNote,
           ),
         );
       },

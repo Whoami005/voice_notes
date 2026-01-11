@@ -13,6 +13,12 @@ class RecordingInput extends StatelessWidget {
   final VoidCallback? onCancelRecording;
   final VoidCallback? onUploadFile;
 
+  /// Controller for text input in idle state
+  final TextEditingController? textController;
+
+  /// Callback when user submits text note
+  final ValueChanged<String>? onTextSubmit;
+
   const RecordingInput({
     required this.state,
     this.recordingDuration = Duration.zero,
@@ -21,6 +27,8 @@ class RecordingInput extends StatelessWidget {
     this.onStopRecording,
     this.onCancelRecording,
     this.onUploadFile,
+    this.textController,
+    this.onTextSubmit,
     super.key,
   });
 
@@ -30,6 +38,8 @@ class RecordingInput extends StatelessWidget {
       RecordingInputState.idle => _IdleState(
         onStartRecording: onStartRecording,
         onUploadFile: onUploadFile,
+        textController: textController,
+        onTextSubmit: onTextSubmit,
       ),
       RecordingInputState.recording => _RecordingState(
         duration: recordingDuration,
@@ -43,15 +53,64 @@ class RecordingInput extends StatelessWidget {
   }
 }
 
-class _IdleState extends StatelessWidget {
+class _IdleState extends StatefulWidget {
   final VoidCallback? onStartRecording;
   final VoidCallback? onUploadFile;
+  final TextEditingController? textController;
+  final ValueChanged<String>? onTextSubmit;
 
-  const _IdleState({this.onStartRecording, this.onUploadFile});
+  const _IdleState({
+    this.onStartRecording,
+    this.onUploadFile,
+    this.textController,
+    this.onTextSubmit,
+  });
+
+  @override
+  State<_IdleState> createState() => _IdleStateState();
+}
+
+class _IdleStateState extends State<_IdleState> {
+  late final TextEditingController _controller;
+  bool _hasText = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = widget.textController ?? TextEditingController();
+    _hasText = _controller.text.trim().isNotEmpty;
+    _controller.addListener(_onTextChanged);
+  }
+
+  void _onTextChanged() {
+    final hasText = _controller.text.trim().isNotEmpty;
+    if (hasText != _hasText) {
+      setState(() => _hasText = hasText);
+    }
+  }
+
+  void _onSubmit() {
+    final text = _controller.text;
+    if (text.trim().isEmpty) return;
+
+    widget.onTextSubmit?.call(text);
+    _controller.clear();
+  }
+
+  @override
+  void dispose() {
+    _controller.removeListener(_onTextChanged);
+    // Dispose only if we created it
+    if (widget.textController == null) {
+      _controller.dispose();
+    }
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final themeColors = context.themeColors;
+    final textTheme = context.textTheme;
 
     return Row(
       children: [
@@ -60,35 +119,46 @@ class _IdleState extends StatelessWidget {
           size: AppSizes.buttonSmallHeight,
           backgroundColor: themeColors.bgTertiary,
           iconColor: themeColors.textSecondary,
-          onTap: onUploadFile,
+          onTap: widget.onUploadFile,
         ),
         AppSpacer.p12,
         Expanded(
           child: Container(
             padding: const EdgeInsets.symmetric(
               horizontal: AppSizes.screenPadding,
-              vertical: AppSizes.p14,
             ),
             decoration: BoxDecoration(
               color: themeColors.bgTertiary,
               borderRadius: BorderRadius.circular(AppSizes.radiusRound),
             ),
-            child: Text(
-              'Нажмите для записи...',
-              style: context.textTheme.bodyMedium?.copyWith(
-                color: themeColors.textTertiary,
+            child: TextField(
+              controller: _controller,
+              style: textTheme.bodyMedium?.copyWith(
+                color: themeColors.textPrimary,
               ),
+              decoration: InputDecoration(
+                isDense: true,
+                hintText: 'Введите текст или запишите...',
+                hintStyle: textTheme.bodyMedium?.copyWith(
+                  color: themeColors.textTertiary,
+                ),
+                border: InputBorder.none,
+                disabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: AppSizes.p14,
+                ),
+              ),
+              textInputAction: TextInputAction.send,
+              onSubmitted: (_) => _onSubmit(),
             ),
           ),
         ),
         AppSpacer.p12,
-        _CircleButton(
-          icon: Icons.mic,
-          size: AppSizes.micButtonSize,
-          backgroundColor: themeColors.accentPrimary,
-          iconColor: themeColors.textInverse,
-          onTap: onStartRecording,
-          hasShadow: true,
+        _ActionButton(
+          hasText: _hasText,
+          onSend: _onSubmit,
+          onStartRecording: widget.onStartRecording,
         ),
       ],
     );
@@ -210,6 +280,53 @@ class _TranscribingState extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Animated action button that switches between mic and send icons
+class _ActionButton extends StatelessWidget {
+  final bool hasText;
+  final VoidCallback? onSend;
+  final VoidCallback? onStartRecording;
+
+  const _ActionButton({
+    required this.hasText,
+    this.onSend,
+    this.onStartRecording,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final themeColors = context.themeColors;
+
+    return GestureDetector(
+      onTap: hasText ? onSend : onStartRecording,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: AppSizes.micButtonSize,
+        height: AppSizes.micButtonSize,
+        decoration: BoxDecoration(
+          color: themeColors.accentPrimary,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: themeColors.accentGlow,
+              blurRadius: 24,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 200),
+          child: Icon(
+            hasText ? Icons.send : Icons.mic,
+            key: ValueKey(hasText),
+            color: themeColors.textInverse,
+            size: AppSizes.iconLarge,
+          ),
+        ),
       ),
     );
   }

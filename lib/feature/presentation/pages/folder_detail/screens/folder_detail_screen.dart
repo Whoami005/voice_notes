@@ -81,6 +81,7 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
           bottomNavigationBar: const FolderDetailRecordingBar(),
           body: RefreshableWrapper<FolderDetailCubit>(
             child: CustomScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               slivers: [
                 if (_isSearchVisible)
                   SliverToBoxAdapter(
