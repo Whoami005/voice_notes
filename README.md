@@ -67,7 +67,7 @@ Each feature screen follows the pattern: `screens/` + `widgets/` + `logic/` (Cub
 Microphone → record (16kHz WAV) → Isolate → sherpa-onnx → Transcribed text
 ```
 
-Speech recognition runs in a separate Dart isolate to keep the UI responsive. Supports two engines:
+Speech recognition runs in a **long-lived Dart isolate** — it is created once at app startup and reused for all subsequent operations (model loading, transcription, streaming recognition). This avoids the overhead of repeatedly spawning isolates and keeps the UI thread completely free.
 
 | Model | Engine | Size | Languages |
 |---|---|---|---|
@@ -75,7 +75,7 @@ Speech recognition runs in a separate Dart isolate to keep the UI responsive. Su
 | Whisper Small | OpenAI Whisper | 466 MB | 99 languages |
 | Whisper Medium | OpenAI Whisper | 1.5 GB | 99 languages |
 
-Models are downloaded on demand and stored locally.
+Models are downloaded on demand and stored locally. Downloads are managed through a **queue system** — models are downloaded sequentially, with progress tracking and the ability to cancel. This prevents concurrent large downloads from competing for bandwidth and ensures a predictable user experience.
 
 #### State Management
 
@@ -155,7 +155,7 @@ lib/
 Микрофон → record (16kHz WAV) → Isolate → sherpa-onnx → Распознанный текст
 ```
 
-Распознавание речи выполняется в отдельном Dart-изоляте, чтобы не блокировать UI. Поддерживаются два движка:
+Распознавание речи выполняется в **долгоживущем Dart-изоляте** — он создается один раз при запуске приложения и переиспользуется для всех последующих операций (загрузка модели, транскрипция, потоковое распознавание). Это исключает накладные расходы на повторное создание изолятов и полностью освобождает UI-поток.
 
 | Модель | Движок | Размер | Языки |
 |---|---|---|---|
@@ -163,7 +163,7 @@ lib/
 | Whisper Small | OpenAI Whisper | 466 МБ | 99 языков |
 | Whisper Medium | OpenAI Whisper | 1.5 ГБ | 99 языков |
 
-Модели загружаются по требованию и хранятся локально.
+Модели загружаются по требованию и хранятся локально. Загрузки управляются через **систему очередей** — модели скачиваются последовательно, с отслеживанием прогресса и возможностью отмены. Это предотвращает конкуренцию за пропускную способность при одновременной загрузке нескольких моделей.
 
 #### Управление состоянием
 
