@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/packages/app_router/app_route_wrapper.dart';
 import 'package:voice_notes/core/packages/app_router/routes/app_routes.dart';
@@ -9,8 +8,6 @@ import 'package:voice_notes/core/packages/asr/asr_service.dart';
 import 'package:voice_notes/core/packages/audio/audio_recording_service.dart';
 import 'package:voice_notes/core/packages/di/injection.dart';
 import 'package:voice_notes/core/state/async/async_state_widgets.dart';
-import 'package:voice_notes/feature/domain/enums/recording_state.dart'
-    show SearchFilter;
 import 'package:voice_notes/feature/domain/repositories/folder_repository.dart';
 import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/components/notes_list_section.dart';
@@ -18,7 +15,6 @@ import 'package:voice_notes/feature/presentation/pages/folder_detail/logic/folde
 import 'package:voice_notes/feature/presentation/pages/folder_detail/logic/recording_cubit.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/widgets/folder_detail_app_bar.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/widgets/folder_detail_recording_bar.dart';
-import 'package:voice_notes/feature/presentation/pages/folder_detail/widgets/search_bar_with_filters.dart';
 import 'package:voice_notes/feature/presentation/widgets/dialogs/confirm_dialog.dart';
 import 'package:voice_notes/feature/presentation/widgets/refresh/refreshable_wrapper.dart';
 
@@ -62,8 +58,9 @@ class FolderDetailScreen extends StatefulWidget implements AppRouteWrapper {
 
 class _FolderDetailScreenState extends State<FolderDetailScreen> {
   bool _isSearchVisible = false;
-  String _searchQuery = '';
-  SearchFilter _activeFilter = SearchFilter.all;
+
+  // String _searchQuery = '';
+  // SearchFilter _activeFilter = SearchFilter.all;
 
   @override
   Widget build(BuildContext context) {
@@ -79,26 +76,26 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
             onDeleteFolder: _onDeleteFolder,
           ),
           bottomNavigationBar: const FolderDetailRecordingBar(),
-          body: RefreshableWrapper<FolderDetailCubit>(
+          body: const RefreshableWrapper<FolderDetailCubit>(
             child: CustomScrollView(
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               slivers: [
-                if (_isSearchVisible)
-                  SliverToBoxAdapter(
-                    child: SearchBarWithFilters(
-                      padding: const EdgeInsets.only(
-                        left: AppSizes.screenPadding,
-                        right: AppSizes.screenPadding,
-                        bottom: AppSizes.p16,
-                      ),
-                      query: _searchQuery,
-                      onQueryChanged: (q) => setState(() => _searchQuery = q),
-                      activeFilter: _activeFilter,
-                      onFilterChanged: (f) => setState(() => _activeFilter = f),
-                      placeholder: 'Поиск в папке...',
-                    ),
-                  ),
-                const NotesListSection(),
+                // if (_isSearchVisible)
+                //   SliverToBoxAdapter(
+                //     child: SearchBarWithFilters(
+                //       padding: const EdgeInsets.only(
+                //         left: AppSizes.screenPadding,
+                //         right: AppSizes.screenPadding,
+                //         bottom: AppSizes.p16,
+                //       ),
+                //       query: _searchQuery,
+                //       onQueryChanged: (q) => setState(() => _searchQuery = q),
+                //       activeFilter: _activeFilter,
+                //       onFilterChanged: (f) => setState(() => _activeFilter = f),
+                //       placeholder: 'Поиск в папке...',
+                //     ),
+                //   ),
+                NotesListSection(),
               ],
             ),
           ),
@@ -108,13 +105,13 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
   }
 
   void _toggleSearch() {
-    setState(() {
-      _isSearchVisible = !_isSearchVisible;
-      if (!_isSearchVisible) {
-        _searchQuery = '';
-        _activeFilter = SearchFilter.all;
-      }
-    });
+    // setState(() {
+    //   _isSearchVisible = !_isSearchVisible;
+    //   if (!_isSearchVisible) {
+    //     _searchQuery = '';
+    //     _activeFilter = SearchFilter.all;
+    //   }
+    // });
   }
 
   void _onEditFolder() {

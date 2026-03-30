@@ -51,21 +51,21 @@ class FolderDetailRecordingBar extends StatelessWidget {
 
   void _handleRecordingStateChange(BuildContext context, RecordingState state) {
     if (state is RecordingSuccessState) {
-      _showSuccessToast(context, state);
+      // _showSuccessToast(context, state);
     } else if (state is RecordingErrorState) {
       _showErrorToast(context, state);
     }
   }
 
-  void _showSuccessToast(BuildContext context, RecordingSuccessState state) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Заметка создана: ${state.text}'),
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
-      ),
-    );
-  }
+  // void _showSuccessToast(BuildContext context, RecordingSuccessState state) {
+  //   ScaffoldMessenger.of(context).showSnackBar(
+  //     SnackBar(
+  //       content: Text('Заметка создана: ${state.text}'),
+  //       behavior: SnackBarBehavior.floating,
+  //       duration: const Duration(seconds: 2),
+  //     ),
+  //   );
+  // }
 
   void _showErrorToast(BuildContext context, RecordingErrorState state) {
     ScaffoldMessenger.of(context).showSnackBar(
