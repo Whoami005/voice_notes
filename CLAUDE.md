@@ -70,7 +70,7 @@ lib/
 - **Clean Architecture**: data/domain/presentation layers
 - **Theme system**: Separate light/dark themes via `AppColors.dark` / `AppColors.light`
 - **Spacing system**: 8px base grid defined in `AppSizes`
-- **State management**: Riverpod or BLoC recommended
+- **State management**: BLoC recommended
 - **Navigation**: go_router for declarative routing
 
 #### List Operations in State Management
