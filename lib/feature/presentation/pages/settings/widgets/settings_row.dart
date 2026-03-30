@@ -31,11 +31,8 @@ class SettingsRow extends StatelessWidget {
 
     return Opacity(
       opacity: opacity,
-      child: InkWell(
+      child: GestureDetector(
         onTap: isEnabled ? onTap : null,
-        borderRadius: showDivider
-            ? BorderRadius.zero
-            : BorderRadius.circular(AppSizes.cardRadius),
         child: Column(
           children: [
             Padding(
@@ -93,11 +90,7 @@ class SettingsToggle extends StatelessWidget {
   final bool value;
   final ValueChanged<bool>? onChanged;
 
-  const SettingsToggle({
-    required this.value,
-    super.key,
-    this.onChanged,
-  });
+  const SettingsToggle({required this.value, super.key, this.onChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -131,9 +124,7 @@ class SettingsChevron extends StatelessWidget {
         if (value != null) ...[
           Text(
             value!,
-            style: AppTypography.body.copyWith(
-              color: themeColors.textTertiary,
-            ),
+            style: AppTypography.body.copyWith(color: themeColors.textTertiary),
           ),
           AppSpacer.p4,
         ],

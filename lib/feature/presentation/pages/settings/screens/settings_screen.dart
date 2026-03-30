@@ -53,7 +53,7 @@ class _SettingsScreenState extends State<SettingsScreen>
   bool _autoTags = false;
   String _recordingQuality = 'Высокое';
   String _defaultLanguage = 'Русский';
-  String _theme = 'Системная';
+  String _theme = 'Темная';
   String _appLanguage = 'Русский';
 
   @override
@@ -207,12 +207,14 @@ class _GeneralTabState extends State<_GeneralTab>
                   value: widget.autoSave,
                   onChanged: widget.onAutoSaveChanged,
                 ),
+                isEnabled: false,
               ),
               SettingsRow(
                 icon: Icons.tune,
                 title: 'Качество записи',
                 trailing: SettingsChevron(value: widget.recordingQuality),
                 onTap: widget.onRecordingQualityTap,
+                isEnabled: false,
               ),
               SettingsRow(
                 icon: Icons.mic_off_outlined,
@@ -222,6 +224,7 @@ class _GeneralTabState extends State<_GeneralTab>
                   value: widget.vadEnabled,
                   onChanged: widget.onVadChanged,
                 ),
+                isEnabled: false,
                 showDivider: false,
               ),
             ],
@@ -235,6 +238,7 @@ class _GeneralTabState extends State<_GeneralTab>
                 title: 'Язык по умолчанию',
                 trailing: SettingsChevron(value: widget.defaultLanguage),
                 onTap: widget.onDefaultLanguageTap,
+                isEnabled: false,
               ),
               SettingsRow(
                 icon: Icons.tag,
@@ -244,6 +248,7 @@ class _GeneralTabState extends State<_GeneralTab>
                   value: widget.autoTags,
                   onChanged: widget.onAutoTagsChanged,
                 ),
+                isEnabled: false,
                 showDivider: false,
               ),
             ],
@@ -257,12 +262,14 @@ class _GeneralTabState extends State<_GeneralTab>
                 title: 'Тема',
                 trailing: SettingsChevron(value: widget.theme),
                 onTap: widget.onThemeTap,
+                isEnabled: false,
               ),
               SettingsRow(
                 icon: Icons.translate,
                 title: 'Язык приложения',
                 trailing: SettingsChevron(value: widget.appLanguage),
                 onTap: widget.onAppLanguageTap,
+                isEnabled: false,
                 showDivider: false,
               ),
             ],
@@ -290,6 +297,7 @@ class _GeneralTabState extends State<_GeneralTab>
                 title: 'Экспорт данных',
                 trailing: const SettingsChevron(),
                 onTap: widget.onExportTap,
+                isEnabled: false,
               ),
               SettingsRow(
                 icon: Icons.delete_sweep_outlined,
@@ -297,6 +305,7 @@ class _GeneralTabState extends State<_GeneralTab>
                 subtitle: 'Освободить место на устройстве',
                 trailing: const SettingsChevron(),
                 onTap: widget.onClearCacheTap,
+                isEnabled: false,
                 showDivider: false,
               ),
             ],

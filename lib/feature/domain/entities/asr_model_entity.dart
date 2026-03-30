@@ -181,19 +181,19 @@ class AsrModelEntity extends Equatable {
     ),
 
     // Parakeet TDT v3 (~640MB int8)
-    AsrModelEntity(
-      uuid: 'parakeet-tdt-v3',
-      name: 'Parakeet V3',
-      engine: 'NVIDIA NeMo',
-      size: '640 MB',
-      languageLabel: '25 европейских языков',
-      supportedLanguages: _parakeetLanguages,
-      description:
-          'Компактная модель для европейских языков. '
-          'Быстрая работа на устройстве.',
-      modelDirName: 'sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8',
-      modelType: AsrModelType.parakeetTdt,
-    ),
+    // AsrModelEntity(
+    //   uuid: 'parakeet-tdt-v3',
+    //   name: 'Parakeet V3',
+    //   engine: 'NVIDIA NeMo',
+    //   size: '640 MB',
+    //   languageLabel: '25 европейских языков',
+    //   supportedLanguages: _parakeetLanguages,
+    //   description:
+    //       'Компактная модель для европейских языков. '
+    //       'Быстрая работа на устройстве.',
+    //   modelDirName: 'sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8',
+    //   modelType: AsrModelType.parakeetTdt,
+    // ),
   ];
 
   /// 25 европейских языков поддерживаемых Parakeet V3
