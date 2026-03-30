@@ -79,6 +79,7 @@ class VoiceNotesApp extends StatelessWidget {
         boldText: false,
       ),
       child: MaterialApp.router(
+        debugShowCheckedModeBanner: false,
         title: 'Voice Notes',
         theme: AppTheme.light,
         darkTheme: AppTheme.dark,

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
+import 'package:voice_notes/core/state/async/async_state.dart';
 import 'package:voice_notes/feature/presentation/pages/folders/logic/folders_cubit.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/screens/settings_screen.dart';
 
@@ -57,6 +58,9 @@ class _FoldersAppBarState extends State<FoldersAppBar> {
   Widget build(BuildContext context) {
     final textTheme = context.textTheme;
     final themeColors = context.themeColors;
+    final isEmpty = context.select(
+      (FoldersCubit cubit) => cubit.state.requireData.folders.isEmpty,
+    );
 
     return SliverAppBar(
       floating: true,
@@ -65,13 +69,14 @@ class _FoldersAppBarState extends State<FoldersAppBar> {
       title: Text('Заметки', style: textTheme.displayLarge),
       actionsPadding: const EdgeInsets.symmetric(horizontal: AppSizes.p8),
       actions: [
-        IconButton(
-          icon: Icon(
-            _isSearchVisible ? Icons.close : Icons.search,
-            color: themeColors.textSecondary,
+        if (!isEmpty)
+          IconButton(
+            icon: Icon(
+              _isSearchVisible ? Icons.close : Icons.search,
+              color: themeColors.textSecondary,
+            ),
+            onPressed: _toggleSearch,
           ),
-          onPressed: _toggleSearch,
-        ),
         IconButton(
           icon: Icon(Icons.settings_outlined, color: themeColors.textSecondary),
           onPressed: _onSettingsTap,

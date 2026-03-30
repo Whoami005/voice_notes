@@ -62,20 +62,20 @@ class _FolderDetailAppBarState extends State<FolderDetailAppBar> {
       ),
       actionsPadding: const EdgeInsets.symmetric(horizontal: 8),
       actions: [
-        IconButton(
-          icon: Icon(
-            widget.isSearchVisible ? Icons.close : Icons.search,
-            color: themeColors.textSecondary,
-          ),
-          onPressed: widget.onToggleSearch,
-        ),
+        // IconButton(
+        //   icon: Icon(
+        //     widget.isSearchVisible ? Icons.close : Icons.search,
+        //     color: themeColors.textSecondary,
+        //   ),
+        //   onPressed: widget.onToggleSearch,
+        // ),
         AppDropdownMenu(
           items: [
-            AppMenuItem(
-              icon: Icons.edit_outlined,
-              label: 'Редактировать',
-              onTap: widget.onEditFolder,
-            ),
+            // AppMenuItem(
+            //   icon: Icons.edit_outlined,
+            //   label: 'Редактировать',
+            //   onTap: widget.onEditFolder,
+            // ),
             AppMenuItem(
               icon: Icons.delete_outline,
               label: 'Удалить папку',
