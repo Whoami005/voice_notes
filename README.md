@@ -1,3 +1,13 @@
+<table>
+  <tr>
+    <td><img width="240" alt="Снимок экрана 2026-03-31 в 01 46 13" src="https://github.com/user-attachments/assets/dd4bafc2-3c06-4a8a-8335-6e38ef1a9679" /></td>
+    <td><img width="240" alt="Снимок экрана 2026-03-31 в 01 46 22" src="https://github.com/user-attachments/assets/9b18cd14-9f26-444b-8806-463667b2e48b" /></td>
+    <td><img width="240" alt="Снимок экрана 2026-03-31 в 01 46 28" src="https://github.com/user-attachments/assets/a3b3fc58-aac7-4ebc-8a46-738ae83901e3" /></td>
+    <td><img width="240" alt="Снимок экрана 2026-03-31 в 01 46 31" src="https://github.com/user-attachments/assets/83cc91c7-fe30-4f26-a56d-f842b2ee5d01" /></td>
+  </tr>
+</table>
+
+
 # Voice Notes
 
 [English](#english) | [Русский](#русский)
