@@ -11,6 +11,7 @@
 // ignore_for_file: no_leading_underscores_for_library_prefixes
 import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
+import 'package:shared_preferences/shared_preferences.dart' as _i460;
 
 import '../../../feature/data/local/data_sources/folder_local_data_source.dart'
     as _i377;
@@ -36,6 +37,7 @@ import '../db/object_box/objectbox_database.dart' as _i88;
 import '../db/transaction_manager.dart' as _i138;
 import '../downloader/download_manager.dart' as _i551;
 import 'modules/asr_module.dart' as _i835;
+import 'modules/prefs_module.dart' as _i12;
 
 extension GetItInjectableX on _i174.GetIt {
   // initializes the registration of main-scope dependencies inside of GetIt
@@ -44,11 +46,16 @@ extension GetItInjectableX on _i174.GetIt {
     _i526.EnvironmentFilter? environmentFilter,
   }) async {
     final gh = _i526.GetItHelper(this, environment, environmentFilter);
+    final prefsModule = _$PrefsModule();
     final asrModule = _$AsrModule();
     gh.singleton<_i796.AppRouter>(() => _i796.AppRouter());
     gh.singleton<_i571.AudioRecordingService>(
       () => _i571.AudioRecordingService(),
       dispose: (i) => i.dispose(),
+    );
+    await gh.singletonAsync<_i460.SharedPreferences>(
+      () => prefsModule.prefs(),
+      preResolve: true,
     );
     await gh.singletonAsync<_i551.DownloadManager>(
       () {
@@ -101,5 +108,7 @@ extension GetItInjectableX on _i174.GetIt {
     return this;
   }
 }
+
+class _$PrefsModule extends _i12.PrefsModule {}
 
 class _$AsrModule extends _i835.AsrModule {}

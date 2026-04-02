@@ -1,13 +1,4 @@
 /// Состояние UI компонента RecordingInput
 enum RecordingInputState { idle, recording, transcribing }
 
-enum SearchFilter {
-  all(title: 'Все'),
-  text(title: 'Текст'),
-  tags(title: 'Теги'),
-  date(title: 'Дата');
-
-  const SearchFilter({required this.title});
-
-  final String title;
-}
+enum SearchFilter { all, text, tags, date }

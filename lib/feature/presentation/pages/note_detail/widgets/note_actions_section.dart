@@ -25,7 +25,7 @@ class NoteActionsSection extends StatelessWidget {
       children: [
         _ActionButton(
           icon: Icons.copy_outlined,
-          label: 'Копировать текст',
+          label: context.l10n.noteDetailCopyText,
           onTap: onCopy,
         ),
         // _ActionButton(
@@ -40,7 +40,7 @@ class NoteActionsSection extends StatelessWidget {
         // ),
         _ActionButton(
           icon: Icons.delete_outline,
-          label: 'Удалить заметку',
+          label: context.l10n.noteDetailDeleteNote,
           color: themeColors.error,
           onTap: onDelete,
         ),

@@ -14,10 +14,10 @@ class LanguageOption {
     required this.flag,
   });
 
-  static const ru = LanguageOption(code: 'ru', name: 'Русский', flag: '🇷🇺');
   static const en = LanguageOption(code: 'en', name: 'English', flag: '🇺🇸');
+  static const ru = LanguageOption(code: 'ru', name: 'Русский', flag: '🇷🇺');
 
-  static const List<LanguageOption> all = [ru, en];
+  static const List<LanguageOption> all = [en, ru];
 }
 
 class LanguageDialog extends StatelessWidget {
@@ -66,27 +66,25 @@ class LanguageDialog extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Язык интерфейса',
+                context.l10n.languageDialogTitle,
                 style: textTheme.headlineMedium,
                 textAlign: TextAlign.center,
               ),
               AppSpacer.p20,
-              ...LanguageOption.all.map((option) {
-                final isSelected = option.code == currentLanguage;
-
-                return Padding(
+              for (final option in LanguageOption.all)
+                Padding(
                   padding: const EdgeInsets.only(bottom: AppSizes.p12),
                   child: _LanguageItem(
                     option: option,
-                    isSelected: isSelected,
-                    onTap: () => Navigator.of(context).pop(option.code),
+                    displayName: option.name,
+                    isSelected: option.code == currentLanguage,
+                    onTap: () => context.router.pop(option.code),
                   ),
-                );
-              }),
+                ),
               AppSpacer.p8,
               TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Отмена'),
+                onPressed: () => context.router.pop(),
+                child: Text(context.l10n.dialogCancel),
               ),
             ],
           ),
@@ -98,11 +96,13 @@ class LanguageDialog extends StatelessWidget {
 
 class _LanguageItem extends StatelessWidget {
   final LanguageOption option;
+  final String displayName;
   final bool isSelected;
   final VoidCallback onTap;
 
   const _LanguageItem({
     required this.option,
+    required this.displayName,
     required this.isSelected,
     required this.onTap,
   });
@@ -130,7 +130,7 @@ class _LanguageItem extends StatelessWidget {
             AppSpacer.p12,
             Expanded(
               child: Text(
-                option.name,
+                displayName,
                 style: textTheme.bodyMedium?.copyWith(
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
                 ),

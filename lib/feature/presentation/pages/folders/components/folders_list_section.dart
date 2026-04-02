@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
+import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/state/async/async_state.dart';
 import 'package:voice_notes/feature/domain/entities/folder_entity.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/screens/folder_detail_screen.dart';
@@ -37,7 +38,7 @@ class FoldersListSection extends StatelessWidget {
       headerBuilder: (context, items) => Padding(
         padding: const EdgeInsets.only(bottom: AppSizes.p12),
         child: FoldersSectionHeader(
-          title: 'Папки',
+          title: context.l10n.foldersSectionTitle,
           count: items.length,
           trailing: NewFolderButton(onPressed: () => _onCreateFolder(context)),
         ),
@@ -95,13 +96,12 @@ class FoldersListSection extends StatelessWidget {
     BuildContext context,
     FolderEntity folder,
   ) async {
+    final l10n = context.l10n;
     final confirmed = await ConfirmDialog.show(
       context: context,
-      title: 'Удалить папку?',
-      message:
-          'Папка "${folder.name}" и все заметки в ней '
-          'будут удалены безвозвратно.',
-      confirmText: 'Удалить',
+      title: l10n.deleteFolderTitle,
+      message: l10n.deleteFolderMessage(folder.name),
+      confirmText: l10n.dialogDelete,
       icon: Icons.delete_outline,
     );
 

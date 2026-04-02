@@ -23,18 +23,19 @@ class NoteDetailBody extends StatelessWidget {
 
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(const SnackBar(content: Text('Текст скопирован')));
+    ).showSnackBar(SnackBar(content: Text(context.l10n.noteDetailTextCopied)));
   }
 
   Future<void> _onDelete(BuildContext context) async {
     final cubit = context.read<NoteDetailCubit>();
     final themeColors = context.themeColors;
 
+    final l10n = context.l10n;
     final confirmed = await ConfirmDialog.show(
       context: context,
-      title: 'Удалить заметку?',
-      message: 'Это действие нельзя отменить.',
-      confirmText: 'Удалить',
+      title: l10n.deleteNoteTitle,
+      message: l10n.deleteNoteMessage,
+      confirmText: l10n.dialogDelete,
       confirmColor: themeColors.error,
     );
 
@@ -54,7 +55,7 @@ class NoteDetailBody extends StatelessWidget {
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           padding: const EdgeInsets.all(AppSizes.screenPadding),
           children: [
-            const SectionHeader(title: 'Текст'),
+            SectionHeader(title: context.l10n.noteDetailSectionText),
             AppSpacer.p12,
             NoteTextSection(
               key: ValueKey(data.originalNote.uuid),
@@ -64,7 +65,7 @@ class NoteDetailBody extends StatelessWidget {
                   context.read<NoteDetailCubit>().updateText(text),
             ),
             AppSpacer.p24,
-            const SectionHeader(title: 'Теги'),
+            SectionHeader(title: context.l10n.noteDetailSectionTags),
             AppSpacer.p12,
             NoteTagsSection(
               tags: data.currentNote.tags,
@@ -74,11 +75,11 @@ class NoteDetailBody extends StatelessWidget {
                   context.read<NoteDetailCubit>().removeTag(tag),
             ),
             AppSpacer.p24,
-            const SectionHeader(title: 'Информация'),
+            SectionHeader(title: context.l10n.noteDetailSectionInfo),
             AppSpacer.p12,
             NoteInfoSection(note: data.currentNote),
             AppSpacer.p24,
-            const SectionHeader(title: 'Действия'),
+            SectionHeader(title: context.l10n.noteDetailSectionActions),
             AppSpacer.p12,
             NoteActionsSection(
               onCopy: () => _onCopy(context, data),

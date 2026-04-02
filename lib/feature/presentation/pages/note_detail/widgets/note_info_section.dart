@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
@@ -12,6 +13,8 @@ class NoteInfoSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeColors = context.themeColors;
+    final l10n = context.l10n;
+    final localeCode = Localizations.localeOf(context).languageCode;
 
     return Container(
       padding: const EdgeInsets.all(AppSizes.cardPadding),
@@ -24,24 +27,32 @@ class NoteInfoSection extends StatelessWidget {
         children: [
           _InfoRow(
             icon: Icons.timer_outlined,
-            label: 'Длительность',
+            label: l10n.noteInfoDuration,
             value: _formatDuration(note.duration),
           ),
           _Divider(),
-          _InfoRow(icon: Icons.language, label: 'Язык', value: note.language),
+          _InfoRow(
+            icon: Icons.language,
+            label: l10n.noteInfoLanguage,
+            value: note.language,
+          ),
           _Divider(),
-          _InfoRow(icon: Icons.memory, label: 'Модель', value: note.modelName),
+          _InfoRow(
+            icon: Icons.memory,
+            label: l10n.noteInfoModel,
+            value: note.modelName,
+          ),
           _Divider(),
           _InfoRow(
             icon: Icons.text_fields,
-            label: 'Слов',
+            label: l10n.noteInfoWords,
             value: '${note.wordCount}',
           ),
           _Divider(),
           _InfoRow(
             icon: Icons.calendar_today_outlined,
-            label: 'Дата',
-            value: _formatDate(note.createdAt),
+            label: l10n.noteInfoDate,
+            value: _formatDate(note.createdAt, localeCode),
           ),
         ],
       ),
@@ -55,31 +66,9 @@ class NoteInfoSection extends StatelessWidget {
     return '$minutes:$seconds';
   }
 
-  String _formatDate(DateTime date) {
-    final day = date.day.toString().padLeft(2, '0');
-    final month = _getMonthName(date.month);
-    final year = date.year;
-    final hour = date.hour.toString().padLeft(2, '0');
-    final minute = date.minute.toString().padLeft(2, '0');
-    return '$day $month $year, $hour:$minute';
-  }
-
-  String _getMonthName(int month) {
-    const months = [
-      'января',
-      'февраля',
-      'марта',
-      'апреля',
-      'мая',
-      'июня',
-      'июля',
-      'августа',
-      'сентября',
-      'октября',
-      'ноября',
-      'декабря',
-    ];
-    return months[month - 1];
+  String _formatDate(DateTime date, String localeCode) {
+    final formatter = DateFormat('dd MMMM yyyy, HH:mm', localeCode);
+    return formatter.format(date);
   }
 }
 

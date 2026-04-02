@@ -119,13 +119,15 @@ class _CreateFolderSheetState extends State<CreateFolderSheet> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          isEditing ? 'Редактировать папку' : 'Новая папка',
+          isEditing
+              ? context.l10n.editFolderTitle
+              : context.l10n.createFolderTitle,
           style: textTheme.headlineMedium,
         ),
         AppSpacer.p20,
         _PreviewCard(
           name: _nameController.text.isEmpty
-              ? 'Название'
+              ? context.l10n.createFolderNamePreview
               : _nameController.text,
           color: _selectedColor,
           icon: _selectedIcon,
@@ -134,19 +136,23 @@ class _CreateFolderSheetState extends State<CreateFolderSheet> {
         TextField(
           controller: _nameController,
           onChanged: (_) => setState(() {}),
-          decoration: const InputDecoration(hintText: 'Название папки'),
+          decoration: InputDecoration(
+            hintText: context.l10n.createFolderNameHint,
+          ),
           textCapitalization: TextCapitalization.sentences,
         ),
         AppSpacer.p12,
         TextField(
           controller: _descriptionController,
-          decoration: const InputDecoration(hintText: 'Описание (опционально)'),
+          decoration: InputDecoration(
+            hintText: context.l10n.createFolderDescriptionHint,
+          ),
           textCapitalization: TextCapitalization.sentences,
           maxLines: 2,
           minLines: 1,
         ),
         AppSpacer.p20,
-        Text('Цвет', style: textTheme.labelMedium),
+        Text(context.l10n.createFolderColorLabel, style: textTheme.labelMedium),
         AppSpacer.p12,
         _ColorPicker(
           colors: AppColors.folderColors,
@@ -154,7 +160,7 @@ class _CreateFolderSheetState extends State<CreateFolderSheet> {
           onSelect: (color) => setState(() => _selectedColor = color),
         ),
         AppSpacer.p20,
-        Text('Иконка', style: textTheme.labelMedium),
+        Text(context.l10n.createFolderIconLabel, style: textTheme.labelMedium),
         AppSpacer.p12,
         _IconPicker(
           icons: _folderIcons,
@@ -165,7 +171,11 @@ class _CreateFolderSheetState extends State<CreateFolderSheet> {
         AppSpacer.p24,
         ElevatedButton(
           onPressed: _nameController.text.trim().isEmpty ? null : _submit,
-          child: Text(isEditing ? 'Сохранить' : 'Создать'),
+          child: Text(
+            isEditing
+                ? context.l10n.createFolderButtonSave
+                : context.l10n.createFolderButtonCreate,
+          ),
         ),
       ],
     );

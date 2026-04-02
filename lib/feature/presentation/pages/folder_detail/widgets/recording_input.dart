@@ -138,7 +138,7 @@ class _IdleStateState extends State<_IdleState> {
               ),
               decoration: InputDecoration(
                 isDense: true,
-                hintText: 'Введите текст или запишите...',
+                hintText: context.l10n.recordingInputHint,
                 hintStyle: textTheme.bodyMedium?.copyWith(
                   color: themeColors.textTertiary,
                 ),
@@ -271,7 +271,7 @@ class _TranscribingState extends StatelessWidget {
           AppSpacer.p12,
           Expanded(
             child: Text(
-              text ?? 'Транскрибирование...',
+              text ?? context.l10n.transcribing,
               style: textTheme.bodyMedium?.copyWith(
                 color: themeColors.textSecondary,
               ),

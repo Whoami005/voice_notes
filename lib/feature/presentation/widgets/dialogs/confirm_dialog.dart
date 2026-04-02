@@ -6,8 +6,8 @@ import 'package:voice_notes/core/extensions/context_extensions.dart';
 class ConfirmDialog extends StatelessWidget {
   final String title;
   final String message;
-  final String confirmText;
-  final String cancelText;
+  final String? confirmText;
+  final String? cancelText;
   final Color? confirmColor;
   final IconData? icon;
 
@@ -15,8 +15,8 @@ class ConfirmDialog extends StatelessWidget {
     required this.title,
     required this.message,
     super.key,
-    this.confirmText = 'Подтвердить',
-    this.cancelText = 'Отмена',
+    this.confirmText,
+    this.cancelText,
     this.confirmColor,
     this.icon,
   });
@@ -25,8 +25,8 @@ class ConfirmDialog extends StatelessWidget {
     required BuildContext context,
     required String title,
     required String message,
-    String confirmText = 'Подтвердить',
-    String cancelText = 'Отмена',
+    String? confirmText,
+    String? cancelText,
     Color? confirmColor,
     IconData? icon,
   }) {
@@ -59,6 +59,10 @@ class ConfirmDialog extends StatelessWidget {
     final textTheme = context.textTheme;
     final themeColors = context.themeColors;
     final effectiveConfirmColor = confirmColor ?? themeColors.error;
+
+    final l10n = context.l10n;
+    final effectiveConfirmText = confirmText ?? l10n.dialogConfirm;
+    final effectiveCancelText = cancelText ?? l10n.dialogCancel;
 
     return Center(
       child: Container(
@@ -108,7 +112,7 @@ class ConfirmDialog extends StatelessWidget {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () => Navigator.of(context).pop(false),
-                      child: Text(cancelText),
+                      child: Text(effectiveCancelText),
                     ),
                   ),
                   AppSpacer.p12,
@@ -118,7 +122,7 @@ class ConfirmDialog extends StatelessWidget {
                       style: ElevatedButton.styleFrom(
                         backgroundColor: effectiveConfirmColor,
                       ),
-                      child: Text(confirmText),
+                      child: Text(effectiveConfirmText),
                     ),
                   ),
                 ],

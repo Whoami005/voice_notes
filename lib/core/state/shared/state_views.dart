@@ -12,9 +12,9 @@ class StateLoadingView extends StatelessWidget {
 }
 
 class StateEmptyView extends StatelessWidget {
-  final String message;
+  final String? message;
 
-  const StateEmptyView({super.key, this.message = 'Пусто'});
+  const StateEmptyView({super.key, this.message});
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +25,7 @@ class StateEmptyView extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(AppSizes.p24),
         child: Text(
-          message,
+          message ?? context.l10n.stateEmpty,
           style: textTheme.bodyLarge?.copyWith(color: colors.textSecondary),
           textAlign: TextAlign.center,
         ),
@@ -38,11 +38,7 @@ class StateErrorView extends StatelessWidget {
   final String message;
   final VoidCallback? onRetry;
 
-  const StateErrorView({
-    required this.message,
-    this.onRetry,
-    super.key,
-  });
+  const StateErrorView({required this.message, this.onRetry, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -64,7 +60,7 @@ class StateErrorView extends StatelessWidget {
               const SizedBox(height: AppSizes.p16),
               TextButton(
                 onPressed: onRetry,
-                child: const Text('Повторить'),
+                child: Text(context.l10n.stateRetry),
               ),
             ],
           ],

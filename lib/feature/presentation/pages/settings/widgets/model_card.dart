@@ -4,11 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
+import 'package:voice_notes/core/l10n/download_status_l10n.dart';
+import 'package:voice_notes/core/l10n/localized_models.dart';
 import 'package:voice_notes/core/packages/downloader/download_manager.dart';
 import 'package:voice_notes/core/packages/downloader/download_status.dart';
 import 'package:voice_notes/core/theme/app_colors_extension.dart';
 import 'package:voice_notes/core/theme/app_typography.dart';
 import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
+import 'package:voice_notes/l10n/app_localizations.dart';
 
 class ModelCard extends StatelessWidget {
   final AsrModelEntity model;
@@ -61,7 +64,8 @@ class ModelCard extends StatelessWidget {
             ],
           ),
           Text(
-            model.description,
+            LocalizedModels.description(model.uuid, context.l10n) ??
+                model.description,
             style: AppTypography.caption.copyWith(
               color: themeColors.textSecondary,
             ),
@@ -142,7 +146,8 @@ class _ModelInfo extends StatelessWidget {
         ),
         AppSpacer.p2,
         Text(
-          model.languageLabel,
+          LocalizedModels.languageLabel(model.uuid, context.l10n) ??
+              model.languageLabel,
           style: AppTypography.caption.copyWith(
             color: themeColors.textTertiary,
           ),
@@ -171,7 +176,7 @@ class _ActiveBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppSizes.p10),
       ),
       child: Text(
-        'АКТИВНА',
+        context.l10n.modelCardActive,
         style: AppTypography.micro.copyWith(
           color: themeColors.textInverse,
           fontWeight: FontWeight.w600,
@@ -197,6 +202,7 @@ class _DownloadProgressWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeColors = context.themeColors;
+    final l10n = context.l10n;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -204,7 +210,7 @@ class _DownloadProgressWidget extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Expanded(child: _buildStatusText(themeColors)),
+            Expanded(child: _buildStatusText(themeColors, l10n)),
             if (progress.status.isDownloading || progress.status.isPaused)
               _buildProgressPercent(themeColors),
           ],
@@ -213,24 +219,25 @@ class _DownloadProgressWidget extends StatelessWidget {
         _buildProgressIndicator(themeColors),
         if (_showActionButtons) ...[
           AppSpacer.p12,
-          _buildActionButtons(themeColors),
+          _buildActionButtons(themeColors, l10n),
         ],
       ],
     );
   }
 
-  Widget _buildStatusText(AppColorsExtension themeColors) {
-    final (text, color) = switch (progress.status) {
-      DownloadStatus.queued => ('В очереди...', themeColors.textSecondary),
-      DownloadStatus.downloading => ('Загрузка...', themeColors.textSecondary),
-      DownloadStatus.extracting => ('Распаковка...', themeColors.textSecondary),
-      DownloadStatus.paused => ('Приостановлено', themeColors.warning),
-      DownloadStatus.failed => (
-        progress.errorMessage ?? 'Ошибка',
-        themeColors.error,
-      ),
-      DownloadStatus.cancelled => ('Отменено', themeColors.textTertiary),
-      _ => ('', themeColors.textSecondary),
+  Widget _buildStatusText(
+    AppColorsExtension themeColors,
+    AppLocalizations l10n,
+  ) {
+    final text = progress.status.isFailed
+        ? progress.errorMessage ?? l10n.modelStatusError
+        : progress.status.statusTitle(l10n);
+
+    final color = switch (progress.status) {
+      DownloadStatus.paused => themeColors.warning,
+      DownloadStatus.failed => themeColors.error,
+      DownloadStatus.cancelled => themeColors.textTertiary,
+      _ => themeColors.textSecondary,
     };
 
     return Text(
@@ -252,8 +259,7 @@ class _DownloadProgressWidget extends StatelessWidget {
 
   Widget _buildProgressIndicator(AppColorsExtension themeColors) {
     final isIndeterminate =
-        progress.status == DownloadStatus.queued ||
-        progress.status == DownloadStatus.extracting;
+        progress.status.isQueued || progress.status.isExtracting;
 
     final color = switch (progress.status) {
       DownloadStatus.paused => themeColors.warning,
@@ -280,12 +286,15 @@ class _DownloadProgressWidget extends StatelessWidget {
   }
 
   bool get _showActionButtons =>
-      progress.status == DownloadStatus.downloading ||
-      progress.status == DownloadStatus.paused ||
-      progress.status == DownloadStatus.queued;
+      progress.status.isDownloading ||
+      progress.status.isPaused ||
+      progress.status.isQueued;
 
-  Widget _buildActionButtons(AppColorsExtension themeColors) {
-    final isPaused = progress.status == DownloadStatus.paused;
+  Widget _buildActionButtons(
+    AppColorsExtension themeColors,
+    AppLocalizations l10n,
+  ) {
+    final isPaused = progress.status.isPaused;
 
     return Row(
       children: [
@@ -296,7 +305,9 @@ class _DownloadProgressWidget extends StatelessWidget {
               isPaused ? Icons.play_arrow : Icons.pause,
               size: AppSizes.iconMedium,
             ),
-            label: Text(isPaused ? 'Продолжить' : 'Пауза'),
+            label: Text(
+              isPaused ? l10n.modelActionResume : l10n.modelActionPause,
+            ),
             style: OutlinedButton.styleFrom(
               foregroundColor: themeColors.textSecondary,
               side: BorderSide(color: themeColors.borderPrimary),
@@ -349,7 +360,7 @@ class _ActionButtons extends StatelessWidget {
         child: OutlinedButton.icon(
           onPressed: onDownload,
           icon: const Icon(Icons.download, size: AppSizes.iconMedium),
-          label: const Text('Скачать'),
+          label: Text(context.l10n.modelActionDownload),
           style: OutlinedButton.styleFrom(
             foregroundColor: themeColors.accentPrimary,
             side: BorderSide(color: themeColors.accentPrimary),
@@ -376,7 +387,7 @@ class _ActionButtons extends StatelessWidget {
                       ),
                     ),
                   ),
-                  child: const Text('Используется'),
+                  child: Text(context.l10n.modelActionInUse),
                 )
               : ElevatedButton(
                   onPressed: onUse,
@@ -389,7 +400,7 @@ class _ActionButtons extends StatelessWidget {
                       ),
                     ),
                   ),
-                  child: const Text('Использовать'),
+                  child: Text(context.l10n.modelActionUse),
                 ),
         ),
         AppSpacer.p8,

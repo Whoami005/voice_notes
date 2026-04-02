@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
+import 'package:voice_notes/core/l10n/search_filter_l10n.dart';
 import 'package:voice_notes/feature/domain/enums/recording_state.dart';
 
 class SearchBarWithFilters extends StatelessWidget {
@@ -9,7 +10,7 @@ class SearchBarWithFilters extends StatelessWidget {
   final ValueChanged<String> onQueryChanged;
   final SearchFilter activeFilter;
   final ValueChanged<SearchFilter> onFilterChanged;
-  final String placeholder;
+  final String? placeholder;
   final EdgeInsetsGeometry padding;
 
   const SearchBarWithFilters({
@@ -21,12 +22,13 @@ class SearchBarWithFilters extends StatelessWidget {
       left: AppSizes.screenPadding,
       right: AppSizes.screenPadding,
     ),
-    this.placeholder = 'Поиск...',
+    this.placeholder,
     super.key,
   });
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final themeColors = context.themeColors;
 
     return Padding(
@@ -38,7 +40,7 @@ class SearchBarWithFilters extends StatelessWidget {
             initialValue: query,
             onChanged: onQueryChanged,
             decoration: InputDecoration(
-              hintText: placeholder,
+              hintText: placeholder ?? l10n.foldersSearchHint,
               prefixIcon: Icon(Icons.search, color: themeColors.textTertiary),
               suffixIcon: query.isNotEmpty
                   ? IconButton(
@@ -59,7 +61,7 @@ class SearchBarWithFilters extends StatelessWidget {
                 return Padding(
                   padding: const EdgeInsets.only(right: AppSizes.p8),
                   child: _FilterChip(
-                    label: filter.title,
+                    label: filter.title(l10n),
                     isActive: isActive,
                     onTap: () => onFilterChanged(filter),
                   ),

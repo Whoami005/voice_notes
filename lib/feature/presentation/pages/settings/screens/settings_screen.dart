@@ -1,9 +1,11 @@
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
+import 'package:voice_notes/core/l10n/locale_cubit.dart';
 import 'package:voice_notes/core/packages/app_router/app_route_wrapper.dart';
 import 'package:voice_notes/core/packages/app_router/routes/app_routes.dart';
 import 'package:voice_notes/core/packages/asr/asr_service.dart';
@@ -19,6 +21,7 @@ import 'package:voice_notes/feature/presentation/pages/settings/widgets/model_ca
 import 'package:voice_notes/feature/presentation/pages/settings/widgets/settings_row.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/widgets/settings_section.dart';
 import 'package:voice_notes/feature/presentation/widgets/dialogs/error_dialog.dart';
+import 'package:voice_notes/feature/presentation/widgets/dialogs/language_dialog.dart';
 
 class SettingsScreen extends StatefulWidget implements AppRouteWrapper {
   const SettingsScreen({super.key});
@@ -54,7 +57,6 @@ class _SettingsScreenState extends State<SettingsScreen>
   String _recordingQuality = 'Высокое';
   String _defaultLanguage = 'Русский';
   String _theme = 'Темная';
-  String _appLanguage = 'Русский';
 
   @override
   void initState() {
@@ -79,14 +81,14 @@ class _SettingsScreenState extends State<SettingsScreen>
         surfaceTintColor: Colors.transparent,
         automaticallyImplyLeading: false,
         title: Text(
-          'Настройки',
+          context.l10n.settingsTitle,
           style: AppTypography.h2.copyWith(color: themeColors.textPrimary),
         ),
         bottom: TabBar(
           controller: _tabController,
-          tabs: const [
-            Tab(text: 'Основные'),
-            Tab(text: 'Модели'),
+          tabs: [
+            Tab(text: context.l10n.settingsTabGeneral),
+            Tab(text: context.l10n.settingsTabModels),
           ],
         ),
       ),
@@ -100,14 +102,12 @@ class _SettingsScreenState extends State<SettingsScreen>
             recordingQuality: _recordingQuality,
             defaultLanguage: _defaultLanguage,
             theme: _theme,
-            appLanguage: _appLanguage,
             onAutoSaveChanged: (value) => setState(() => _autoSave = value),
             onVadChanged: (value) => setState(() => _vadEnabled = value),
             onAutoTagsChanged: (value) => setState(() => _autoTags = value),
             onRecordingQualityTap: _onRecordingQualityTap,
             onDefaultLanguageTap: _onDefaultLanguageTap,
             onThemeTap: _onThemeTap,
-            onAppLanguageTap: _onAppLanguageTap,
             onExportTap: _onExportTap,
             onClearCacheTap: _onClearCacheTap,
           ),
@@ -129,10 +129,6 @@ class _SettingsScreenState extends State<SettingsScreen>
     // TODO: Show theme picker
   }
 
-  void _onAppLanguageTap() {
-    // TODO: Show language dialog
-  }
-
   void _onExportTap() {
     // TODO: Export data
   }
@@ -149,14 +145,12 @@ class _GeneralTab extends StatefulWidget {
   final String recordingQuality;
   final String defaultLanguage;
   final String theme;
-  final String appLanguage;
   final ValueChanged<bool> onAutoSaveChanged;
   final ValueChanged<bool> onVadChanged;
   final ValueChanged<bool> onAutoTagsChanged;
   final VoidCallback onRecordingQualityTap;
   final VoidCallback onDefaultLanguageTap;
   final VoidCallback onThemeTap;
-  final VoidCallback onAppLanguageTap;
   final VoidCallback onExportTap;
   final VoidCallback onClearCacheTap;
 
@@ -167,14 +161,12 @@ class _GeneralTab extends StatefulWidget {
     required this.recordingQuality,
     required this.defaultLanguage,
     required this.theme,
-    required this.appLanguage,
     required this.onAutoSaveChanged,
     required this.onVadChanged,
     required this.onAutoTagsChanged,
     required this.onRecordingQualityTap,
     required this.onDefaultLanguageTap,
     required this.onThemeTap,
-    required this.onAppLanguageTap,
     required this.onExportTap,
     required this.onClearCacheTap,
   });
@@ -188,21 +180,44 @@ class _GeneralTabState extends State<_GeneralTab>
   @override
   bool get wantKeepAlive => true;
 
+  String _languageDisplayName(Locale locale) {
+    final name = LanguageOption.all
+        .firstWhereOrNull((option) => option.code == locale.languageCode)
+        ?.name;
+
+    return name ?? locale.languageCode;
+  }
+
+  Future<void> _onAppLanguageTap() async {
+    final localeCubit = context.read<LocaleCubit>();
+    final currentCode = localeCubit.state.locale.languageCode;
+
+    final selectedCode = await LanguageDialog.show(
+      context: context,
+      currentLanguage: currentCode,
+    );
+
+    if (selectedCode != null && selectedCode != currentCode) {
+      await localeCubit.setLocale(Locale(selectedCode));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    final l10n = context.l10n;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(vertical: AppSizes.screenPadding),
       child: Column(
         children: [
           SettingsSection(
-            title: 'Запись',
+            title: l10n.settingsSectionRecording,
             children: [
               SettingsRow(
                 icon: Icons.save_outlined,
-                title: 'Авто-сохранение',
-                subtitle: 'Сохранять записи автоматически',
+                title: l10n.settingsAutoSaveTitle,
+                subtitle: l10n.settingsAutoSaveSubtitle,
                 trailing: SettingsToggle(
                   value: widget.autoSave,
                   onChanged: widget.onAutoSaveChanged,
@@ -211,15 +226,15 @@ class _GeneralTabState extends State<_GeneralTab>
               ),
               SettingsRow(
                 icon: Icons.tune,
-                title: 'Качество записи',
+                title: l10n.settingsRecordingQuality,
                 trailing: SettingsChevron(value: widget.recordingQuality),
                 onTap: widget.onRecordingQualityTap,
                 isEnabled: false,
               ),
               SettingsRow(
                 icon: Icons.mic_off_outlined,
-                title: 'VAD',
-                subtitle: 'Авто-стоп при тишине',
+                title: l10n.settingsVadTitle,
+                subtitle: l10n.settingsVadSubtitle,
                 trailing: SettingsToggle(
                   value: widget.vadEnabled,
                   onChanged: widget.onVadChanged,
@@ -231,19 +246,19 @@ class _GeneralTabState extends State<_GeneralTab>
           ),
           AppSpacer.p20,
           SettingsSection(
-            title: 'Транскрипция',
+            title: l10n.settingsSectionTranscription,
             children: [
               SettingsRow(
                 icon: Icons.language,
-                title: 'Язык по умолчанию',
+                title: l10n.settingsDefaultLanguage,
                 trailing: SettingsChevron(value: widget.defaultLanguage),
                 onTap: widget.onDefaultLanguageTap,
                 isEnabled: false,
               ),
               SettingsRow(
                 icon: Icons.tag,
-                title: 'Авто-теги',
-                subtitle: 'Автоматически добавлять теги',
+                title: l10n.settingsAutoTags,
+                subtitle: l10n.settingsAutoTagsSubtitle,
                 trailing: SettingsToggle(
                   value: widget.autoTags,
                   onChanged: widget.onAutoTagsChanged,
@@ -255,34 +270,40 @@ class _GeneralTabState extends State<_GeneralTab>
           ),
           AppSpacer.p20,
           SettingsSection(
-            title: 'Интерфейс',
+            title: l10n.settingsSectionInterface,
             children: [
               SettingsRow(
                 icon: Icons.dark_mode_outlined,
-                title: 'Тема',
+                title: l10n.settingsTheme,
                 trailing: SettingsChevron(value: widget.theme),
                 onTap: widget.onThemeTap,
                 isEnabled: false,
               ),
-              SettingsRow(
-                icon: Icons.translate,
-                title: 'Язык приложения',
-                trailing: SettingsChevron(value: widget.appLanguage),
-                onTap: widget.onAppLanguageTap,
-                isEnabled: false,
-                showDivider: false,
+              BlocSelector<LocaleCubit, LocaleState, Locale>(
+                selector: (state) => state.locale,
+                builder: (context, locale) {
+                  final appLanguage = _languageDisplayName(locale);
+
+                  return SettingsRow(
+                    icon: Icons.translate,
+                    title: l10n.settingsAppLanguage,
+                    trailing: SettingsChevron(value: appLanguage),
+                    onTap: _onAppLanguageTap,
+                    showDivider: false,
+                  );
+                },
               ),
             ],
           ),
           AppSpacer.p20,
-          const SettingsSection(
-            title: 'Уведомления',
+          SettingsSection(
+            title: l10n.settingsSectionNotifications,
             children: [
               SettingsRow(
                 icon: Icons.notifications_outlined,
-                title: 'Уведомления',
-                subtitle: 'Скоро',
-                trailing: SettingsToggle(value: false),
+                title: l10n.settingsSectionNotifications,
+                subtitle: l10n.settingsNotificationsSubtitle,
+                trailing: const SettingsToggle(value: false),
                 isEnabled: false,
                 showDivider: false,
               ),
@@ -290,19 +311,19 @@ class _GeneralTabState extends State<_GeneralTab>
           ),
           AppSpacer.p20,
           SettingsSection(
-            title: 'Данные',
+            title: l10n.settingsSectionData,
             children: [
               SettingsRow(
                 icon: Icons.upload_outlined,
-                title: 'Экспорт данных',
+                title: l10n.settingsExportData,
                 trailing: const SettingsChevron(),
                 onTap: widget.onExportTap,
                 isEnabled: false,
               ),
               SettingsRow(
                 icon: Icons.delete_sweep_outlined,
-                title: 'Очистка кэша',
-                subtitle: 'Освободить место на устройстве',
+                title: l10n.settingsClearCache,
+                subtitle: l10n.settingsClearCacheSubtitle,
                 trailing: const SettingsChevron(),
                 onTap: widget.onClearCacheTap,
                 isEnabled: false,
@@ -339,7 +360,7 @@ class _ModelsTabState extends State<_ModelsTab>
       onSuccess: (context, state) {
         final models = state.models;
 
-        if (models.isEmpty) return const Center(child: Text('Пусто'));
+        if (models.isEmpty) return Center(child: Text(context.l10n.stateEmpty));
 
         final themeColors = context.themeColors;
         final activeModel = state.selectedModel;
@@ -350,7 +371,7 @@ class _ModelsTabState extends State<_ModelsTab>
           children: [
             if (activeModel != null) ...[
               Text(
-                'АКТИВНАЯ МОДЕЛЬ',
+                context.l10n.settingsActiveModel,
                 style: AppTypography.overline.copyWith(
                   color: themeColors.textTertiary,
                 ),
@@ -360,7 +381,7 @@ class _ModelsTabState extends State<_ModelsTab>
               AppSpacer.p24,
             ],
             Text(
-              'ДОСТУПНЫЕ МОДЕЛИ',
+              context.l10n.settingsAvailableModels,
               style: AppTypography.overline.copyWith(
                 color: themeColors.textTertiary,
               ),
@@ -400,7 +421,7 @@ class _ModelsTabState extends State<_ModelsTab>
     showDialog<void>(
       context: context,
       builder: (context) => ErrorDialog(
-        title: 'Ошибка загрузки',
+        title: context.l10n.settingsDownloadError,
         message: message,
         icon: Icons.error_outline_rounded,
       ),
@@ -458,19 +479,16 @@ class _ModelsTabState extends State<_ModelsTab>
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Удалить модель?'),
-        content: Text(
-          'Модель "${model.name}" будет удалена с устройства. '
-          'Вы сможете скачать её снова.',
-        ),
+        title: Text(context.l10n.deleteModelTitle),
+        content: Text(context.l10n.deleteModelMessage(model.name)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Отмена'),
+            child: Text(context.l10n.dialogCancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Удалить'),
+            child: Text(context.l10n.dialogDelete),
           ),
         ],
       ),

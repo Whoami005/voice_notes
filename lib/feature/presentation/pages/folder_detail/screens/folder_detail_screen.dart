@@ -65,7 +65,7 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
   @override
   Widget build(BuildContext context) {
     return AsyncStateScaffold<FolderDetailCubit, FolderDetailData>(
-      title: 'Папка',
+      title: context.l10n.folderDetailTitle,
       onSuccess: (context, _) {
         return Scaffold(
           extendBody: true,
@@ -89,9 +89,11 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
                 //         bottom: AppSizes.p16,
                 //       ),
                 //       query: _searchQuery,
-                //       onQueryChanged: (q) => setState(() => _searchQuery = q),
+                //       onQueryChanged: (q) =>
+                //       setState(() => _searchQuery = q),
                 //       activeFilter: _activeFilter,
-                //       onFilterChanged: (f) => setState(() => _activeFilter = f),
+                //       onFilterChanged: (f) =>
+                //       setState(() => _activeFilter = f),
                 //       placeholder: 'Поиск в папке...',
                 //     ),
                 //   ),
@@ -120,11 +122,13 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
 
   Future<void> _onDeleteFolder() async {
     final themeColors = context.themeColors;
+    final l10n = context.l10n;
+
     final confirmed = await ConfirmDialog.show(
       context: context,
-      title: 'Удалить папку?',
-      message: 'Все заметки в этой папке будут удалены безвозвратно.',
-      confirmText: 'Удалить',
+      title: l10n.deleteFolderTitle,
+      message: l10n.deleteFolderMessageGeneric,
+      confirmText: l10n.dialogDelete,
       confirmColor: themeColors.error,
     );
 

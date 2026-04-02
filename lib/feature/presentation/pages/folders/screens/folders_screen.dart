@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/packages/app_router/app_route_wrapper.dart';
 import 'package:voice_notes/core/packages/app_router/routes/app_routes.dart';
 import 'package:voice_notes/core/packages/di/injection.dart';
@@ -36,7 +37,7 @@ class _FoldersScreenState extends State<FoldersScreen> {
   @override
   Widget build(BuildContext context) {
     return AsyncStateScaffold<FoldersCubit, FoldersState>(
-      title: 'Заметки',
+      title: context.l10n.foldersTitle,
       onSuccess: (context, _) {
         return const Scaffold(
           floatingActionButton: VoiceRecordButton(),

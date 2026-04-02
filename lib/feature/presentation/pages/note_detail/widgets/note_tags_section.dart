@@ -73,12 +73,12 @@ class _NoteTagsSectionState extends State<NoteTagsSection> {
               Expanded(
                 child: TextField(
                   controller: _tagController,
-                  decoration: const InputDecoration(
-                    hintText: 'Новый тег...',
+                  decoration: InputDecoration(
+                    hintText: context.l10n.noteDetailNewTagHint,
                     isDense: true,
-                    contentPadding: EdgeInsets.symmetric(
-                      horizontal: AppSizes.p12,
+                    contentPadding: const EdgeInsets.symmetric(
                       vertical: AppSizes.p10,
+                      horizontal: AppSizes.p12,
                     ),
                   ),
                   onSubmitted: (_) => _onAddTag(),

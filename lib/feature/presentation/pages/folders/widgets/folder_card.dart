@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/feature/domain/entities/folder_entity.dart';
+import 'package:voice_notes/l10n/app_localizations.dart';
 
 class FolderCard extends StatelessWidget {
   final FolderEntity folder;
@@ -78,6 +80,8 @@ class _TextContent extends StatelessWidget {
   Widget build(BuildContext context) {
     final textTheme = context.textTheme;
     final themeColors = context.themeColors;
+    final l10n = context.l10n;
+    final localeCode = Localizations.localeOf(context).languageCode;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -90,7 +94,7 @@ class _TextContent extends StatelessWidget {
         ),
         AppSpacer.p2,
         Text(
-          _buildSubtitle(),
+          _buildSubtitle(l10n, localeCode),
           style: textTheme.labelMedium?.copyWith(
             color: themeColors.textTertiary,
           ),
@@ -101,57 +105,31 @@ class _TextContent extends StatelessWidget {
     );
   }
 
-  String _buildSubtitle() {
+  String _buildSubtitle(AppLocalizations l10n, String localeCode) {
     final count = folder.notesCount;
-    final noteWord = _pluralize(count, 'заметка', 'заметки', 'заметок');
-    final timeAgo = _formatTimeAgo(folder.updatedAt);
-    return '$count $noteWord • $timeAgo';
+    final noteWord = l10n.folderCardNotesCount(count);
+    final timeAgo = _formatTimeAgo(folder.updatedAt, l10n, localeCode);
+    return '$noteWord \u2022 $timeAgo';
   }
 
-  String _pluralize(int count, String one, String few, String many) {
-    final mod10 = count % 10;
-    final mod100 = count % 100;
-
-    if (mod100 >= 11 && mod100 <= 19) return many;
-    if (mod10 == 1) return one;
-    if (mod10 >= 2 && mod10 <= 4) return few;
-    return many;
-  }
-
-  String _formatTimeAgo(DateTime dateTime) {
+  String _formatTimeAgo(
+    DateTime dateTime,
+    AppLocalizations l10n,
+    String localeCode,
+  ) {
     final now = DateTime.now();
     final difference = now.difference(dateTime);
 
     if (difference.inMinutes < 60) {
-      return '${difference.inMinutes} мин. назад';
+      return l10n.folderCardMinutesAgo(difference.inMinutes);
     } else if (difference.inHours < 24) {
-      return '${difference.inHours} ч. назад';
+      return l10n.folderCardHoursAgo(difference.inHours);
     } else if (difference.inDays == 1) {
-      return 'Вчера';
+      return l10n.folderCardYesterday;
     } else if (difference.inDays < 7) {
-      return '${difference.inDays} дн. назад';
+      return l10n.folderCardDaysAgo(difference.inDays);
     } else {
-      final day = dateTime.day;
-      final month = _monthName(dateTime.month);
-      return '$day $month';
+      return DateFormat('d MMM', localeCode).format(dateTime);
     }
-  }
-
-  String _monthName(int month) {
-    const months = [
-      'янв.',
-      'февр.',
-      'марта',
-      'апр.',
-      'мая',
-      'июня',
-      'июля',
-      'авг.',
-      'сент.',
-      'окт.',
-      'нояб.',
-      'дек.',
-    ];
-    return months[month - 1];
   }
 }

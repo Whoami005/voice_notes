@@ -15,8 +15,11 @@ class DateGroup<T> extends Equatable {
   /// затем конкретные даты ("15 декабря", "14 декабря"...)
   static List<DateGroup<T>> groupByDate<T>(
     List<T> items,
-    DateTime Function(T) getDate,
-  ) {
+    DateTime Function(T) getDate, {
+    required String todayLabel,
+    required String yesterdayLabel,
+    required String localeCode,
+  }) {
     if (items.isEmpty) return const [];
 
     final now = DateTime.now();
@@ -29,7 +32,14 @@ class DateGroup<T> extends Equatable {
       final itemDate = getDate(item);
       final dateOnly = DateTime(itemDate.year, itemDate.month, itemDate.day);
 
-      final label = _getDateLabel(dateOnly, today, yesterday);
+      final label = _getDateLabel(
+        dateOnly,
+        today,
+        yesterday,
+        todayLabel: todayLabel,
+        yesterdayLabel: yesterdayLabel,
+        localeCode: localeCode,
+      );
 
       groups.putIfAbsent(label, () => []).add(item);
     }
@@ -43,12 +53,15 @@ class DateGroup<T> extends Equatable {
   static String _getDateLabel(
     DateTime date,
     DateTime today,
-    DateTime yesterday,
-  ) {
-    if (date == today) return 'Сегодня';
-    if (date == yesterday) return 'Вчера';
+    DateTime yesterday, {
+    required String todayLabel,
+    required String yesterdayLabel,
+    required String localeCode,
+  }) {
+    if (date == today) return todayLabel;
+    if (date == yesterday) return yesterdayLabel;
 
-    final formatter = DateFormat('d MMMM', 'ru');
+    final formatter = DateFormat('d MMMM', localeCode);
     return formatter.format(date);
   }
 }

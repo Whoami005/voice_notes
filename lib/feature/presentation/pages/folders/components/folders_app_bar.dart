@@ -66,7 +66,7 @@ class _FoldersAppBarState extends State<FoldersAppBar> {
       floating: true,
       backgroundColor: themeColors.bgPrimary,
       surfaceTintColor: Colors.transparent,
-      title: Text('Заметки', style: textTheme.displayLarge),
+      title: Text(context.l10n.foldersTitle, style: textTheme.displayLarge),
       actionsPadding: const EdgeInsets.symmetric(horizontal: AppSizes.p8),
       actions: [
         if (!isEmpty)
@@ -123,7 +123,7 @@ class _SearchField extends StatelessWidget {
         controller: controller,
         onChanged: onChanged,
         decoration: InputDecoration(
-          hintText: 'Поиск заметок...',
+          hintText: context.l10n.foldersSearchHint,
           prefixIcon: Icon(Icons.search, color: themeColors.textTertiary),
           suffixIcon: controller.text.isNotEmpty
               ? IconButton(

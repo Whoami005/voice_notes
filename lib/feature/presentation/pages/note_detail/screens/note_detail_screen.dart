@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/packages/app_router/app_route_wrapper.dart';
 import 'package:voice_notes/core/packages/app_router/routes/app_routes.dart';
 import 'package:voice_notes/core/packages/di/injection.dart';
@@ -55,7 +56,7 @@ class NoteDetailScreen extends StatelessWidget implements AppRouteWrapper {
   @override
   Widget build(BuildContext context) {
     return AsyncStateScaffold<NoteDetailCubit, NoteDetailData>(
-      title: 'Заметка',
+      title: context.l10n.noteDetailTitle,
       onSuccess: (context, data) {
         return BasePopScope(
           canPop: (context) => !data.hasChanges,

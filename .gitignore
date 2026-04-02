@@ -47,7 +47,12 @@ app.*.map.json
 .claude/
 .serena
 .agent/
+docs/
 
 # Auto Claude data directory
 .auto-claude/
 .claude_settings.json
+
+# Generated l10n files
+lib/l10n/app_localizations.dart
+lib/l10n/app_localizations_*.dart

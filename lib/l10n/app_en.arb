@@ -1,0 +1,151 @@
+{
+  "@@locale": "en",
+
+  "navNotes": "Notes",
+  "navSettings": "Settings",
+
+  "foldersTitle": "Notes",
+  "foldersSearchHint": "Search notes...",
+  "foldersSectionTitle": "Folders",
+  "foldersNewButton": "New",
+
+  "folderCardNotesCount": "{count, plural, one{{count} note} other{{count} notes}}",
+  "folderCardMinutesAgo": "{count} min ago",
+  "folderCardHoursAgo": "{count} h ago",
+  "folderCardYesterday": "Yesterday",
+  "folderCardDaysAgo": "{count} d ago",
+
+  "folderActionEdit": "Edit",
+  "folderActionDelete": "Delete",
+
+  "deleteFolderTitle": "Delete folder?",
+  "deleteFolderMessage": "Folder \"{name}\" and all notes in it will be permanently deleted.",
+  "deleteFolderMessageGeneric": "All notes in this folder will be permanently deleted.",
+  "deleteFolderAppBarAction": "Delete folder",
+
+  "folderDetailTitle": "Folder",
+  "recordingInputHint": "Type text or record...",
+  "transcribing": "Transcribing...",
+
+  "searchFilterAll": "All",
+  "searchFilterText": "Text",
+  "searchFilterTags": "Tags",
+  "searchFilterDate": "Date",
+
+  "noteDetailTitle": "Note",
+  "noteDetailSectionText": "Text",
+  "noteDetailSectionTags": "Tags",
+  "noteDetailSectionInfo": "Information",
+  "noteDetailSectionActions": "Actions",
+  "noteDetailTextHint": "Enter note text...",
+  "noteDetailNewTagHint": "New tag...",
+  "noteDetailCopyText": "Copy text",
+  "noteDetailDeleteNote": "Delete note",
+  "noteDetailTextCopied": "Text copied",
+
+  "deleteNoteTitle": "Delete note?",
+  "deleteNoteMessage": "This action cannot be undone.",
+
+  "noteInfoDuration": "Duration",
+  "noteInfoLanguage": "Language",
+  "noteInfoModel": "Model",
+  "noteInfoWords": "Words",
+  "noteInfoDate": "Date",
+
+  "createFolderTitle": "New folder",
+  "editFolderTitle": "Edit folder",
+  "createFolderNamePreview": "Name",
+  "createFolderNameHint": "Folder name",
+  "createFolderDescriptionHint": "Description (optional)",
+  "createFolderColorLabel": "Color",
+  "createFolderIconLabel": "Icon",
+  "createFolderButtonCreate": "Create",
+  "createFolderButtonSave": "Save",
+
+  "settingsTitle": "Settings",
+  "settingsTabGeneral": "General",
+  "settingsTabModels": "Models",
+
+  "settingsSectionRecording": "Recording",
+  "settingsAutoSaveTitle": "Auto-save",
+  "settingsAutoSaveSubtitle": "Save recordings automatically",
+  "settingsRecordingQuality": "Recording quality",
+  "settingsVadTitle": "VAD",
+  "settingsVadSubtitle": "Auto-stop on silence",
+
+  "settingsSectionTranscription": "Transcription",
+  "settingsDefaultLanguage": "Default language",
+  "settingsAutoTags": "Auto-tags",
+  "settingsAutoTagsSubtitle": "Automatically add tags",
+
+  "settingsSectionInterface": "Interface",
+  "settingsTheme": "Theme",
+  "settingsAppLanguage": "App language",
+
+  "settingsSectionNotifications": "Notifications",
+  "settingsNotificationsSubtitle": "Coming soon",
+
+  "settingsSectionData": "Data",
+  "settingsExportData": "Export data",
+  "settingsClearCache": "Clear cache",
+  "settingsClearCacheSubtitle": "Free up device storage",
+
+  "settingsActiveModel": "ACTIVE MODEL",
+  "settingsAvailableModels": "AVAILABLE MODELS",
+  "settingsDownloadError": "Download error",
+
+  "deleteModelTitle": "Delete model?",
+  "deleteModelMessage": "Model \"{name}\" will be deleted from the device. You can download it again.",
+
+  "modelCardActive": "ACTIVE",
+  "modelStatusQueued": "Queued...",
+  "modelStatusDownloading": "Downloading...",
+  "modelStatusExtracting": "Extracting...",
+  "modelStatusPaused": "Paused",
+  "modelStatusError": "Error",
+  "modelStatusCancelled": "Cancelled",
+  "modelActionResume": "Resume",
+  "modelActionPause": "Pause",
+  "modelActionDownload": "Download",
+  "modelActionInUse": "In use",
+  "modelActionUse": "Use",
+
+  "dialogConfirm": "Confirm",
+  "dialogCancel": "Cancel",
+  "dialogDelete": "Delete",
+  "dialogOk": "Got it",
+
+  "errorNetworkTitle": "No internet connection",
+  "errorNetworkMessage": "An internet connection is required to download the model. Check your network settings and try again.",
+  "errorStorageTitle": "Not enough storage",
+  "errorStorageMessage": "More free space is needed on the device to download and extract the model.",
+  "errorStorageRequired": "Required: {size}",
+  "errorStorageAvailable": "Available: {size}",
+  "errorGenericTitle": "Error",
+
+  "unsavedChangesTitle": "Unsaved changes",
+  "unsavedChangesMessage": "You have unsaved changes. Are you sure you want to leave?",
+  "unsavedChangesLeave": "Leave",
+  "unsavedChangesStay": "Stay",
+
+  "stateEmpty": "Empty",
+  "stateRetry": "Retry",
+
+  "initErrorTitle": "Initialization error",
+  "initErrorRetry": "Retry",
+
+  "languageDialogTitle": "Interface language",
+  "languageSystem": "System",
+
+  "dateToday": "Today",
+  "dateYesterday": "Yesterday",
+
+  "settingsRecordingQualityHigh": "High",
+  "settingsThemeDark": "Dark",
+
+  "modelDescWhisperTiny": "Fastest model. English only.",
+  "modelDescWhisperSmall": "Fast model with good quality. Recommended for most tasks.",
+  "modelDescWhisperMedium": "More accurate model for complex audio with noise or accents.",
+  "modelLangEnglish": "English",
+  "modelLang99Languages": "99 languages"
+}

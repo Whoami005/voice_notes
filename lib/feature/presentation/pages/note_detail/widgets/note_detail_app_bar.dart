@@ -26,7 +26,7 @@ class _NoteDetailAppBarState extends State<NoteDetailAppBar> {
         final data = state.requireData;
 
         return AppBar(
-          title: const Text('Заметка'),
+          title: Text(context.l10n.noteDetailTitle),
           actionsPadding: const EdgeInsets.symmetric(horizontal: AppSizes.p8),
           actions: [
             if (data.isEditing) ...[

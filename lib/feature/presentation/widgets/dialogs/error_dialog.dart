@@ -3,13 +3,14 @@ import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/error/app_failure.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
+import 'package:voice_notes/l10n/app_localizations.dart';
 
 /// Диалог для отображения ошибок
 class ErrorDialog extends StatelessWidget {
   final String title;
   final String message;
   final String? details;
-  final String buttonText;
+  final String? buttonText;
   final IconData icon;
   final Color? iconColor;
 
@@ -19,30 +20,34 @@ class ErrorDialog extends StatelessWidget {
     required this.icon,
     super.key,
     this.details,
-    this.buttonText = 'Понятно',
+    this.buttonText,
     this.iconColor,
   });
 
   /// Показать диалог об ошибке сети
   static Future<void> showNetworkError(BuildContext context) {
+    final l10n = context.l10n;
+
     return _show(
       context: context,
-      title: 'Нет подключения к интернету',
-      message:
-          'Для скачивания модели необходимо подключение к интернету. '
-          'Проверьте настройки сети и попробуйте снова.',
+      title: l10n.errorNetworkTitle,
+      message: l10n.errorNetworkMessage,
       icon: Icons.wifi_off_rounded,
     );
   }
 
-  static String _storageDetails({int? requiredBytes, int? availableBytes}) {
+  static String _storageDetails(
+    AppLocalizations l10n, {
+    int? requiredBytes,
+    int? availableBytes,
+  }) {
     String details = '';
     if (requiredBytes != null) {
-      details += 'Требуется: ${_formatBytes(requiredBytes)}';
+      details += l10n.errorStorageRequired(_formatBytes(requiredBytes));
     }
     if (availableBytes != null) {
       if (details.isNotEmpty) details += '\n';
-      details += 'Доступно: ${_formatBytes(availableBytes)}';
+      details += l10n.errorStorageAvailable(_formatBytes(availableBytes));
     }
 
     return details;
@@ -54,17 +59,18 @@ class ErrorDialog extends StatelessWidget {
     int? requiredBytes,
     int? availableBytes,
   }) {
+    final l10n = context.l10n;
+
     final String details = _storageDetails(
+      l10n,
       requiredBytes: requiredBytes,
       availableBytes: availableBytes,
     );
 
     return _show(
       context: context,
-      title: 'Недостаточно места',
-      message:
-          'Для скачивания и распаковки модели требуется больше '
-          'свободного места на устройстве.',
+      title: l10n.errorStorageTitle,
+      message: l10n.errorStorageMessage,
       details: details.isNotEmpty ? details : null,
       icon: Icons.storage_rounded,
     );
@@ -85,7 +91,7 @@ class ErrorDialog extends StatelessWidget {
         ),
       _ => _show(
         context: context,
-        title: 'Ошибка',
+        title: context.l10n.errorGenericTitle,
         message: failure.message,
         icon: Icons.error_outline_rounded,
       ),
@@ -137,6 +143,7 @@ class ErrorDialog extends StatelessWidget {
     final textTheme = context.textTheme;
     final themeColors = context.themeColors;
     final effectiveIconColor = iconColor ?? themeColors.warning;
+    final effectiveButtonText = buttonText ?? context.l10n.dialogOk;
 
     return Center(
       child: Container(
@@ -200,7 +207,7 @@ class ErrorDialog extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: Text(buttonText),
+                  child: Text(effectiveButtonText),
                 ),
               ),
             ],

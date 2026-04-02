@@ -6,23 +6,24 @@ class UnsavedChangesDialog {
 
   static Future<bool?> show(BuildContext context) async {
     final themeColors = context.themeColors;
+    final l10n = context.l10n;
 
     return showAdaptiveDialog<bool>(
       context: context,
       builder: (context) => AlertDialog.adaptive(
-        title: const Text('Несохранённые изменения'),
-        content: const Text(
-          'У вас есть несохранённые изменения. '
-          'Вы уверены, что хотите выйти ?',
-        ),
+        title: Text(l10n.unsavedChangesTitle),
+        content: Text(l10n.unsavedChangesMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text('Выйти', style: TextStyle(color: themeColors.error)),
+            child: Text(
+              l10n.unsavedChangesLeave,
+              style: TextStyle(color: themeColors.error),
+            ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Остаться'),
+            child: Text(l10n.unsavedChangesStay),
           ),
         ],
       ),

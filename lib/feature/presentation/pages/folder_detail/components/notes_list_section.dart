@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
+import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/state/async/async_state.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/logic/folder_detail_cubit.dart';
@@ -15,14 +16,21 @@ class NotesListSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final localeCode = Localizations.localeOf(context).languageCode;
+
     return BlocGroupedSliverList<
       FolderDetailCubit,
       AsyncState<FolderDetailData>,
       NoteEntity
     >(
-      selector: (state) => state.requireData.groupedNotes,
+      selector: (state) => state.requireData.groupedNotes(
+        todayLabel: l10n.dateToday,
+        yesterdayLabel: l10n.dateYesterday,
+        localeCode: localeCode,
+      ),
       buildWhen: (prev, curr) =>
-          prev.requireData.groupedNotes != curr.requireData.groupedNotes,
+          prev.requireData.notes != curr.requireData.notes,
       padding: const EdgeInsets.only(
         left: AppSizes.screenPadding,
         right: AppSizes.screenPadding,

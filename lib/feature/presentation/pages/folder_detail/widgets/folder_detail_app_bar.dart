@@ -78,7 +78,7 @@ class _FolderDetailAppBarState extends State<FolderDetailAppBar> {
             // ),
             AppMenuItem(
               icon: Icons.delete_outline,
-              label: 'Удалить папку',
+              label: context.l10n.deleteFolderAppBarAction,
               color: themeColors.error,
               onTap: widget.onDeleteFolder,
             ),

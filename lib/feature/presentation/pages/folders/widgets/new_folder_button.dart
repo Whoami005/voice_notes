@@ -28,7 +28,7 @@ class NewFolderButton extends StatelessWidget {
           children: [
             Icon(Icons.add, size: 14, color: themeColors.accentPrimary),
             Text(
-              'Новая',
+              context.l10n.foldersNewButton,
               style: TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.w500,

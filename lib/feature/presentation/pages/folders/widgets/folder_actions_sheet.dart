@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
+import 'package:voice_notes/core/l10n/folder_action_l10n.dart';
 import 'package:voice_notes/feature/domain/entities/folder_entity.dart';
 
 /// Available actions for folder context menu.
@@ -19,10 +20,7 @@ class FolderActionsSheet extends StatelessWidget {
   const FolderActionsSheet._({required this.folder});
 
   /// Shows the action sheet and returns the selected action.
-  static Future<FolderAction?> show(
-    BuildContext context, 
-    FolderEntity folder,
-  ) {
+  static Future<FolderAction?> show(BuildContext context, FolderEntity folder) {
     return showModalBottomSheet<FolderAction>(
       context: context,
       builder: (context) => FolderActionsSheet._(folder: folder),
@@ -31,6 +29,7 @@ class FolderActionsSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     final themeColors = context.themeColors;
 
     return SafeArea(
@@ -53,13 +52,13 @@ class FolderActionsSheet extends StatelessWidget {
                 Icons.edit_outlined,
                 color: themeColors.textPrimary,
               ),
-              title: const Text('Редактировать'),
+              title: Text(FolderAction.edit.title(l10n)),
               onTap: () => Navigator.pop(context, FolderAction.edit),
             ),
             ListTile(
               leading: Icon(Icons.delete_outline, color: themeColors.error),
               title: Text(
-                'Удалить',
+                FolderAction.delete.title(l10n),
                 style: TextStyle(color: themeColors.error),
               ),
               onTap: () => Navigator.pop(context, FolderAction.delete),

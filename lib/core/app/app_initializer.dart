@@ -1,11 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_easy_dialogs/flutter_easy_dialogs.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
+import 'package:voice_notes/core/l10n/locale_cubit.dart';
 import 'package:voice_notes/core/packages/app_router/app_router.dart';
 import 'package:voice_notes/core/packages/di/di.dart';
 import 'package:voice_notes/core/theme/app_theme.dart';
 import 'package:voice_notes/feature/presentation/pages/error/initialization_error_screen.dart';
+import 'package:voice_notes/l10n/app_localizations.dart';
 
 class AppInitializer extends StatefulWidget {
   const AppInitializer({super.key});
@@ -73,19 +77,29 @@ class VoiceNotesApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MediaQuery(
-      data: context.mediaQuery.copyWith(
-        textScaler: TextScaler.noScaling,
-        boldText: false,
-      ),
-      child: MaterialApp.router(
-        debugShowCheckedModeBanner: false,
-        title: 'Voice Notes',
-        theme: AppTheme.light,
-        darkTheme: AppTheme.dark,
-        themeMode: ThemeMode.dark,
-        routerConfig: router,
-        builder: FlutterEasyDialogs.builder(),
+    return BlocProvider(
+      create: (_) => LocaleCubit(prefs: getIt<SharedPreferences>()),
+      child: BlocBuilder<LocaleCubit, LocaleState>(
+        builder: (context, state) {
+          return MediaQuery(
+            data: context.mediaQuery.copyWith(
+              boldText: false,
+              textScaler: TextScaler.noScaling,
+            ),
+            child: MaterialApp.router(
+              debugShowCheckedModeBanner: false,
+              title: 'Voice Notes',
+              theme: AppTheme.light,
+              darkTheme: AppTheme.dark,
+              themeMode: ThemeMode.dark,
+              routerConfig: router,
+              locale: state.locale,
+              supportedLocales: AppLocalizations.supportedLocales,
+              localizationsDelegates: AppLocalizations.localizationsDelegates,
+              builder: FlutterEasyDialogs.builder(),
+            ),
+          );
+        },
       ),
     );
   }

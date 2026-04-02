@@ -6,8 +6,18 @@ class FolderDetailData extends Equatable {
 
   const FolderDetailData({required this.folder, this.notes = const []});
 
-  List<DateGroup<NoteEntity>> get groupedNotes =>
-      DateGroup.groupByDate(notes, (note) => note.createdAt);
+  List<DateGroup<NoteEntity>> groupedNotes({
+    required String todayLabel,
+    required String yesterdayLabel,
+    required String localeCode,
+  }) =>
+      DateGroup.groupByDate(
+        notes,
+        (note) => note.createdAt,
+        todayLabel: todayLabel,
+        yesterdayLabel: yesterdayLabel,
+        localeCode: localeCode,
+      );
 
   FolderDetailData copyWith({FolderEntity? folder, List<NoteEntity>? notes}) {
     return FolderDetailData(

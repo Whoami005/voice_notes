@@ -31,7 +31,7 @@ class NoteTextSection extends StatelessWidget {
       ),
       decoration: InputDecoration(
         contentPadding: const EdgeInsets.all(AppSizes.cardPadding),
-        hintText: 'Введите текст заметки...',
+        hintText: context.l10n.noteDetailTextHint,
         filled: true,
         fillColor: themeColors.bgSecondary,
         border: OutlineInputBorder(
