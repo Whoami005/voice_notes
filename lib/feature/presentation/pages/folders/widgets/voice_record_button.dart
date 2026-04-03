@@ -4,6 +4,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
+import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/packages/asr/asr_service.dart';
 import 'package:voice_notes/core/packages/audio/audio_recording_service.dart';
 import 'package:voice_notes/core/packages/di/injection.dart';
@@ -20,17 +21,32 @@ abstract final class _Styles {
   static const rippleSpawnInterval = Duration(milliseconds: 600);
   static const rippleDuration = Duration(milliseconds: 1800);
 
-  static const idleGradient = LinearGradient(
+  // Dark theme
+  static const darkIdleGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [Color(0xFF3A3A3C), Color(0xFF2C2C2E), Color(0xFF1C1C1E)],
   );
 
-  static const recordingGradientColors = [
+  static const darkRecordingGradientColors = [
     Color(0xFF5A5A5C),
     Color(0xFF4A4A4C),
     Color(0xFF3A3A3C),
     Color(0xFF5A5A5C),
+  ];
+
+  // Light theme
+  static const lightIdleGradient = LinearGradient(
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [Color(0xFFD97706), Color(0xFFF59E0B), Color(0xFFFBBF24)],
+  );
+
+  static const lightRecordingGradientColors = [
+    Color(0xFFFBBF24),
+    Color(0xFFF59E0B),
+    Color(0xFFD97706),
+    Color(0xFFFBBF24),
   ];
 }
 
@@ -250,6 +266,8 @@ class _AnimatedButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = context.isDarkMode;
+
     return GestureDetector(
       onTap: onTap,
       child: AnimatedBuilder(
@@ -260,9 +278,13 @@ class _AnimatedButton extends StatelessWidget {
             height: _Styles.buttonSize,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: _buildGradient(),
+              gradient: _buildGradient(isDarkMode),
               border: Border.all(
-                color: Colors.white.withValues(alpha: isRecording ? 0.3 : 0.15),
+                color: isDarkMode
+                    ? Colors.white.withValues(alpha: isRecording ? 0.3 : 0.15)
+                    : const Color(
+                        0xFFD97706,
+                      ).withValues(alpha: isRecording ? 0.4 : 0.2),
               ),
               boxShadow: [
                 BoxShadow(
@@ -272,7 +294,9 @@ class _AnimatedButton extends StatelessWidget {
                 ),
                 if (isRecording)
                   BoxShadow(
-                    color: Colors.white.withValues(alpha: 0.1),
+                    color: isDarkMode
+                        ? Colors.white.withValues(alpha: 0.1)
+                        : const Color(0xFFF59E0B).withValues(alpha: 0.3),
                     blurRadius: 30,
                   ),
               ],
@@ -303,15 +327,20 @@ class _AnimatedButton extends StatelessWidget {
     );
   }
 
-  LinearGradient _buildGradient() {
-    if (!isRecording) return _Styles.idleGradient;
+  LinearGradient _buildGradient(bool isDarkMode) {
+    if (!isRecording) {
+      return isDarkMode ? _Styles.darkIdleGradient : _Styles.lightIdleGradient;
+    }
 
     final shift = gradientAnimation.value;
+    final colors = isDarkMode
+        ? _Styles.darkRecordingGradientColors
+        : _Styles.lightRecordingGradientColors;
 
     return LinearGradient(
       begin: Alignment(-1.0 + shift, -1.0 + shift),
       end: Alignment(1.0 + shift, 1.0 + shift),
-      colors: _Styles.recordingGradientColors,
+      colors: colors,
       stops: const [0.0, 0.33, 0.66, 1.0],
     );
   }
@@ -330,6 +359,8 @@ class _RippleWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = context.isDarkMode;
+
     return AnimatedBuilder(
       animation: animation,
       builder: (context, child) {
@@ -344,7 +375,9 @@ class _RippleWidget extends StatelessWidget {
               shape: BoxShape.circle,
               gradient: RadialGradient(
                 colors: [
-                  Colors.white.withValues(alpha: 0.15),
+                  isDarkMode
+                      ? Colors.white.withValues(alpha: 0.15)
+                      : const Color(0xFFF59E0B).withValues(alpha: 0.2),
                   Colors.transparent,
                 ],
               ),
@@ -363,6 +396,8 @@ class _TimerBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = context.isDarkMode;
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
       child: BackdropFilter(
@@ -370,16 +405,18 @@ class _TimerBadge extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.75),
+            color: isDarkMode
+                ? Colors.black.withValues(alpha: 0.75)
+                : Colors.white.withValues(alpha: 0.85),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
             _formatDuration(duration),
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: isDarkMode ? Colors.white : const Color(0xFF44403C),
               fontSize: 13,
               fontWeight: FontWeight.w500,
-              fontFeatures: [FontFeature.tabularFigures()],
+              fontFeatures: const [FontFeature.tabularFigures()],
             ),
           ),
         ),
