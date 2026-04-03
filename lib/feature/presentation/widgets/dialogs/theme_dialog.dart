@@ -2,40 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
+import 'package:voice_notes/core/theme/theme_cubit.dart';
 
-class LanguageOption {
-  final String code;
-  final String name;
-  final String flag;
+class ThemeDialog extends StatelessWidget {
+  final AppThemeMode currentMode;
 
-  const LanguageOption({
-    required this.code,
-    required this.name,
-    required this.flag,
-  });
+  const ThemeDialog({required this.currentMode, super.key});
 
-  static const en = LanguageOption(code: 'en', name: 'English', flag: '🇺🇸');
-  static const ru = LanguageOption(code: 'ru', name: 'Русский', flag: '🇷🇺');
-
-  static const List<LanguageOption> all = [en, ru];
-}
-
-class LanguageDialog extends StatelessWidget {
-  final String currentLanguage;
-
-  const LanguageDialog({required this.currentLanguage, super.key});
-
-  static Future<String?> show({
+  static Future<AppThemeMode?> show({
     required BuildContext context,
-    required String currentLanguage,
+    required AppThemeMode currentMode,
   }) {
-    return showGeneralDialog<String>(
+    return showGeneralDialog<AppThemeMode>(
       context: context,
       barrierDismissible: true,
       barrierLabel: context.materialL10n.modalBarrierDismissLabel,
       barrierColor: Colors.black54,
       pageBuilder: (context, animation, secondaryAnimation) {
-        return LanguageDialog(currentLanguage: currentLanguage);
+        return ThemeDialog(currentMode: currentMode);
       },
       transitionBuilder: (context, animation, secondaryAnimation, child) {
         return ScaleTransition(
@@ -66,19 +50,18 @@ class LanguageDialog extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                context.l10n.languageDialogTitle,
+                context.l10n.themeDialogTitle,
                 style: textTheme.headlineMedium,
                 textAlign: TextAlign.center,
               ),
               AppSpacer.p20,
-              for (final option in LanguageOption.all)
+              for (final mode in AppThemeMode.values)
                 Padding(
                   padding: const EdgeInsets.only(bottom: AppSizes.p12),
-                  child: _LanguageItem(
-                    option: option,
-                    displayName: option.name,
-                    isSelected: option.code == currentLanguage,
-                    onTap: () => context.router.pop(option.code),
+                  child: _ThemeItem(
+                    mode: mode,
+                    isSelected: mode == currentMode,
+                    onTap: () => context.router.pop(mode),
                   ),
                 ),
             ],
@@ -89,18 +72,26 @@ class LanguageDialog extends StatelessWidget {
   }
 }
 
-class _LanguageItem extends StatelessWidget {
-  final LanguageOption option;
-  final String displayName;
+class _ThemeItem extends StatelessWidget {
+  final AppThemeMode mode;
   final bool isSelected;
   final VoidCallback onTap;
 
-  const _LanguageItem({
-    required this.option,
-    required this.displayName,
+  const _ThemeItem({
+    required this.mode,
     required this.isSelected,
     required this.onTap,
   });
+
+  IconData get _icon => switch (mode) {
+    AppThemeMode.light => Icons.light_mode_outlined,
+    AppThemeMode.dark => Icons.dark_mode_outlined,
+  };
+
+  String _label(BuildContext context) => switch (mode) {
+    AppThemeMode.light => context.l10n.settingsThemeLight,
+    AppThemeMode.dark => context.l10n.settingsThemeDark,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -119,9 +110,15 @@ class _LanguageItem extends StatelessWidget {
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: AppSizes.p16),
         onTap: onTap,
-        leading: Text(option.flag, style: const TextStyle(fontSize: 24)),
+        leading: Icon(
+          _icon,
+          size: 24,
+          color: isSelected
+              ? themeColors.accentPrimary
+              : themeColors.textSecondary,
+        ),
         title: Text(
-          displayName,
+          _label(context),
           style: textTheme.bodyMedium?.copyWith(
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
           ),

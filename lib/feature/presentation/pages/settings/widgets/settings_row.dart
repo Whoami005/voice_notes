@@ -33,6 +33,7 @@ class SettingsRow extends StatelessWidget {
       opacity: opacity,
       child: GestureDetector(
         onTap: isEnabled ? onTap : null,
+        behavior: HitTestBehavior.translucent,
         child: Column(
           children: [
             Padding(

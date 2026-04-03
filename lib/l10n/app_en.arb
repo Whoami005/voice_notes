@@ -142,6 +142,8 @@
 
   "settingsRecordingQualityHigh": "High",
   "settingsThemeDark": "Dark",
+  "settingsThemeLight": "Light",
+  "themeDialogTitle": "App theme",
 
   "modelDescWhisperTiny": "Fastest model. English only.",
   "modelDescWhisperSmall": "Fast model with good quality. Recommended for most tasks.",

@@ -109,7 +109,7 @@ class ErrorDialog extends StatelessWidget {
     return showGeneralDialog(
       context: context,
       barrierDismissible: true,
-      barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
+      barrierLabel: context.materialL10n.modalBarrierDismissLabel,
       barrierColor: Colors.black54,
       pageBuilder: (context, animation, secondaryAnimation) {
         return ErrorDialog(

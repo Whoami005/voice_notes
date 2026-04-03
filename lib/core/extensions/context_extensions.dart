@@ -6,6 +6,8 @@ import 'package:voice_notes/l10n/app_localizations.dart';
 extension BuildContextExtensions on BuildContext {
   AppLocalizations get l10n => AppLocalizations.of(this);
 
+  MaterialLocalizations get materialL10n => MaterialLocalizations.of(this);
+
   ThemeData get theme => Theme.of(this);
 
   GoRouter get router => GoRouter.of(this);

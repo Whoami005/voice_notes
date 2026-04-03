@@ -280,6 +280,10 @@
   "@settingsRecordingQualityHigh": { "description": "Recording quality: high" },
   "settingsThemeDark": "Темная",
   "@settingsThemeDark": { "description": "Theme: dark" },
+  "settingsThemeLight": "Светлая",
+  "@settingsThemeLight": { "description": "Theme: light" },
+  "themeDialogTitle": "Тема оформления",
+  "@themeDialogTitle": { "description": "Theme picker dialog title" },
 
   "modelDescWhisperTiny": "Самая быстрая модель. Только английский язык.",
   "@modelDescWhisperTiny": { "description": "Whisper Tiny model description" },

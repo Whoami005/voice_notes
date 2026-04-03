@@ -8,6 +8,7 @@ import 'package:voice_notes/core/l10n/locale_cubit.dart';
 import 'package:voice_notes/core/packages/app_router/app_router.dart';
 import 'package:voice_notes/core/packages/di/di.dart';
 import 'package:voice_notes/core/theme/app_theme.dart';
+import 'package:voice_notes/core/theme/theme_cubit.dart';
 import 'package:voice_notes/feature/presentation/pages/error/initialization_error_screen.dart';
 import 'package:voice_notes/l10n/app_localizations.dart';
 
@@ -77,10 +78,22 @@ class VoiceNotesApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => LocaleCubit(prefs: getIt<SharedPreferences>()),
-      child: BlocBuilder<LocaleCubit, LocaleState>(
-        builder: (context, state) {
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) => LocaleCubit(prefs: getIt<SharedPreferences>()),
+        ),
+        BlocProvider(
+          create: (_) => ThemeCubit(prefs: getIt<SharedPreferences>()),
+        ),
+      ],
+      child: Builder(
+        builder: (context) {
+          final theme = context.select((ThemeCubit cubit) => cubit.state.mode);
+          final locale = context.select(
+            (LocaleCubit cubit) => cubit.state.locale,
+          );
+
           return MediaQuery(
             data: context.mediaQuery.copyWith(
               boldText: false,
@@ -91,9 +104,9 @@ class VoiceNotesApp extends StatelessWidget {
               title: 'Voice Notes',
               theme: AppTheme.light,
               darkTheme: AppTheme.dark,
-              themeMode: ThemeMode.dark,
+              themeMode: theme.themeMode,
               routerConfig: router,
-              locale: state.locale,
+              locale: locale,
               supportedLocales: AppLocalizations.supportedLocales,
               localizationsDelegates: AppLocalizations.localizationsDelegates,
               builder: FlutterEasyDialogs.builder(),

@@ -14,6 +14,7 @@ import 'package:voice_notes/core/packages/downloader/download_status.dart';
 import 'package:voice_notes/core/state/async/async_state.dart';
 import 'package:voice_notes/core/state/async/async_state_widgets.dart';
 import 'package:voice_notes/core/theme/app_typography.dart';
+import 'package:voice_notes/core/theme/theme_cubit.dart';
 import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
 import 'package:voice_notes/feature/domain/repositories/model_repository.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/logic/models_cubit.dart';
@@ -22,6 +23,7 @@ import 'package:voice_notes/feature/presentation/pages/settings/widgets/settings
 import 'package:voice_notes/feature/presentation/pages/settings/widgets/settings_section.dart';
 import 'package:voice_notes/feature/presentation/widgets/dialogs/error_dialog.dart';
 import 'package:voice_notes/feature/presentation/widgets/dialogs/language_dialog.dart';
+import 'package:voice_notes/feature/presentation/widgets/dialogs/theme_dialog.dart';
 
 class SettingsScreen extends StatefulWidget implements AppRouteWrapper {
   const SettingsScreen({super.key});
@@ -56,7 +58,6 @@ class _SettingsScreenState extends State<SettingsScreen>
   bool _autoTags = false;
   String _recordingQuality = 'Высокое';
   String _defaultLanguage = 'Русский';
-  String _theme = 'Темная';
 
   @override
   void initState() {
@@ -101,13 +102,11 @@ class _SettingsScreenState extends State<SettingsScreen>
             autoTags: _autoTags,
             recordingQuality: _recordingQuality,
             defaultLanguage: _defaultLanguage,
-            theme: _theme,
             onAutoSaveChanged: (value) => setState(() => _autoSave = value),
             onVadChanged: (value) => setState(() => _vadEnabled = value),
             onAutoTagsChanged: (value) => setState(() => _autoTags = value),
             onRecordingQualityTap: _onRecordingQualityTap,
             onDefaultLanguageTap: _onDefaultLanguageTap,
-            onThemeTap: _onThemeTap,
             onExportTap: _onExportTap,
             onClearCacheTap: _onClearCacheTap,
           ),
@@ -125,10 +124,6 @@ class _SettingsScreenState extends State<SettingsScreen>
     // TODO: Show language dialog
   }
 
-  void _onThemeTap() {
-    // TODO: Show theme picker
-  }
-
   void _onExportTap() {
     // TODO: Export data
   }
@@ -144,13 +139,11 @@ class _GeneralTab extends StatefulWidget {
   final bool autoTags;
   final String recordingQuality;
   final String defaultLanguage;
-  final String theme;
   final ValueChanged<bool> onAutoSaveChanged;
   final ValueChanged<bool> onVadChanged;
   final ValueChanged<bool> onAutoTagsChanged;
   final VoidCallback onRecordingQualityTap;
   final VoidCallback onDefaultLanguageTap;
-  final VoidCallback onThemeTap;
   final VoidCallback onExportTap;
   final VoidCallback onClearCacheTap;
 
@@ -160,13 +153,11 @@ class _GeneralTab extends StatefulWidget {
     required this.autoTags,
     required this.recordingQuality,
     required this.defaultLanguage,
-    required this.theme,
     required this.onAutoSaveChanged,
     required this.onVadChanged,
     required this.onAutoTagsChanged,
     required this.onRecordingQualityTap,
     required this.onDefaultLanguageTap,
-    required this.onThemeTap,
     required this.onExportTap,
     required this.onClearCacheTap,
   });
@@ -186,6 +177,20 @@ class _GeneralTabState extends State<_GeneralTab>
         ?.name;
 
     return name ?? locale.languageCode;
+  }
+
+  Future<void> _onThemeTap() async {
+    final themeCubit = context.read<ThemeCubit>();
+    final currentMode = themeCubit.state.mode;
+
+    final selectedMode = await ThemeDialog.show(
+      context: context,
+      currentMode: currentMode,
+    );
+
+    if (selectedMode != null && selectedMode != currentMode) {
+      await themeCubit.setTheme(selectedMode);
+    }
   }
 
   Future<void> _onAppLanguageTap() async {
@@ -272,12 +277,20 @@ class _GeneralTabState extends State<_GeneralTab>
           SettingsSection(
             title: l10n.settingsSectionInterface,
             children: [
-              SettingsRow(
-                icon: Icons.dark_mode_outlined,
-                title: l10n.settingsTheme,
-                trailing: SettingsChevron(value: widget.theme),
-                onTap: widget.onThemeTap,
-                isEnabled: false,
+              BlocSelector<ThemeCubit, ThemeState, AppThemeMode>(
+                selector: (state) => state.mode,
+                builder: (context, mode) {
+                  final themeName = mode == AppThemeMode.light
+                      ? l10n.settingsThemeLight
+                      : l10n.settingsThemeDark;
+
+                  return SettingsRow(
+                    icon: Icons.dark_mode_outlined,
+                    title: l10n.settingsTheme,
+                    trailing: SettingsChevron(value: themeName),
+                    onTap: _onThemeTap,
+                  );
+                },
               ),
               BlocSelector<LocaleCubit, LocaleState, Locale>(
                 selector: (state) => state.locale,
