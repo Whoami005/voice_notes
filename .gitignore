@@ -47,7 +47,9 @@ app.*.map.json
 .claude/
 .serena
 .agent/
+CLAUDE.md
 docs/
+FLUTTER_DESIGN_SPEC.md
 
 # Auto Claude data directory
 .auto-claude/
