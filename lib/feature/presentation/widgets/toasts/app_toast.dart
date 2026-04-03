@@ -52,7 +52,7 @@ abstract final class AppToast {
       context: context,
       type: type,
       style: ToastificationStyle.fillColored,
-      title: Text(message),
+      title: Text(message, maxLines: 5),
       alignment: Alignment.topCenter,
       autoCloseDuration: _autoCloseDuration,
       primaryColor: primaryColor,
