@@ -181,30 +181,22 @@ class _GeneralTabState extends State<_GeneralTab>
 
   Future<void> _onThemeTap() async {
     final themeCubit = context.read<ThemeCubit>();
-    final currentMode = themeCubit.state.mode;
 
-    final selectedMode = await ThemeDialog.show(
+    await ThemeDialog.show(
       context: context,
-      currentMode: currentMode,
+      currentMode: themeCubit.state.mode,
+      onSave: themeCubit.setTheme,
     );
-
-    if (selectedMode != null && selectedMode != currentMode) {
-      await themeCubit.setTheme(selectedMode);
-    }
   }
 
   Future<void> _onAppLanguageTap() async {
     final localeCubit = context.read<LocaleCubit>();
-    final currentCode = localeCubit.state.locale.languageCode;
 
-    final selectedCode = await LanguageDialog.show(
+    await LanguageDialog.show(
       context: context,
-      currentLanguage: currentCode,
+      currentLanguage: localeCubit.state.locale.languageCode,
+      onSave: (code) => localeCubit.setLocale(Locale(code)),
     );
-
-    if (selectedCode != null && selectedCode != currentCode) {
-      await localeCubit.setLocale(Locale(selectedCode));
-    }
   }
 
   @override

@@ -53,9 +53,15 @@ class ThemeCubit extends BaseCubit<ThemeState> {
         : AppThemeMode.dark;
   }
 
-  Future<void> setTheme(AppThemeMode mode) async {
-    await _prefs.setString(_key, mode.name);
+  Future<bool> setTheme(AppThemeMode mode) async {
+    try {
+      await _prefs.setString(_key, mode.name);
+      emit(ThemeState(mode: mode));
 
-    emit(ThemeState(mode: mode));
+      return true;
+    } catch (e, s) {
+      logError(e, s);
+      return false;
+    }
   }
 }

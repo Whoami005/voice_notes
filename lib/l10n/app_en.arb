@@ -122,6 +122,7 @@
   "errorStorageRequired": "Required: {size}",
   "errorStorageAvailable": "Available: {size}",
   "errorGenericTitle": "Error",
+  "errorGenericMessage": "An unexpected error occurred. Please try again",
 
   "unsavedChangesTitle": "Unsaved changes",
   "unsavedChangesMessage": "You have unsaved changes. Are you sure you want to leave?",

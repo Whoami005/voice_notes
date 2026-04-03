@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
+import 'package:voice_notes/feature/presentation/widgets/dialogs/error_dialog.dart';
 
 class LanguageOption {
   final String code;
@@ -20,22 +21,28 @@ class LanguageOption {
   static const List<LanguageOption> all = [en, ru];
 }
 
-class LanguageDialog extends StatelessWidget {
+class LanguageDialog extends StatefulWidget {
   final String currentLanguage;
+  final Future<bool> Function(String code) onSave;
 
-  const LanguageDialog({required this.currentLanguage, super.key});
+  const LanguageDialog({
+    required this.currentLanguage,
+    required this.onSave,
+    super.key,
+  });
 
-  static Future<String?> show({
+  static Future<void> show({
     required BuildContext context,
     required String currentLanguage,
+    required Future<bool> Function(String code) onSave,
   }) {
-    return showGeneralDialog<String>(
+    return showGeneralDialog<void>(
       context: context,
       barrierDismissible: true,
       barrierLabel: context.materialL10n.modalBarrierDismissLabel,
       barrierColor: Colors.black54,
       pageBuilder: (context, animation, secondaryAnimation) {
-        return LanguageDialog(currentLanguage: currentLanguage);
+        return LanguageDialog(currentLanguage: currentLanguage, onSave: onSave);
       },
       transitionBuilder: (context, animation, secondaryAnimation, child) {
         return ScaleTransition(
@@ -44,6 +51,24 @@ class LanguageDialog extends StatelessWidget {
         );
       },
     );
+  }
+
+  @override
+  State<LanguageDialog> createState() => _LanguageDialogState();
+}
+
+class _LanguageDialogState extends State<LanguageDialog> {
+  Future<void> _onSelect(String code) async {
+    if (code == widget.currentLanguage) {
+      context.router.pop();
+      return;
+    }
+
+    final success = await widget.onSave(code);
+
+    if (!mounted) return;
+
+    success ? context.router.pop() : ErrorDialog.showUnknownError(context);
   }
 
   @override
@@ -77,8 +102,8 @@ class LanguageDialog extends StatelessWidget {
                   child: _LanguageItem(
                     option: option,
                     displayName: option.name,
-                    isSelected: option.code == currentLanguage,
-                    onTap: () => context.router.pop(option.code),
+                    isSelected: option.code == widget.currentLanguage,
+                    onTap: () => _onSelect(option.code),
                   ),
                 ),
             ],

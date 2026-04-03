@@ -42,9 +42,14 @@ class LocaleCubit extends BaseCubit<LocaleState> {
     return isSupported ? Locale(systemCode) : const Locale('en');
   }
 
-  Future<void> setLocale(Locale locale) async {
-    await _prefs.setString(_key, locale.languageCode);
-
-    emit(LocaleState(locale: locale));
+  Future<bool> setLocale(Locale locale) async {
+    try {
+      await _prefs.setString(_key, locale.languageCode);
+      emit(LocaleState(locale: locale));
+      return true;
+    } catch (e, s) {
+      logError(e, s);
+      return false;
+    }
   }
 }

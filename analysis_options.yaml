@@ -33,6 +33,7 @@ linter:
     prefer_if_elements_to_conditional_expressions: false
     omit_local_variable_types: false
     document_ignores: false
+    avoid_types_on_closure_parameters: false
     # avoid_print: false  # Uncomment to disable the `avoid_print` rule
     # prefer_single_quotes: true  # Uncomment to enable the `prefer_single_quotes` rule
 

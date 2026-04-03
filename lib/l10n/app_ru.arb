@@ -246,6 +246,8 @@
   },
   "errorGenericTitle": "Ошибка",
   "@errorGenericTitle": { "description": "Generic error dialog title" },
+  "errorGenericMessage": "Произошла непредвиденная ошибка. Попробуйте ещё раз",
+  "@errorGenericMessage": { "description": "Generic error dialog message" },
 
   "unsavedChangesTitle": "Несохранённые изменения",
   "@unsavedChangesTitle": { "description": "Unsaved changes dialog title" },

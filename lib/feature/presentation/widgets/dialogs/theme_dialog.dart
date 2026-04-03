@@ -3,23 +3,30 @@ import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/theme/theme_cubit.dart';
+import 'package:voice_notes/feature/presentation/widgets/dialogs/error_dialog.dart';
 
-class ThemeDialog extends StatelessWidget {
+class ThemeDialog extends StatefulWidget {
   final AppThemeMode currentMode;
+  final Future<bool> Function(AppThemeMode mode) onSave;
 
-  const ThemeDialog({required this.currentMode, super.key});
+  const ThemeDialog({
+    required this.currentMode,
+    required this.onSave,
+    super.key,
+  });
 
-  static Future<AppThemeMode?> show({
+  static Future<void> show({
     required BuildContext context,
     required AppThemeMode currentMode,
+    required Future<bool> Function(AppThemeMode mode) onSave,
   }) {
-    return showGeneralDialog<AppThemeMode>(
+    return showGeneralDialog<void>(
       context: context,
       barrierDismissible: true,
       barrierLabel: context.materialL10n.modalBarrierDismissLabel,
       barrierColor: Colors.black54,
       pageBuilder: (context, animation, secondaryAnimation) {
-        return ThemeDialog(currentMode: currentMode);
+        return ThemeDialog(currentMode: currentMode, onSave: onSave);
       },
       transitionBuilder: (context, animation, secondaryAnimation, child) {
         return ScaleTransition(
@@ -28,6 +35,24 @@ class ThemeDialog extends StatelessWidget {
         );
       },
     );
+  }
+
+  @override
+  State<ThemeDialog> createState() => _ThemeDialogState();
+}
+
+class _ThemeDialogState extends State<ThemeDialog> {
+  Future<void> _onSelect(AppThemeMode mode) async {
+    if (mode == widget.currentMode) {
+      context.router.pop();
+      return;
+    }
+
+    final success = await widget.onSave(mode);
+
+    if (!mounted) return;
+
+    success ? context.router.pop() : ErrorDialog.showUnknownError(context);
   }
 
   @override
@@ -60,8 +85,8 @@ class ThemeDialog extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: AppSizes.p12),
                   child: _ThemeItem(
                     mode: mode,
-                    isSelected: mode == currentMode,
-                    onTap: () => context.router.pop(mode),
+                    isSelected: mode == widget.currentMode,
+                    onTap: () => _onSelect(mode),
                   ),
                 ),
             ],

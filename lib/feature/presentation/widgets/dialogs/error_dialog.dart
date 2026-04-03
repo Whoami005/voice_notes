@@ -3,6 +3,7 @@ import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/error/app_failure.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
+import 'package:voice_notes/feature/presentation/widgets/toasts/app_toast.dart';
 import 'package:voice_notes/l10n/app_localizations.dart';
 
 /// Диалог для отображения ошибок
@@ -74,6 +75,11 @@ class ErrorDialog extends StatelessWidget {
       details: details.isNotEmpty ? details : null,
       icon: Icons.storage_rounded,
     );
+  }
+
+  /// Показать снэкбар с неизвестной ошибкой
+  static void showUnknownError(BuildContext context) {
+    AppToast.error(context, message: context.l10n.errorGenericMessage);
   }
 
   /// Показать диалог на основе AppFailure
