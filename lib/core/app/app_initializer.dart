@@ -6,9 +6,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/l10n/locale_cubit.dart';
 import 'package:voice_notes/core/packages/app_router/app_router.dart';
+import 'package:voice_notes/core/packages/asr/asr_cubit.dart';
+import 'package:voice_notes/core/packages/asr/asr_service.dart';
 import 'package:voice_notes/core/packages/di/di.dart';
 import 'package:voice_notes/core/theme/app_theme.dart';
 import 'package:voice_notes/core/theme/theme_cubit.dart';
+import 'package:voice_notes/feature/domain/repositories/model_repository.dart';
 import 'package:voice_notes/feature/presentation/pages/error/initialization_error_screen.dart';
 import 'package:voice_notes/l10n/app_localizations.dart';
 
@@ -62,11 +65,19 @@ class _SplashScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
-      themeMode: ThemeMode.dark,
-      home: const Scaffold(body: Center(child: CircularProgressIndicator())),
+    return MediaQuery(
+      data: context.mediaQuery.copyWith(
+        boldText: false,
+        textScaler: TextScaler.noScaling,
+      ),
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Voice Notes',
+        theme: AppTheme.light,
+        darkTheme: AppTheme.dark,
+        themeMode: ThemeMode.dark,
+        home: const Scaffold(body: Center(child: CircularProgressIndicator())),
+      ),
     );
   }
 }
@@ -81,10 +92,19 @@ class VoiceNotesApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(
+          lazy: false,
           create: (_) => LocaleCubit(prefs: getIt<SharedPreferences>()),
         ),
         BlocProvider(
+          lazy: false,
           create: (_) => ThemeCubit(prefs: getIt<SharedPreferences>()),
+        ),
+        BlocProvider(
+          lazy: false,
+          create: (_) => AsrCubit(
+            asrService: getIt<AsrService>(),
+            modelRepository: getIt<ModelRepository>(),
+          ),
         ),
       ],
       child: Builder(

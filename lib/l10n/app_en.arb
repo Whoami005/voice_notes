@@ -150,5 +150,10 @@
   "modelDescWhisperSmall": "Fast model with good quality. Recommended for most tasks.",
   "modelDescWhisperMedium": "More accurate model for complex audio with noise or accents.",
   "modelLangEnglish": "English",
-  "modelLang99Languages": "99 languages"
+  "modelLang99Languages": "99 languages",
+
+  "asrInitializing": "Initializing model...",
+  "asrInitError": "Model initialization error",
+  "asrReinitialize": "Reinitialize",
+  "asrNoModel": "No model selected"
 }

@@ -15,6 +15,7 @@ import 'package:voice_notes/feature/presentation/pages/folder_detail/logic/folde
 import 'package:voice_notes/feature/presentation/pages/folder_detail/logic/recording_cubit.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/widgets/folder_detail_app_bar.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/widgets/folder_detail_recording_bar.dart';
+import 'package:voice_notes/feature/presentation/widgets/asr_status_banner.dart';
 import 'package:voice_notes/feature/presentation/widgets/dialogs/confirm_dialog.dart';
 import 'package:voice_notes/feature/presentation/widgets/refresh/refreshable_wrapper.dart';
 
@@ -80,6 +81,7 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
             child: CustomScrollView(
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               slivers: [
+                AsrStatusBanner.sliver(),
                 // if (_isSearchVisible)
                 //   SliverToBoxAdapter(
                 //     child: SearchBarWithFilters(

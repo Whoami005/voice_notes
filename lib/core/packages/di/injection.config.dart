@@ -32,11 +32,11 @@ import '../../../feature/domain/repositories/note_repository.dart' as _i1032;
 import '../../../feature/domain/repositories/tag_repository.dart' as _i484;
 import '../app_router/app_router.dart' as _i796;
 import '../asr/asr_service.dart' as _i233;
+import '../asr/sherpa_asr_service.dart' as _i699;
 import '../audio/audio_recording_service.dart' as _i571;
 import '../db/object_box/objectbox_database.dart' as _i88;
 import '../db/transaction_manager.dart' as _i138;
 import '../downloader/download_manager.dart' as _i551;
-import 'modules/asr_module.dart' as _i835;
 import 'modules/prefs_module.dart' as _i12;
 
 extension GetItInjectableX on _i174.GetIt {
@@ -47,7 +47,6 @@ extension GetItInjectableX on _i174.GetIt {
   }) async {
     final gh = _i526.GetItHelper(this, environment, environmentFilter);
     final prefsModule = _$PrefsModule();
-    final asrModule = _$AsrModule();
     gh.singleton<_i796.AppRouter>(() => _i796.AppRouter());
     gh.singleton<_i571.AudioRecordingService>(
       () => _i571.AudioRecordingService(),
@@ -70,6 +69,7 @@ extension GetItInjectableX on _i174.GetIt {
       preResolve: true,
       dispose: (i) => i.close(),
     );
+    gh.singleton<_i233.AsrService>(() => _i699.SherpaAsrService());
     gh.singleton<_i952.TagLocalDataSource>(
       () => _i952.TagLocalDataSourceImpl(gh<_i88.DatabaseClient>()),
     );
@@ -101,14 +101,8 @@ extension GetItInjectableX on _i174.GetIt {
     gh.singleton<_i138.TransactionManager>(
       () => _i138.TransactionManager(gh<_i88.DatabaseClient>()),
     );
-    await gh.singletonAsync<_i233.AsrService>(
-      () => asrModule.asrService(gh<_i56.ModelRepository>()),
-      preResolve: true,
-    );
     return this;
   }
 }
 
 class _$PrefsModule extends _i12.PrefsModule {}
-
-class _$AsrModule extends _i835.AsrModule {}

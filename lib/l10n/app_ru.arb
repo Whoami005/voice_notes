@@ -296,5 +296,14 @@
   "modelLangEnglish": "English",
   "@modelLangEnglish": { "description": "English language label" },
   "modelLang99Languages": "99 языков",
-  "@modelLang99Languages": { "description": "99 languages label" }
+  "@modelLang99Languages": { "description": "99 languages label" },
+
+  "asrInitializing": "Инициализация модели...",
+  "@asrInitializing": { "description": "ASR status banner: model initializing" },
+  "asrInitError": "Ошибка инициализации модели",
+  "@asrInitError": { "description": "ASR status banner: initialization error" },
+  "asrReinitialize": "Переинициализировать",
+  "@asrReinitialize": { "description": "Model card: reinitialize button when ASR init failed" },
+  "asrNoModel": "Модель не выбрана",
+  "@asrNoModel": { "description": "ASR status: no model selected" }
 }

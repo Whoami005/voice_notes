@@ -11,6 +11,7 @@ import 'package:voice_notes/feature/presentation/pages/folders/components/folder
 import 'package:voice_notes/feature/presentation/pages/folders/components/folders_list_section.dart';
 import 'package:voice_notes/feature/presentation/pages/folders/logic/folders_cubit.dart';
 import 'package:voice_notes/feature/presentation/pages/folders/widgets/voice_record_button.dart';
+import 'package:voice_notes/feature/presentation/widgets/asr_status_banner.dart';
 import 'package:voice_notes/feature/presentation/widgets/refresh/refreshable_wrapper.dart';
 
 class FoldersScreen extends StatefulWidget implements AppRouteWrapper {
@@ -45,7 +46,11 @@ class _FoldersScreenState extends State<FoldersScreen> {
             bottom: false,
             child: RefreshableWrapper<FoldersCubit>(
               child: CustomScrollView(
-                slivers: [FoldersAppBar(), FoldersListSection()],
+                slivers: [
+                  FoldersAppBar(),
+                  AsrStatusBanner.sliver(),
+                  FoldersListSection(),
+                ],
               ),
             ),
           ),

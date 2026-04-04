@@ -1,13 +1,16 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/l10n/download_status_l10n.dart';
 import 'package:voice_notes/core/l10n/localized_models.dart';
+import 'package:voice_notes/core/packages/asr/asr_cubit.dart';
 import 'package:voice_notes/core/packages/downloader/download_manager.dart';
 import 'package:voice_notes/core/packages/downloader/download_status.dart';
+import 'package:voice_notes/core/state/status/status_state.dart';
 import 'package:voice_notes/core/theme/app_colors_extension.dart';
 import 'package:voice_notes/core/theme/app_typography.dart';
 import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
@@ -376,19 +379,7 @@ class _ActionButtons extends StatelessWidget {
       children: [
         Expanded(
           child: model.isSelected
-              ? OutlinedButton(
-                  onPressed: null,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: themeColors.textTertiary,
-                    side: BorderSide(color: themeColors.borderPrimary),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(
-                        AppSizes.buttonRadius,
-                      ),
-                    ),
-                  ),
-                  child: Text(context.l10n.modelActionInUse),
-                )
+              ? _SelectedModelButton(themeColors: themeColors)
               : ElevatedButton(
                   onPressed: onUse,
                   style: ElevatedButton.styleFrom(
@@ -420,5 +411,66 @@ class _ActionButtons extends StatelessWidget {
         ),
       ],
     );
+  }
+}
+
+/// Кнопка для выбранной модели — реагирует на состояние AsrCubit.
+///
+/// - loading → "Инициализация..." с спиннером
+/// - success → "Используется" (неактивна)
+/// - error → "Переинициализировать" (активна)
+class _SelectedModelButton extends StatelessWidget {
+  final AppColorsExtension themeColors;
+
+  const _SelectedModelButton({required this.themeColors});
+
+  @override
+  Widget build(BuildContext context) {
+    final asrStatus = context.select((AsrCubit c) => c.state.status);
+    final l10n = context.l10n;
+
+    return switch (asrStatus) {
+      Status.loading => OutlinedButton.icon(
+        onPressed: null,
+        icon: SizedBox.square(
+          dimension: 14,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            color: themeColors.textTertiary,
+          ),
+        ),
+        label: Text(l10n.asrInitializing, textAlign: TextAlign.center),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: themeColors.textTertiary,
+          side: BorderSide(color: themeColors.borderPrimary),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSizes.buttonRadius),
+          ),
+        ),
+      ),
+      Status.error => OutlinedButton.icon(
+        onPressed: context.read<AsrCubit>().retry,
+        icon: const Icon(Icons.refresh, size: AppSizes.iconMedium),
+        label: Text(l10n.asrReinitialize),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: themeColors.error,
+          side: BorderSide(color: themeColors.error),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSizes.buttonRadius),
+          ),
+        ),
+      ),
+      _ => OutlinedButton(
+        onPressed: null,
+        style: OutlinedButton.styleFrom(
+          foregroundColor: themeColors.textTertiary,
+          side: BorderSide(color: themeColors.borderPrimary),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppSizes.buttonRadius),
+          ),
+        ),
+        child: Text(l10n.modelActionInUse),
+      ),
+    };
   }
 }

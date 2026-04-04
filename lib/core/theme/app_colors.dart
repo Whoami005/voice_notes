@@ -10,6 +10,8 @@ class AppColors {
   static const light = _LightColors();
 
   // =>=>=>=>=>=>=>=>=>=>=>=> SHARED =>=>=>=>=>=>=>=>=>=>=>=>
+  static const Color transparent = Colors.transparent;
+
   static const folderColors = [
     Color(0xFFF59E0B), // amber
     Color(0xFF22C55E), // green

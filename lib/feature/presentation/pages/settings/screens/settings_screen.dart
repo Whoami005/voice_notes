@@ -8,7 +8,6 @@ import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/l10n/locale_cubit.dart';
 import 'package:voice_notes/core/packages/app_router/app_route_wrapper.dart';
 import 'package:voice_notes/core/packages/app_router/routes/app_routes.dart';
-import 'package:voice_notes/core/packages/asr/asr_service.dart';
 import 'package:voice_notes/core/packages/di/injection.dart';
 import 'package:voice_notes/core/packages/downloader/download_status.dart';
 import 'package:voice_notes/core/state/async/async_state.dart';
@@ -36,10 +35,7 @@ class SettingsScreen extends StatefulWidget implements AppRouteWrapper {
   @override
   Widget wrappedRoute(BuildContext context) {
     return BlocProvider(
-      create: (context) => ModelsCubit(
-        repository: getIt<ModelRepository>(),
-        asrService: getIt<AsrService>(),
-      ),
+      create: (context) => ModelsCubit(repository: getIt<ModelRepository>()),
       child: this,
     );
   }

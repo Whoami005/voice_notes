@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:injectable/injectable.dart';
 import 'package:sherpa_onnx/sherpa_onnx.dart' as sherpa;
 import 'package:voice_notes/core/packages/asr/asr_config.dart';
 import 'package:voice_notes/core/packages/asr/asr_exception.dart';
@@ -18,6 +19,7 @@ import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
 /// Вся тяжёлая работа (инициализация модели, транскрибация) выполняется
 /// в фоновом изоляте для предотвращения блокировки UI.
 /// Streaming API остаётся на main isolate для минимальной задержки.
+@Singleton(as: AsrService)
 class SherpaAsrService implements AsrService {
   // ==================== Состояние ====================
 
