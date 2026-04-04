@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
+import 'package:voice_notes/core/packages/asr/asr_cubit.dart';
 import 'package:voice_notes/core/packages/asr/asr_service.dart';
 import 'package:voice_notes/core/packages/audio/audio_recording_service.dart';
 import 'package:voice_notes/core/packages/di/injection.dart';
@@ -55,6 +56,10 @@ class VoiceRecordButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isAsrReady = context.select((AsrCubit c) => c.state.isReady);
+
+    if (!isAsrReady) return const SizedBox.shrink();
+
     return BlocProvider(
       create: (_) => RecordingCubit(
         recordingService: getIt<AudioRecordingService>(),
