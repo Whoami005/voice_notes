@@ -119,7 +119,7 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
   }
 
   void _onEditFolder() {
-    // TODO: Open edit folder sheet
+    // TODO(W): Open edit folder sheet
   }
 
   Future<void> _onDeleteFolder() async {

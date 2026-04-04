@@ -23,9 +23,9 @@ sealed class IconRefEntity extends Equatable {
 
     return switch (type) {
       'material' => _parseMaterialIcon(data),
-      // TODO: 'svg' => SvgIconRefEntity(data),
-      // TODO: 'asset' => AssetIconRefEntity(data),
-      // TODO: 'photo' => PhotoIconRefEntity(data),
+      // TODO(W): 'svg' => SvgIconRefEntity(data),
+      // TODO(W): 'asset' => AssetIconRefEntity(data),
+      // TODO(W): 'photo' => PhotoIconRefEntity(data),
       _ => null,
     };
   }
@@ -60,7 +60,7 @@ class MaterialIconRefEntity extends IconRefEntity {
 }
 
 // -----------------------------------------------------------------------------
-// TODO: Реализовать когда понадобится поддержка кастомных иконок
+// TODO(W): Реализовать когда понадобится поддержка кастомных иконок
 // -----------------------------------------------------------------------------
 
 // /// SVG иконка (путь к asset).

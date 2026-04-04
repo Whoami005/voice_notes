@@ -61,15 +61,15 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
   }
 
   void _onRecordingQualityTap() {
-    // TODO: Show quality picker
+    // TODO(W): Show quality picker
   }
 
   void _onDefaultLanguageTap() {
-    // TODO: Show language dialog
+    // TODO(W): Show language dialog
   }
 
   void _onExportTap() {
-    // TODO: Export data
+    // TODO(W): Export data
   }
 
   void _onClearCacheTap() {

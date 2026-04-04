@@ -49,7 +49,7 @@ class FolderDetailRecordingBar extends StatelessWidget {
   }
 
   void _onUploadFile() {
-    // TODO: Open file picker
+    // TODO(W): Open file picker
   }
 
   void _handleRecordingStateChange(BuildContext context, RecordingState state) {
