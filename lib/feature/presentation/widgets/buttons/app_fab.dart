@@ -18,13 +18,17 @@ class AppFab extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeColors = context.themeColors;
 
+    final isDark = context.isDarkMode;
+
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppSizes.fabRadius),
         boxShadow: [
           BoxShadow(
-            color: themeColors.accentGlow,
-            blurRadius: 24,
+            color: isDark
+                ? themeColors.accentGlow
+                : themeColors.accentPrimary.withValues(alpha: 0.3),
+            blurRadius: isDark ? 24 : 16,
             offset: const Offset(0, 8),
           ),
         ],

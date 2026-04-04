@@ -9,6 +9,7 @@ import 'package:voice_notes/core/packages/asr/asr_cubit.dart';
 import 'package:voice_notes/core/packages/asr/asr_service.dart';
 import 'package:voice_notes/core/packages/audio/audio_recording_service.dart';
 import 'package:voice_notes/core/packages/di/injection.dart';
+import 'package:voice_notes/core/theme/app_colors.dart';
 import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/logic/recording_cubit.dart';
 import 'package:voice_notes/feature/presentation/widgets/dialogs/error_dialog.dart';
@@ -21,34 +22,10 @@ abstract final class _Styles {
   static const gradientDuration = Duration(milliseconds: 2000);
   static const rippleSpawnInterval = Duration(milliseconds: 600);
   static const rippleDuration = Duration(milliseconds: 1800);
-
-  // Dark theme
-  static const darkIdleGradient = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [Color(0xFF3A3A3C), Color(0xFF2C2C2E), Color(0xFF1C1C1E)],
-  );
-
-  static const darkRecordingGradientColors = [
-    Color(0xFF5A5A5C),
-    Color(0xFF4A4A4C),
-    Color(0xFF3A3A3C),
-    Color(0xFF5A5A5C),
-  ];
-
-  // Light theme
-  static const lightIdleGradient = LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [Color(0xFFD97706), Color(0xFFF59E0B), Color(0xFFFBBF24)],
-  );
-
-  static const lightRecordingGradientColors = [
-    Color(0xFFFBBF24),
-    Color(0xFFF59E0B),
-    Color(0xFFD97706),
-    Color(0xFFFBBF24),
-  ];
+  static const darkShadowBlur = 32.0;
+  static const lightShadowBlur = 16.0;
+  static const glowBlurRadius = 30.0;
+  static const shadowOffset = Offset(0, 8);
 }
 
 class VoiceRecordButton extends StatelessWidget {
@@ -272,6 +249,9 @@ class _AnimatedButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = context.isDarkMode;
+    final vb = isDarkMode
+        ? AppColors.dark.voiceButton
+        : AppColors.light.voiceButton;
 
     return GestureDetector(
       onTap: onTap,
@@ -283,45 +263,38 @@ class _AnimatedButton extends StatelessWidget {
             height: _Styles.buttonSize,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: _buildGradient(isDarkMode),
+              gradient: _buildGradient(vb),
               border: Border.all(
-                color: isDarkMode
-                    ? Colors.white.withValues(alpha: isRecording ? 0.3 : 0.15)
-                    : const Color(
-                        0xFFD97706,
-                      ).withValues(alpha: isRecording ? 0.4 : 0.2),
+                color: isRecording ? vb.borderActive : vb.border,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.4),
-                  blurRadius: 32,
-                  offset: const Offset(0, 8),
+                  color: vb.shadow,
+                  blurRadius: isDarkMode
+                      ? _Styles.darkShadowBlur
+                      : _Styles.lightShadowBlur,
+                  offset: _Styles.shadowOffset,
                 ),
                 if (isRecording)
-                  BoxShadow(
-                    color: isDarkMode
-                        ? Colors.white.withValues(alpha: 0.1)
-                        : const Color(0xFFF59E0B).withValues(alpha: 0.3),
-                    blurRadius: 30,
-                  ),
+                  BoxShadow(color: vb.glow, blurRadius: _Styles.glowBlurRadius),
               ],
             ),
             child: Center(
               child: isTranscribing
-                  ? const SizedBox(
+                  ? SizedBox(
                       width: 24,
                       height: 24,
                       child: CircularProgressIndicator(
                         strokeWidth: 2.5,
-                        color: Colors.white,
+                        color: vb.icon,
                       ),
                     )
                   : AnimatedScale(
                       scale: isRecording ? 1.1 : 1.0,
                       duration: const Duration(milliseconds: 200),
-                      child: const Icon(
+                      child: Icon(
                         Icons.mic,
-                        color: Colors.white,
+                        color: vb.icon,
                         size: AppSizes.iconMedium,
                       ),
                     ),
@@ -332,20 +305,20 @@ class _AnimatedButton extends StatelessWidget {
     );
   }
 
-  LinearGradient _buildGradient(bool isDarkMode) {
+  LinearGradient _buildGradient(VoiceButtonColors vb) {
     if (!isRecording) {
-      return isDarkMode ? _Styles.darkIdleGradient : _Styles.lightIdleGradient;
+      return LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: vb.idleGradient,
+      );
     }
 
     final shift = gradientAnimation.value;
-    final colors = isDarkMode
-        ? _Styles.darkRecordingGradientColors
-        : _Styles.lightRecordingGradientColors;
-
     return LinearGradient(
       begin: Alignment(-1.0 + shift, -1.0 + shift),
       end: Alignment(1.0 + shift, 1.0 + shift),
-      colors: colors,
+      colors: vb.activeGradient,
       stops: const [0.0, 0.33, 0.66, 1.0],
     );
   }
@@ -364,7 +337,9 @@ class _RippleWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = context.isDarkMode;
+    final vb = context.isDarkMode
+        ? AppColors.dark.voiceButton
+        : AppColors.light.voiceButton;
 
     return AnimatedBuilder(
       animation: animation,
@@ -379,12 +354,7 @@ class _RippleWidget extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: RadialGradient(
-                colors: [
-                  isDarkMode
-                      ? Colors.white.withValues(alpha: 0.15)
-                      : const Color(0xFFF59E0B).withValues(alpha: 0.2),
-                  Colors.transparent,
-                ],
+                colors: [vb.ripple, AppColors.transparent],
               ),
             ),
           ),
@@ -401,7 +371,9 @@ class _TimerBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isDarkMode = context.isDarkMode;
+    final vb = context.isDarkMode
+        ? AppColors.dark.voiceButton
+        : AppColors.light.voiceButton;
 
     return ClipRRect(
       borderRadius: BorderRadius.circular(12),
@@ -410,15 +382,13 @@ class _TimerBadge extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: isDarkMode
-                ? Colors.black.withValues(alpha: 0.75)
-                : Colors.white.withValues(alpha: 0.85),
+            color: vb.timerBg,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
             _formatDuration(duration),
             style: TextStyle(
-              color: isDarkMode ? Colors.white : const Color(0xFF44403C),
+              color: vb.timerText,
               fontSize: 13,
               fontWeight: FontWeight.w500,
               fontFeatures: const [FontFeature.tabularFigures()],

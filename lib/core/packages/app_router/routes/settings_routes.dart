@@ -6,9 +6,6 @@ import 'package:voice_notes/feature/presentation/pages/settings/models/screens/m
 import 'package:voice_notes/feature/presentation/pages/settings/screens/settings_shell_screen.dart';
 
 /// Route module для ветки Settings.
-///
-/// Использует [StatefulShellRoute] с [navigatorContainerBuilder]
-/// для поддержки свайпа между табами через [TabBarView].
 class SettingsRouteModule {
   const SettingsRouteModule._();
 

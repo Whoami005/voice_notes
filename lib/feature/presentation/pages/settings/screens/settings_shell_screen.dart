@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/packages/app_router/app_route_wrapper.dart';
 import 'package:voice_notes/core/packages/di/injection.dart';
+import 'package:voice_notes/core/theme/app_colors.dart';
 import 'package:voice_notes/core/theme/app_typography.dart';
 import 'package:voice_notes/feature/domain/repositories/model_repository.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/models/logic/models_cubit.dart';
@@ -75,7 +76,7 @@ class _SettingsShellScreenState extends State<SettingsShellScreen>
       backgroundColor: themeColors.bgPrimary,
       appBar: AppBar(
         backgroundColor: themeColors.bgPrimary,
-        surfaceTintColor: Colors.transparent,
+        surfaceTintColor: AppColors.transparent,
         automaticallyImplyLeading: false,
         title: Text(
           context.l10n.settingsTitle,

@@ -101,8 +101,9 @@ class _ModelIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeColors = context.themeColors;
     final isWhisper = engine.toLowerCase().contains('whisper');
-    final color = isWhisper ? const Color(0xFF22C55E) : const Color(0xFF3B82F6);
+    final color = isWhisper ? themeColors.success : themeColors.info;
 
     return Container(
       width: AppSizes.avatarMedium,

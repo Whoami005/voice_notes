@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
+import 'package:voice_notes/core/theme/app_colors.dart';
 import 'package:voice_notes/feature/presentation/widgets/dialogs/error_dialog.dart';
 
 class LanguageOption {
@@ -40,7 +41,6 @@ class LanguageDialog extends StatefulWidget {
       context: context,
       barrierDismissible: true,
       barrierLabel: context.materialL10n.modalBarrierDismissLabel,
-      barrierColor: Colors.black54,
       pageBuilder: (context, animation, secondaryAnimation) {
         return LanguageDialog(currentLanguage: currentLanguage, onSave: onSave);
       },
@@ -137,7 +137,7 @@ class _LanguageItem extends StatelessWidget {
         color: isSelected ? themeColors.accentMuted : themeColors.bgTertiary,
         borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
         border: Border.all(
-          color: isSelected ? themeColors.accentPrimary : Colors.transparent,
+          color: isSelected ? themeColors.accentPrimary : AppColors.transparent,
           width: 2,
         ),
       ),

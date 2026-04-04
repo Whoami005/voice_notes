@@ -19,7 +19,7 @@ class NewFolderButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
         decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: 0.08),
+          color: themeColors.accentMuted,
           borderRadius: BorderRadius.circular(14),
         ),
         child: Row(

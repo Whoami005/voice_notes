@@ -45,7 +45,6 @@ class SuccessDialog extends StatefulWidget {
       context: context,
       barrierDismissible: true,
       barrierLabel: context.materialL10n.modalBarrierDismissLabel,
-      barrierColor: Colors.black54,
       pageBuilder: (context, animation, secondaryAnimation) {
         return SuccessDialog(
           title: title,

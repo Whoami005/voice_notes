@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/state/async/async_state.dart';
+import 'package:voice_notes/core/theme/app_colors.dart';
 import 'package:voice_notes/feature/presentation/pages/folders/logic/folders_cubit.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/general/screens/general_settings_screen.dart';
 
@@ -63,7 +64,7 @@ class _FoldersAppBarState extends State<FoldersAppBar> {
     return SliverAppBar(
       floating: true,
       backgroundColor: themeColors.bgPrimary,
-      surfaceTintColor: Colors.transparent,
+      surfaceTintColor: AppColors.transparent,
       title: Text(context.l10n.foldersTitle, style: textTheme.displayLarge),
       actionsPadding: const EdgeInsets.symmetric(horizontal: AppSizes.p8),
       actions: [

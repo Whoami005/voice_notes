@@ -34,7 +34,6 @@ class ConfirmDialog extends StatelessWidget {
       context: context,
       barrierDismissible: true,
       barrierLabel: context.materialL10n.modalBarrierDismissLabel,
-      barrierColor: Colors.black54,
       pageBuilder: (context, animation, secondaryAnimation) {
         return ConfirmDialog(
           title: title,

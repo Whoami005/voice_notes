@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:voice_notes/core/theme/app_colors.dart';
 
 /// Гибкий виджет плитки списка с полным контролем над размерами.
 class FlexibleListTile extends StatelessWidget {
@@ -145,7 +146,7 @@ class FlexibleListTile extends StatelessWidget {
 
     final effectiveBackgroundColor = selected
         ? (selectedColor ?? theme.colorScheme.primaryContainer)
-        : (backgroundColor ?? listTileTheme.tileColor ?? Colors.transparent);
+        : (backgroundColor ?? listTileTheme.tileColor ?? AppColors.transparent);
 
     final effectiveShape =
         shape ??

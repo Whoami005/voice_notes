@@ -96,6 +96,7 @@ class AppTheme {
         errorStyle: AppTypography.caption.copyWith(color: colors.error),
       ),
       dialogTheme: DialogThemeData(
+        barrierColor: colors.overlay,
         backgroundColor: colors.bgElevated,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
