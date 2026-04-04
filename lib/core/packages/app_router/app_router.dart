@@ -30,17 +30,18 @@ class AppRouter {
       // Обработка ошибок навигации - редирект на корень ветки
       onException: (context, state, router) {
         final path = state.matchedLocation;
+        final isSettings = path.startsWith('/settings');
 
-        if (path.startsWith('/settings')) {
-          router.go(AppRoutes.settings.root);
-        } else {
-          router.go(AppRoutes.folders.root);
-        }
+        isSettings
+            ? router.go(AppRoutes.settings.general)
+            : router.go(AppRoutes.folders.root);
       },
 
       // Редирект для невалидных путей
       redirect: (context, state) {
         final path = state.matchedLocation;
+
+        if (path == '/settings') return AppRoutes.settings.general;
 
         // Проверка параметров для folder detail
         if (path.startsWith('/folders/') && path != '/folders') {

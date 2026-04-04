@@ -4,7 +4,7 @@ import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/state/async/async_state.dart';
 import 'package:voice_notes/feature/presentation/pages/folders/logic/folders_cubit.dart';
-import 'package:voice_notes/feature/presentation/pages/settings/screens/settings_screen.dart';
+import 'package:voice_notes/feature/presentation/pages/settings/general/screens/general_settings_screen.dart';
 
 /// AppBar for folders screen with integrated search functionality.
 ///
@@ -50,9 +50,7 @@ class _FoldersAppBarState extends State<FoldersAppBar> {
     setState(() {});
   }
 
-  void _onSettingsTap() {
-    SettingsScreen.go(context);
-  }
+  void _onSettingsTap() => GeneralSettingsScreen.go(context);
 
   @override
   Widget build(BuildContext context) {

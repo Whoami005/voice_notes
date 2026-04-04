@@ -42,4 +42,10 @@ class _SettingsRoutes {
 
   /// Путь для навигации: /settings
   String get root => '/settings';
+
+  /// Путь для навигации: /settings/general
+  String get general => '/settings/general';
+
+  /// Путь для навигации: /settings/models
+  String get models => '/settings/models';
 }
