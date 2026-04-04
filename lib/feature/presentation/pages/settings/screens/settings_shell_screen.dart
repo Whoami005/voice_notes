@@ -42,7 +42,7 @@ class _SettingsShellScreenState extends State<SettingsShellScreen>
       initialIndex: widget.navigationShell.currentIndex,
       vsync: this,
     );
-    _tabController.addListener(_onTabChanged);
+    _tabController.addListener(_switchedTab);
   }
 
   @override
@@ -51,20 +51,18 @@ class _SettingsShellScreenState extends State<SettingsShellScreen>
     _tabController.index = widget.navigationShell.currentIndex;
   }
 
-  void _onTabChanged() {
-    if (_tabController.indexIsChanging) return;
+  void _switchedTab() {
+    final currentIndex = widget.navigationShell.currentIndex;
 
-    widget.navigationShell.goBranch(
-      _tabController.index,
-      initialLocation:
-          _tabController.index == widget.navigationShell.currentIndex,
-    );
+    if (_tabController.index == currentIndex) return;
+
+    widget.navigationShell.goBranch(_tabController.index);
   }
 
   @override
   void dispose() {
     _tabController
-      ..removeListener(_onTabChanged)
+      ..removeListener(_switchedTab)
       ..dispose();
     super.dispose();
   }
