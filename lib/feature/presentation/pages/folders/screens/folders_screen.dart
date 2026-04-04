@@ -12,6 +12,7 @@ import 'package:voice_notes/feature/presentation/pages/folders/components/folder
 import 'package:voice_notes/feature/presentation/pages/folders/logic/folders_cubit.dart';
 import 'package:voice_notes/feature/presentation/pages/folders/widgets/voice_record_button.dart';
 import 'package:voice_notes/feature/presentation/widgets/asr_status_banner.dart';
+import 'package:voice_notes/feature/presentation/widgets/base_preferred_app_bar.dart';
 import 'package:voice_notes/feature/presentation/widgets/refresh/refreshable_wrapper.dart';
 
 class FoldersScreen extends StatefulWidget implements AppRouteWrapper {
@@ -38,7 +39,7 @@ class _FoldersScreenState extends State<FoldersScreen> {
   @override
   Widget build(BuildContext context) {
     return AsyncStateScaffold<FoldersCubit, FoldersState>(
-      title: context.l10n.foldersTitle,
+      appBar: const _LoadingAppBar(),
       onSuccess: (context, _) {
         return const Scaffold(
           floatingActionButton: VoiceRecordButton(),
@@ -56,6 +57,24 @@ class _FoldersScreenState extends State<FoldersScreen> {
           ),
         );
       },
+    );
+  }
+}
+
+class _LoadingAppBar extends BasePreferredAppBar {
+  const _LoadingAppBar({super.key});
+
+  @override
+  State<_LoadingAppBar> createState() => _LoadingHeaderState();
+}
+
+class _LoadingHeaderState extends State<_LoadingAppBar> {
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = context.textTheme;
+
+    return AppBar(
+      title: Text(context.l10n.foldersTitle, style: textTheme.displayLarge),
     );
   }
 }

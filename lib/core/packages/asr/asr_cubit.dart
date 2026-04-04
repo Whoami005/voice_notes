@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:voice_notes/core/error/app_failure.dart';
+import 'package:voice_notes/core/extensions/future_extensions.dart';
 import 'package:voice_notes/core/packages/asr/asr_service.dart';
 import 'package:voice_notes/core/state/status/initializable_status_cubits.dart';
 import 'package:voice_notes/core/state/status/status_state.dart';
@@ -93,7 +94,7 @@ class AsrCubit extends InitializableStatusCubit<AsrState> {
         return;
       }
 
-      await _asrService.switchModel(model, path);
+      await _asrService.switchModel(model, path).atLeast();
 
       emitSuccess(AsrState(hasModel: true, modelName: model.name));
     } catch (e, s) {
