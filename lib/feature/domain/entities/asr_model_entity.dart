@@ -1,5 +1,24 @@
 import 'package:equatable/equatable.dart';
 
+/// Идентификатор модели ASR
+enum AsrModelIdEnum {
+  whisperTinyEn('whisper-tiny-en'),
+  whisperSmall('whisper-small'),
+  whisperMedium('whisper-medium');
+  // parakeetTdtV3('parakeet-tdt-v3'),
+
+  const AsrModelIdEnum(this.value);
+
+  final String value;
+
+  static AsrModelIdEnum? fromValue(String value) {
+    for (final id in values) {
+      if (id.value == value) return id;
+    }
+    return null;
+  }
+}
+
 /// Тип модели ASR для конфигурации sherpa-onnx
 enum AsrModelType {
   /// Whisper модели (encoder + decoder + tokens)
@@ -10,32 +29,26 @@ enum AsrModelType {
 }
 
 class AsrModelEntity extends Equatable {
-  final String uuid;
+  final AsrModelIdEnum uuid;
   final String name;
   final String engine;
   final String size;
-  final String languageLabel;
   final List<String> supportedLanguages;
-  final String description;
   final String modelDirName;
   final AsrModelType modelType;
   final bool isDownloaded;
   final bool isSelected;
-  final double? downloadProgress;
 
   const AsrModelEntity({
     required this.uuid,
     required this.name,
     required this.engine,
     required this.size,
-    required this.languageLabel,
     required this.supportedLanguages,
-    required this.description,
     required this.modelDirName,
     required this.modelType,
     this.isDownloaded = false,
     this.isSelected = false,
-    this.downloadProgress,
   });
 
   /// URL для скачивания модели с GitHub
@@ -94,103 +107,80 @@ class AsrModelEntity extends Equatable {
     name,
     engine,
     size,
-    languageLabel,
     supportedLanguages,
-    description,
     modelDirName,
     modelType,
     isDownloaded,
     isSelected,
-    downloadProgress,
   ];
 
   /// Создать копию с изменёнными полями
   AsrModelEntity copyWith({
-    String? uuid,
+    AsrModelIdEnum? uuid,
     String? name,
     String? engine,
     String? size,
-    String? languageLabel,
     List<String>? supportedLanguages,
-    String? description,
     String? modelDirName,
     AsrModelType? modelType,
     bool? isDownloaded,
     bool? isSelected,
-    double? downloadProgress,
   }) {
     return AsrModelEntity(
       uuid: uuid ?? this.uuid,
       name: name ?? this.name,
       engine: engine ?? this.engine,
       size: size ?? this.size,
-      languageLabel: languageLabel ?? this.languageLabel,
       supportedLanguages: supportedLanguages ?? this.supportedLanguages,
-      description: description ?? this.description,
       modelDirName: modelDirName ?? this.modelDirName,
       modelType: modelType ?? this.modelType,
       isDownloaded: isDownloaded ?? this.isDownloaded,
       isSelected: isSelected ?? this.isSelected,
-      downloadProgress: downloadProgress ?? this.downloadProgress,
     );
   }
 
-  /// Список доступных моделей для скачивания
+  /// Список доступных моделей для ска��ивания
   static const List<AsrModelEntity> availableModels = [
     // Whisper Tiny.en (~117MB int8)
     AsrModelEntity(
-      uuid: 'whisper-tiny-en',
+      uuid: AsrModelIdEnum.whisperTinyEn,
       name: 'Whisper Tiny',
       engine: 'OpenAI Whisper',
       size: '117 MB',
-      languageLabel: 'English',
       supportedLanguages: ['English'],
-      description: 'Самая быстрая модель. Только английский язык.',
       modelDirName: 'sherpa-onnx-whisper-tiny.en',
       modelType: AsrModelType.whisper,
     ),
 
     // Whisper Small (~466MB)
     AsrModelEntity(
-      uuid: 'whisper-small',
+      uuid: AsrModelIdEnum.whisperSmall,
       name: 'Whisper Small',
       engine: 'OpenAI Whisper',
       size: '466 MB',
-      languageLabel: '99 языков',
       supportedLanguages: _whisperLanguages,
-      description:
-          'Быстрая модель с хорошим качеством. '
-          'Рекомендуется для большинства задач.',
       modelDirName: 'sherpa-onnx-whisper-small',
       modelType: AsrModelType.whisper,
     ),
 
     // Whisper Medium (~1.5GB)
     AsrModelEntity(
-      uuid: 'whisper-medium',
+      uuid: AsrModelIdEnum.whisperMedium,
       name: 'Whisper Medium',
       engine: 'OpenAI Whisper',
       size: '1.5 GB',
-      languageLabel: '99 языков',
       supportedLanguages: _whisperLanguages,
-      description:
-          'Более точная модель для сложных аудиозаписей '
-          'с шумом или акцентом.',
       modelDirName: 'sherpa-onnx-whisper-medium',
       modelType: AsrModelType.whisper,
     ),
 
     // Parakeet TDT v3 (~640MB int8)
     // AsrModelEntity(
-    //   uuid: 'parakeet-tdt-v3',
+    //   uuid: AsrModelIdEnum.parakeetTdtV3,
     //   name: 'Parakeet V3',
     //   engine: 'NVIDIA NeMo',
     //   size: '640 MB',
-    //   languageLabel: '25 европейских языков',
     //   supportedLanguages: _parakeetLanguages,
-    //   description:
-    //       'Компактная модель для европейских языков. '
-    //       'Быстрая работа на устройстве.',
     //   modelDirName: 'sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8',
     //   modelType: AsrModelType.parakeetTdt,
     // ),

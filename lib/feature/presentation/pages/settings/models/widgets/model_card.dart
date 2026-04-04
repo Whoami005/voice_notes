@@ -41,6 +41,7 @@ class ModelCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeColors = context.themeColors;
+    final description = LocalizedModels.description(model.uuid, context.l10n);
 
     return Container(
       padding: const EdgeInsets.all(AppSizes.cardPadding),
@@ -66,15 +67,15 @@ class ModelCard extends StatelessWidget {
               if (model.isSelected) const _ActiveBadge(),
             ],
           ),
-          Text(
-            LocalizedModels.description(model.uuid, context.l10n) ??
-                model.description,
-            style: AppTypography.caption.copyWith(
-              color: themeColors.textSecondary,
+          if (description != null)
+            Text(
+              description,
+              style: AppTypography.caption.copyWith(
+                color: themeColors.textSecondary,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
             ),
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
           downloadProgress != null
               ? _DownloadProgressWidget(
                   progress: downloadProgress!,
@@ -129,6 +130,10 @@ class _ModelInfo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeColors = context.themeColors;
+    final languageLabel = LocalizedModels.languageLabel(
+      model.uuid,
+      context.l10n,
+    );
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -149,15 +154,15 @@ class _ModelInfo extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
         ),
         AppSpacer.p2,
-        Text(
-          LocalizedModels.languageLabel(model.uuid, context.l10n) ??
-              model.languageLabel,
-          style: AppTypography.caption.copyWith(
-            color: themeColors.textTertiary,
+        if (languageLabel != null)
+          Text(
+            languageLabel,
+            style: AppTypography.caption.copyWith(
+              color: themeColors.textTertiary,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
       ],
     );
   }

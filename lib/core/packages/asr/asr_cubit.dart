@@ -88,7 +88,7 @@ class AsrCubit extends InitializableStatusCubit<AsrState> {
         AsrState(status: Status.loading, hasModel: true, modelName: model.name),
       );
 
-      final path = await _modelRepository.getModelPath(model.uuid);
+      final path = await _modelRepository.getModelPath(model.uuid.value);
       if (path == null) {
         emitError(const CustomFailure('Model files not found'));
         return;

@@ -35,7 +35,7 @@ class ModelRepositoryImpl implements ModelRepository {
     final result = <AsrModelEntity>[];
 
     for (final model in AsrModelEntity.availableModels) {
-      final downloaded = downloadedMap[model.uuid];
+      final downloaded = downloadedMap[model.uuid.value];
       result.add(
         model.copyWith(
           isDownloaded: downloaded != null,
@@ -53,7 +53,7 @@ class ModelRepositoryImpl implements ModelRepository {
     late StreamSubscription<ModelDownloadProgress> subscription;
 
     subscription = _downloadManager.progressStream
-        .where((progress) => progress.modelId == model.uuid)
+        .where((progress) => progress.modelId == model.uuid.value)
         .listen((progress) async {
           if (progress.status == DownloadStatus.completed) {
             await subscription.cancel();
@@ -67,18 +67,20 @@ class ModelRepositoryImpl implements ModelRepository {
 
   /// Обработка завершения скачивания
   Future<void> _handleDownloadComplete(AsrModelEntity model) async {
+    final modelId = model.uuid.value;
+
     // Получаем путь к скачанному архиву
     final archivePath = await _downloadManager.getDownloadedArchivePath(
-      model.uuid,
+      modelId,
     );
 
     if (archivePath == null) {
       // Очищаем задачу из менеджера загрузок при ошибке
-      _downloadManager.clearTask(model.uuid);
+      _downloadManager.clearTask(modelId);
 
       _extractionController.add(
         ModelDownloadProgress(
-          modelId: model.uuid,
+          modelId: modelId,
           status: DownloadStatus.failed,
           errorMessage: 'Ошибка распаковки: путь до архива не найден',
         ),
@@ -90,7 +92,7 @@ class ModelRepositoryImpl implements ModelRepository {
     // Отправляем статус "распаковка"
     _extractionController.add(
       ModelDownloadProgress(
-        modelId: model.uuid,
+        modelId: modelId,
         status: DownloadStatus.extracting,
       ),
     );
@@ -123,7 +125,7 @@ class ModelRepositoryImpl implements ModelRepository {
 
       // Сохраняем метаданные в БД
       final downloadedModel = DownloadedModelObject(
-        modelId: model.uuid,
+        modelId: modelId,
         modelDirName: model.modelDirName,
         localPath: AsrModelPaths.modelRelativePath(model.modelDirName),
         downloadedAt: DateTime.now(),
@@ -132,12 +134,12 @@ class ModelRepositoryImpl implements ModelRepository {
       await _localDataSource.save(downloadedModel);
 
       // Очищаем задачу из менеджера загрузок
-      _downloadManager.clearTask(model.uuid);
+      _downloadManager.clearTask(modelId);
 
       // Отправляем статус "готово"
       _extractionController.add(
         ModelDownloadProgress(
-          modelId: model.uuid,
+          modelId: modelId,
           status: DownloadStatus.completed,
         ),
       );
@@ -145,12 +147,12 @@ class ModelRepositoryImpl implements ModelRepository {
       AppFailure.from(e, s);
 
       // Очищаем задачу из менеджера загрузок при ошибке
-      _downloadManager.clearTask(model.uuid);
+      _downloadManager.clearTask(modelId);
 
       // Отправляем статус "ошибка"
       _extractionController.add(
         ModelDownloadProgress(
-          modelId: model.uuid,
+          modelId: modelId,
           status: DownloadStatus.failed,
           errorMessage: 'Ошибка распаковки: $e',
         ),
@@ -213,7 +215,7 @@ class ModelRepositoryImpl implements ModelRepository {
 
     // Находим соответствующую модель из списка доступных
     final selectedModel = AsrModelEntity.availableModels.firstWhereOrNull(
-      (model) => model.uuid == selected.modelId,
+      (model) => model.uuid.value == selected.modelId,
     );
 
     return selectedModel?.copyWith(isDownloaded: true, isSelected: true);
@@ -229,8 +231,8 @@ class ModelRepositoryImpl implements ModelRepository {
       return [
         for (final model in AsrModelEntity.availableModels)
           model.copyWith(
-            isDownloaded: downloadedMap.containsKey(model.uuid),
-            isSelected: downloadedMap[model.uuid]?.isSelected ?? false,
+            isDownloaded: downloadedMap.containsKey(model.uuid.value),
+            isSelected: downloadedMap[model.uuid.value]?.isSelected ?? false,
           ),
       ];
     });
@@ -242,7 +244,7 @@ class ModelRepositoryImpl implements ModelRepository {
       if (selected == null) return null;
 
       final selectedModel = AsrModelEntity.availableModels.firstWhereOrNull(
-        (model) => model.uuid == selected.modelId,
+        (model) => model.uuid.value == selected.modelId,
       );
 
       return selectedModel?.copyWith(isDownloaded: true, isSelected: true);

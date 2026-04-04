@@ -109,9 +109,11 @@ class DownloadManager {
       throw StateError('DownloadManager not initialized. Call init() first.');
     }
 
+    final modelId = model.uuid.value;
+
     // Проверяем, не скачивается ли уже
-    if (_modelIdToTaskId.containsKey(model.uuid)) {
-      return _modelIdToTaskId[model.uuid]!;
+    if (_modelIdToTaskId.containsKey(modelId)) {
+      return _modelIdToTaskId[modelId]!;
     }
 
     final task = DownloadTask(
@@ -122,25 +124,25 @@ class DownloadManager {
       updates: Updates.statusAndProgress,
       allowPause: true,
       retries: 3,
-      metaData: model.uuid,
+      metaData: modelId,
     );
 
-    _modelIdToTaskId[model.uuid] = task.taskId;
-    _taskIdToModelId[task.taskId] = model.uuid;
+    _modelIdToTaskId[modelId] = task.taskId;
+    _taskIdToModelId[task.taskId] = modelId;
 
     // Отправляем начальный статус
     _progressController.add(
-      ModelDownloadProgress(modelId: model.uuid, status: DownloadStatus.queued),
+      ModelDownloadProgress(modelId: modelId, status: DownloadStatus.queued),
     );
 
     final success = await FileDownloader().enqueue(task);
     if (!success) {
-      _modelIdToTaskId.remove(model.uuid);
+      _modelIdToTaskId.remove(modelId);
       _taskIdToModelId.remove(task.taskId);
 
       _progressController.add(
         ModelDownloadProgress(
-          modelId: model.uuid,
+          modelId: modelId,
           status: DownloadStatus.failed,
           errorMessage: 'Не удалось добавить в очередь',
         ),

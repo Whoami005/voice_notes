@@ -141,7 +141,7 @@ class ModelsCubit extends RefreshableAsyncCubit<ModelsState> {
       // Обновляем прогресс с ошибкой
       _handleDownloadProgress(
         ModelDownloadProgress(
-          modelId: model.uuid,
+          modelId: model.uuid.value,
           status: DownloadStatus.failed,
           errorMessage: failure.message,
         ),
@@ -213,7 +213,7 @@ class ModelsCubit extends RefreshableAsyncCubit<ModelsState> {
   /// и самостоятельно переинициализирует AsrService.
   Future<void> selectModel(AsrModelEntity newModel) async {
     await guardAction((current) async {
-      await _repository.selectModel(newModel.uuid);
+      await _repository.selectModel(newModel.uuid.value);
 
       final models = await _repository.getModelsWithStatus();
 

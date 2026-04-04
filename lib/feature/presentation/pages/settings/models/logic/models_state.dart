@@ -25,7 +25,7 @@ class ModelsState extends Equatable {
     final result = <AsrModelEntity>[];
 
     for (final model in models) {
-      final progress = downloads[model.uuid];
+      final progress = downloads[model.uuid.value];
 
       if (progress != null && _isActiveDownload(progress.status)) {
         result.add(model);

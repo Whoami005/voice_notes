@@ -245,14 +245,15 @@ class RecordingCubit extends Cubit<RecordingState> {
     required int wordCount,
     String? language,
   }) async {
-    if (folderId == null) return;
+    final currentModel = _asrService.currentModel;
+    if (folderId == null || currentModel == null) return;
 
     await _noteRepository.create(
       text: text,
       duration: duration,
       folderUid: folderId,
       language: language ?? '',
-      modelName: _asrService.currentModel?.name ?? 'Unknown',
+      modelName: currentModel.name,
       wordCount: wordCount,
     );
   }

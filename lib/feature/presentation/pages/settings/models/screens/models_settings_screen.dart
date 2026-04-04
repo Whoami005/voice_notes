@@ -77,7 +77,7 @@ class _ModelsSettingsScreenState extends State<ModelsSettingsScreen> {
     );
 
     if ((confirmed ?? false) && context.mounted) {
-      await context.read<ModelsCubit>().deleteModel(model.uuid);
+      await context.read<ModelsCubit>().deleteModel(model.uuid.value);
     }
   }
 
@@ -146,7 +146,8 @@ class _ModelsSettingsScreenState extends State<ModelsSettingsScreen> {
     AsrModelEntity model,
   ) {
     final cubit = context.read<ModelsCubit>();
-    final downloadProgress = state.getDownloadProgress(model.uuid);
+    final modelId = model.uuid.value;
+    final downloadProgress = state.getDownloadProgress(modelId);
 
     return ModelCard(
       model: model,
@@ -154,20 +155,20 @@ class _ModelsSettingsScreenState extends State<ModelsSettingsScreen> {
       onUse: model.isDownloaded && !model.isSelected
           ? () => cubit.selectModel(model)
           : null,
-      onDownload: !model.isDownloaded && !state.isDownloading(model.uuid)
+      onDownload: !model.isDownloaded && !state.isDownloading(modelId)
           ? () => _onDownloadModel(context, model)
           : null,
       onDelete: model.isDownloaded
           ? () => _onDeleteModel(context, model)
           : null,
-      onPause: state.isDownloading(model.uuid)
-          ? () => cubit.pauseDownload(model.uuid)
+      onPause: state.isDownloading(modelId)
+          ? () => cubit.pauseDownload(modelId)
           : null,
       onResume: downloadProgress?.status == DownloadStatus.paused
-          ? () => cubit.resumeDownload(model.uuid)
+          ? () => cubit.resumeDownload(modelId)
           : null,
-      onCancel: state.isDownloading(model.uuid)
-          ? () => cubit.cancelDownload(model.uuid)
+      onCancel: state.isDownloading(modelId)
+          ? () => cubit.cancelDownload(modelId)
           : null,
     );
   }
