@@ -51,9 +51,10 @@ class SettingsRouteModule {
 
   static String? _getFolderUid(GoRouterState state) {
     final raw = state.pathParameters['folderUid'];
+    // Это группа «без папки».
+    final isNone = raw == null || raw.trim().isEmpty || raw.contains('none');
 
-    // Empty string из URL — это группа «без папки».
-    return (raw == null || raw.trim().isEmpty) ? null : raw;
+    return isNone ? null : raw;
   }
 
   static GoRoute get _storageRoute => GoRoute(

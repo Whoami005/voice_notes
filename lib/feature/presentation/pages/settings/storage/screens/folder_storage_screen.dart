@@ -21,7 +21,7 @@ class FolderStorageScreen extends StatelessWidget implements AppRouteWrapper {
   const FolderStorageScreen({required this.folderUid, super.key});
 
   static void go(BuildContext context, {String? folderUid}) {
-    context.go(AppRoutes.settings.folderStorage(folderUid ?? ''));
+    context.go(AppRoutes.settings.folderStorage(folderUid ?? 'none'));
   }
 
   @override

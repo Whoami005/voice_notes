@@ -58,5 +58,4 @@ FLUTTER_DESIGN_SPEC.md
 # Generated l10n files
 lib/l10n/app_localizations.dart
 lib/l10n/app_localizations_*.dart
-/.superpowers/brainstorm/15346-1776028641/state/server.pid
-/.superpowers/brainstorm/15346-1776028641/state/server-stopped
+/.superpowers
