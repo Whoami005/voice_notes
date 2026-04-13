@@ -7,6 +7,7 @@ import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/state/async/async_state.dart';
 import 'package:voice_notes/feature/presentation/pages/note_detail/logic/note_detail_cubit.dart';
+import 'package:voice_notes/feature/presentation/pages/note_detail/widgets/audio_player_bar.dart';
 import 'package:voice_notes/feature/presentation/pages/note_detail/widgets/note_actions_section.dart';
 import 'package:voice_notes/feature/presentation/pages/note_detail/widgets/note_info_section.dart';
 import 'package:voice_notes/feature/presentation/pages/note_detail/widgets/note_tags_section.dart';
@@ -50,11 +51,13 @@ class NoteDetailBody extends StatelessWidget {
     return BlocBuilder<NoteDetailCubit, AsyncState<NoteDetailData>>(
       builder: (context, state) {
         final data = state.requireData;
+        final audio = data.currentNote.audio;
 
         return ListView(
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           padding: const EdgeInsets.all(AppSizes.screenPadding),
           children: [
+            if (audio != null) ...[AudioPlayerBar(audio: audio), AppSpacer.p24],
             SectionHeader(title: context.l10n.noteDetailSectionText),
             AppSpacer.p12,
             NoteTextSection(

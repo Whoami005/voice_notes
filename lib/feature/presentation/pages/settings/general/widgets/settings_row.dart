@@ -120,15 +120,14 @@ class SettingsChevron extends StatelessWidget {
     final themeColors = context.themeColors;
 
     return Row(
+      spacing: 4,
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (value != null) ...[
+        if (value != null)
           Text(
             value!,
             style: AppTypography.body.copyWith(color: themeColors.textTertiary),
           ),
-          AppSpacer.p4,
-        ],
         Icon(
           Icons.chevron_right,
           size: AppSizes.iconMedium,

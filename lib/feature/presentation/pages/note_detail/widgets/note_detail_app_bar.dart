@@ -19,9 +19,13 @@ class _NoteDetailAppBarState extends State<NoteDetailAppBar> {
     final themeColors = context.themeColors;
 
     return BlocBuilder<NoteDetailCubit, AsyncState<NoteDetailData>>(
-      buildWhen: (p, c) =>
-          p.requireData.isEditing != c.requireData.isEditing ||
-          p.requireData.hasChanges != c.requireData.hasChanges,
+      buildWhen: (p, c) {
+        final pData = p.requireData;
+        final cData = c.requireData;
+
+        return pData.isEditing != cData.isEditing ||
+            pData.hasChanges != cData.hasChanges;
+      },
       builder: (context, state) {
         final data = state.requireData;
 
@@ -30,13 +34,11 @@ class _NoteDetailAppBarState extends State<NoteDetailAppBar> {
           actionsPadding: const EdgeInsets.symmetric(horizontal: AppSizes.p8),
           actions: [
             if (data.isEditing) ...[
-              // Кнопка отмены
               IconButton(
                 icon: Icon(Icons.close, color: themeColors.textSecondary),
                 onPressed: () =>
                     context.read<NoteDetailCubit>().cancelEditing(),
               ),
-              // Кнопка сохранения
               IconButton(
                 icon: Icon(
                   Icons.check,
@@ -49,7 +51,6 @@ class _NoteDetailAppBarState extends State<NoteDetailAppBar> {
                     : null,
               ),
             ] else
-              // Кнопка редактирования
               IconButton(
                 icon: Icon(
                   Icons.edit_outlined,

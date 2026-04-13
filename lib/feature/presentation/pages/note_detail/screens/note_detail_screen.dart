@@ -5,9 +5,11 @@ import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/packages/app_router/app_route_wrapper.dart';
 import 'package:voice_notes/core/packages/app_router/routes/app_routes.dart';
 import 'package:voice_notes/core/packages/di/injection.dart';
+import 'package:voice_notes/core/packages/player/audio_playback_controller.dart';
 import 'package:voice_notes/core/state/async/async_state_widgets.dart';
 import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
 import 'package:voice_notes/feature/presentation/pages/note_detail/logic/note_detail_cubit.dart';
+import 'package:voice_notes/feature/presentation/pages/note_detail/logic/note_playback_cubit.dart';
 import 'package:voice_notes/feature/presentation/pages/note_detail/widgets/note_detail_app_bar.dart';
 import 'package:voice_notes/feature/presentation/pages/note_detail/widgets/note_detail_body.dart';
 import 'package:voice_notes/feature/presentation/widgets/base_pop_scope.dart';
@@ -36,11 +38,21 @@ class NoteDetailScreen extends StatelessWidget implements AppRouteWrapper {
 
   @override
   Widget wrappedRoute(BuildContext context) {
-    return BlocProvider(
-      create: (_) => NoteDetailCubit(
-        noteRepository: getIt<NoteRepository>(),
-        noteId: noteId,
-      ),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) => NoteDetailCubit(
+            noteRepository: getIt<NoteRepository>(),
+            noteId: noteId,
+          ),
+        ),
+        BlocProvider(
+          create: (_) => NotePlaybackCubit(
+            controller: getIt<AudioPlaybackController>(),
+            noteId: noteId,
+          ),
+        ),
+      ],
       child: this,
     );
   }

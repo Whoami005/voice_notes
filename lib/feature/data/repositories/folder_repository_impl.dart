@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:injectable/injectable.dart';
+import 'package:voice_notes/core/packages/path/audio_paths.dart';
 import 'package:voice_notes/core/packages/uuid/uuid_manager.dart';
 import 'package:voice_notes/feature/data/local/data_sources/folder_local_data_source.dart';
 import 'package:voice_notes/feature/data/local/mappers/folder_mapper.dart';
@@ -67,17 +68,24 @@ class FolderRepositoryImpl implements FolderRepository {
   }
 
   @override
-  Future<void> delete(String uid) async {
-    await _dataSource.delete(uid);
+  Future<void> delete(String uid) => _dataSource.delete(uid);
+
+  @override
+  Future<void> deleteWithNotes(String uid) async {
+    // DataSource транзакционно удаляет folder + все NoteObject + связанные
+    // NoteAudioObject и возвращает список путей к аудиофайлам, которые нужно
+    // подчистить с диска. БД уже консистентна — file delete best-effort.
+    final audioRelativePaths = await _dataSource.deleteWithNotes(uid);
+
+    await Future.wait([
+      for (final relativePath in audioRelativePaths)
+        AudioPaths.deleteFile(relativePath),
+    ]);
   }
 
   @override
-  Future<void> deleteWithNotes(String uid) => _dataSource.deleteWithNotes(uid);
-
-  @override
-  Stream<List<FolderEntity>> watchAll() {
-    return _dataSource.watchAll().map(FolderMapper.toDomainList);
-  }
+  Stream<List<FolderEntity>> watchAll() =>
+      _dataSource.watchAll().map(FolderMapper.toDomainList);
 
   @override
   Stream<FolderEntity?> watchByUid(String uid) {

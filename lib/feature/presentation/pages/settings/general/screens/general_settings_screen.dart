@@ -7,9 +7,12 @@ import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/l10n/locale_cubit.dart';
 import 'package:voice_notes/core/packages/app_router/routes/app_routes.dart';
+import 'package:voice_notes/core/packages/di/injection.dart';
 import 'package:voice_notes/core/theme/theme_cubit.dart';
+import 'package:voice_notes/feature/data/local/preferences/recording_preferences.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/general/widgets/settings_row.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/general/widgets/settings_section.dart';
+import 'package:voice_notes/feature/presentation/pages/settings/storage/screens/storage_screen.dart';
 import 'package:voice_notes/feature/presentation/widgets/dialogs/language_dialog.dart';
 import 'package:voice_notes/feature/presentation/widgets/dialogs/theme_dialog.dart';
 
@@ -25,12 +28,21 @@ class GeneralSettingsScreen extends StatefulWidget {
 }
 
 class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
-  // Mock settings state
-  bool _autoSave = true;
+  final RecordingPreferences _recordingPrefs = getIt<RecordingPreferences>();
+
+  late bool _keepOriginals = _recordingPrefs.keepOriginals;
+
+  // Mock settings state — эти поля остаются заглушками до соответствующих
+  // фич и не влияют на реальную работу приложения.
   bool _vadEnabled = true;
   bool _autoTags = false;
-  String _recordingQuality = 'Высокое';
-  String _defaultLanguage = 'Русский';
+  final String _recordingQuality = 'Высокое';
+  final String _defaultLanguage = 'Русский';
+
+  Future<void> _onKeepOriginalsChanged(bool value) async {
+    setState(() => _keepOriginals = value);
+    await _recordingPrefs.setKeepOriginals(value);
+  }
 
   String _languageDisplayName(Locale locale) {
     final name = LanguageOption.all
@@ -88,14 +100,13 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
             title: l10n.settingsSectionRecording,
             children: [
               SettingsRow(
-                icon: Icons.save_outlined,
-                title: l10n.settingsAutoSaveTitle,
-                subtitle: l10n.settingsAutoSaveSubtitle,
+                icon: Icons.audiotrack_outlined,
+                title: l10n.settingsKeepOriginalsTitle,
+                subtitle: l10n.settingsKeepOriginalsSubtitle,
                 trailing: SettingsToggle(
-                  value: _autoSave,
-                  onChanged: (value) => setState(() => _autoSave = value),
+                  value: _keepOriginals,
+                  onChanged: _onKeepOriginalsChanged,
                 ),
-                isEnabled: false,
               ),
               SettingsRow(
                 icon: Icons.tune,
@@ -194,6 +205,12 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
           SettingsSection(
             title: l10n.settingsSectionData,
             children: [
+              SettingsRow(
+                icon: Icons.storage_rounded,
+                title: l10n.settingsStorageEntryTitle,
+                trailing: const SettingsChevron(),
+                onTap: () => StorageScreen.go(context),
+              ),
               SettingsRow(
                 icon: Icons.upload_outlined,
                 title: l10n.settingsExportData,

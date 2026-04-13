@@ -3,6 +3,7 @@ import 'package:voice_notes/core/packages/db/object_box/dao/box_provider.dart';
 import 'package:voice_notes/core/packages/db/object_box/objectbox.g.dart'
     hide Order;
 import 'package:voice_notes/feature/data/local/models/folder_object.dart';
+import 'package:voice_notes/feature/data/local/models/note_audio_object.dart';
 import 'package:voice_notes/feature/data/local/models/note_object.dart';
 
 /// DAO для работы с папками
@@ -51,11 +52,33 @@ class FolderDao {
   /// Удалить папку по ID
   void remove(BoxProvider box, int id) => box<FolderObject>().remove(id);
 
-  /// Удалить папку вместе со всеми заметками
-  void removeWithNotes(BoxProvider box, FolderObject folder) {
-    final noteIds = [for (final note in folder.notes) note.id];
+  /// Удалить папку вместе со всеми заметками и связанными аудиофайлами.
+  ///
+  /// Возвращает список относительных путей удалённых аудиофайлов —
+  /// чтобы caller мог удалить их с диска вне транзакции (best-effort).
+  /// ObjectBox не каскадит delete через `ToOne`, поэтому
+  /// `NoteAudioObject` удаляются здесь явно.
+  List<String> removeWithNotes(BoxProvider box, FolderObject folder) {
+    final notes = folder.notes.toList();
+    final noteIds = <int>[];
+    final audioIds = <int>[];
+    final audioPaths = <String>[];
+
+    for (final note in notes) {
+      noteIds.add(note.id);
+      final audio = note.audio.target;
+
+      if (audio != null) {
+        audioIds.add(audio.id);
+        audioPaths.add(audio.relativePath);
+      }
+    }
+
+    if (audioIds.isNotEmpty) box<NoteAudioObject>().removeMany(audioIds);
     box<NoteObject>().removeMany(noteIds);
     box<FolderObject>().remove(folder.id);
+
+    return audioPaths;
   }
 
   /// Обновить timestamp папки (для триггера watch)

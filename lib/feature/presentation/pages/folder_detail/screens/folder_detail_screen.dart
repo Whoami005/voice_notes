@@ -7,11 +7,14 @@ import 'package:voice_notes/core/packages/app_router/routes/app_routes.dart';
 import 'package:voice_notes/core/packages/asr/asr_service.dart';
 import 'package:voice_notes/core/packages/audio/audio_recording_service.dart';
 import 'package:voice_notes/core/packages/di/injection.dart';
+import 'package:voice_notes/core/packages/player/audio_playback_controller.dart';
 import 'package:voice_notes/core/state/async/async_state_widgets.dart';
+import 'package:voice_notes/feature/data/local/preferences/recording_preferences.dart';
 import 'package:voice_notes/feature/domain/repositories/folder_repository.dart';
 import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/components/notes_list_section.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/logic/folder_detail_cubit.dart';
+import 'package:voice_notes/feature/presentation/pages/folder_detail/logic/folder_playback_cubit.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/logic/recording_cubit.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/widgets/folder_detail_app_bar.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/widgets/folder_detail_recording_bar.dart';
@@ -26,7 +29,7 @@ class FolderDetailScreen extends StatefulWidget implements AppRouteWrapper {
 
   /// Навигация на экран деталей папки
   static void go(BuildContext context, {required String folderId}) {
-    context.go(AppRoutes.folders.detail(folderId));
+    context.router.go(AppRoutes.folders.detail(folderId));
   }
 
   @override
@@ -45,6 +48,14 @@ class FolderDetailScreen extends StatefulWidget implements AppRouteWrapper {
             recordingService: getIt<AudioRecordingService>(),
             asrService: getIt<AsrService>(),
             noteRepository: getIt<NoteRepository>(),
+            preferences: getIt<RecordingPreferences>(),
+            folderId: folderId,
+          ),
+        ),
+        BlocProvider(
+          create: (_) => FolderPlaybackCubit(
+            controller: getIt<AudioPlaybackController>(),
+            noteRepository: getIt<NoteRepository>(),
             folderId: folderId,
           ),
         ),
@@ -58,7 +69,7 @@ class FolderDetailScreen extends StatefulWidget implements AppRouteWrapper {
 }
 
 class _FolderDetailScreenState extends State<FolderDetailScreen> {
-  bool _isSearchVisible = false;
+  final bool _isSearchVisible = false;
 
   // String _searchQuery = '';
   // SearchFilter _activeFilter = SearchFilter.all;

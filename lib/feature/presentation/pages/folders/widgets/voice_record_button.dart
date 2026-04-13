@@ -10,6 +10,7 @@ import 'package:voice_notes/core/packages/asr/asr_service.dart';
 import 'package:voice_notes/core/packages/audio/audio_recording_service.dart';
 import 'package:voice_notes/core/packages/di/injection.dart';
 import 'package:voice_notes/core/theme/app_colors.dart';
+import 'package:voice_notes/feature/data/local/preferences/recording_preferences.dart';
 import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/logic/recording_cubit.dart';
 import 'package:voice_notes/feature/presentation/widgets/dialogs/error_dialog.dart';
@@ -42,6 +43,7 @@ class VoiceRecordButton extends StatelessWidget {
         recordingService: getIt<AudioRecordingService>(),
         asrService: getIt<AsrService>(),
         noteRepository: getIt<NoteRepository>(),
+        preferences: getIt<RecordingPreferences>(),
       ),
       child: BlocListener<RecordingCubit, RecordingState>(
         listener: _handleStateChange,

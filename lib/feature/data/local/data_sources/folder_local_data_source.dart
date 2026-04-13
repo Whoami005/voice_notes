@@ -22,8 +22,10 @@ abstract interface class FolderLocalDataSource {
   /// Удалить папку по UID
   Future<void> delete(String uid);
 
-  /// Удалить папку вместе со всеми заметками (каскадное удаление)
-  Future<void> deleteWithNotes(String uid);
+  /// Удалить папку вместе со всеми заметками и связанными аудиофайлами.
+  ///
+  /// Возвращает список относительных путей удалённых аудиофайлов.
+  Future<List<String>> deleteWithNotes(String uid);
 
   /// Получить количество заметок в папке
   Future<int> getNotesCount(int folderId);
@@ -71,13 +73,13 @@ class FolderLocalDataSourceImpl implements FolderLocalDataSource {
   }
 
   @override
-  Future<void> deleteWithNotes(String uid) async {
-    await _db.runInTransactionAsync((Store store, String uid) {
+  Future<List<String>> deleteWithNotes(String uid) async {
+    return _db.runInTransactionAsync((Store store, String uid) {
       final box = store.box;
       final folder = _folderDao.findByUid(box, uid);
-      if (folder == null) return;
+      if (folder == null) return const <String>[];
 
-      _folderDao.removeWithNotes(box, folder);
+      return _folderDao.removeWithNotes(box, folder);
     }, param: uid);
   }
 

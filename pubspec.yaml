@@ -61,6 +61,7 @@ dependencies:
   collection: ^1.19.1
   record: 6.2.0
   just_audio: 0.10.5
+  just_waveform: 0.0.7
   injectable: 2.7.1+4
   get_it: 9.2.1
   intl: ^0.20.2

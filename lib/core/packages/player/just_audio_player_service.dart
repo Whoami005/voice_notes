@@ -1,10 +1,8 @@
 import 'dart:async';
 
-import 'package:injectable/injectable.dart';
 import 'package:just_audio/just_audio.dart' as ja;
 import 'package:voice_notes/core/packages/player/audio_player_service.dart';
 
-@Injectable(as: AudioPlayerService)
 class JustAudioPlayerService implements AudioPlayerService {
   final ja.AudioPlayer _player;
 

@@ -96,7 +96,7 @@ class _ModelsSettingsScreenState extends State<ModelsSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return AsyncStateBody<ModelsCubit, ModelsState>(
-      buildWhen: (_, _) => true,
+      buildAlways: true,
       listener: _handleStateChanges,
       onSuccess: (context, state) {
         final models = state.models;

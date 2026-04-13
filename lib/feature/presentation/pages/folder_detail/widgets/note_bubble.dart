@@ -1,21 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
+import 'package:voice_notes/core/packages/player/audio_playback_controller.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
+import 'package:voice_notes/feature/presentation/widgets/audio/audio_inline_player.dart';
 import 'package:voice_notes/feature/presentation/widgets/chips/tag_chip.dart';
 
 class NoteBubble extends StatelessWidget {
   final NoteEntity note;
+  final bool isPlaying;
+  final TrackState? trackState;
+  final List<double>? waveformData;
+  final VoidCallback? onPlayPause;
+  final ValueChanged<Duration>? onSeek;
   final VoidCallback? onTap;
   final VoidCallback? onCopy;
   final VoidCallback? onShare;
 
+  final EdgeInsetsGeometry? margin;
+
   const NoteBubble({
     required this.note,
+    this.isPlaying = false,
+    this.trackState,
+    this.waveformData,
+    this.onPlayPause,
+    this.onSeek,
     this.onTap,
     this.onCopy,
     this.onShare,
     super.key,
+    this.margin,
   });
 
   @override
@@ -34,18 +49,40 @@ class NoteBubble extends StatelessWidget {
             horizontal: AppSizes.p16,
             vertical: AppSizes.p14,
           ),
+          margin: margin,
           decoration: BoxDecoration(
             color: themeColors.bgSecondary,
             borderRadius: BorderRadius.circular(AppSizes.bubbleRadius),
-            border: Border.all(color: themeColors.borderPrimary),
+            border: Border.all(
+              color: isPlaying
+                  ? themeColors.accentPrimary.withValues(alpha: 0.33)
+                  : themeColors.borderPrimary,
+            ),
+            boxShadow: isPlaying
+                ? [
+                    BoxShadow(
+                      color: themeColors.accentPrimary.withValues(alpha: 0.07),
+                      blurRadius: 16,
+                    ),
+                  ]
+                : null,
           ),
           child: Column(
             spacing: AppSizes.p8,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              if (note.audio != null && trackState != null)
+                AudioInlinePlayer(
+                  state: trackState!,
+                  onPlayPause: onPlayPause ?? () {},
+                  onSeek: onSeek ?? (_) {},
+                  waveformData: waveformData,
+                ),
               Text(
                 note.text,
                 style: textTheme.bodyMedium?.copyWith(height: 1.5),
+                maxLines: 5,
+                overflow: TextOverflow.ellipsis,
               ),
               if (note.tags.isNotEmpty)
                 Wrap(

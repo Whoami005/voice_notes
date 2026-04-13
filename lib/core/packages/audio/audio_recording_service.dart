@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:injectable/injectable.dart';
 import 'package:record/record.dart';
 import 'package:voice_notes/core/packages/audio/audio_recording_exception.dart';
-import 'package:voice_notes/core/packages/path/app_path_provider.dart';
+import 'package:voice_notes/core/packages/path/audio_paths.dart';
 
 /// Сервис для записи аудио
 ///
@@ -70,16 +70,24 @@ class AudioRecordingService {
 
   /// Начать запись
   ///
-  /// Запрашивает разрешение если нужно, создаёт временный WAV файл
-  /// и начинает запись с настройками совместимыми с ASR.
+  /// Запрашивает разрешение если нужно, создаёт WAV-файл в permanent-директории
+  /// `Documents/audio/recordings/{noteUuid}.wav` и начинает запись с настройками
+  /// совместимыми с ASR.
   ///
-  /// [onMaxDurationReached] - callback вызываемый при достижении max duration
+  /// [noteUuid] — идентификатор будущей заметки; используется как имя файла,
+  /// чтобы после транскрибации можно было сохранить заметку с тем же uuid
+  /// и прицепить к ней сохранённый оригинал.
+  ///
+  /// [onMaxDurationReached] — callback, вызываемый при достижении max duration.
   ///
   /// Выбрасывает:
   /// - [MicrophonePermissionDeniedException] если разрешение отклонено
   /// - [RecordingAlreadyActiveException] если запись уже активна
   /// - [RecordingFailedException] если запись не удалось начать
-  Future<void> startRecording({void Function()? onMaxDurationReached}) async {
+  Future<void> startRecording({
+    required String noteUuid,
+    void Function()? onMaxDurationReached,
+  }) async {
     if (_isRecording) throw const RecordingAlreadyActiveException();
 
     // Проверяем/запрашиваем разрешение
@@ -87,10 +95,9 @@ class AudioRecordingService {
     if (!hasPermission) throw const MicrophonePermissionDeniedException();
 
     try {
-      // Генерируем уникальный путь к файлу
-      final tempDir = await AppPathProvider.getTemporaryDirectory();
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      _currentFilePath = '${tempDir.path}/recording_$timestamp.wav';
+      // Пишем сразу в permanent-директорию — никаких temp → copy шагов.
+      final recordingsDir = await AudioPaths.recordingsDir;
+      _currentFilePath = '$recordingsDir/$noteUuid.wav';
 
       // Начинаем запись с конфигурацией совместимой с ASR
       await _recorder.start(
