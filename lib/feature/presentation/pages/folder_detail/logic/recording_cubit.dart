@@ -9,6 +9,7 @@ import 'package:voice_notes/core/packages/asr/asr_exception.dart';
 import 'package:voice_notes/core/packages/asr/asr_service.dart';
 import 'package:voice_notes/core/packages/audio/audio_recording_exception.dart';
 import 'package:voice_notes/core/packages/audio/audio_recording_service.dart';
+import 'package:voice_notes/core/packages/player/audio_playback_controller.dart';
 import 'package:voice_notes/core/packages/path/audio_paths.dart';
 import 'package:voice_notes/core/packages/uuid/uuid_manager.dart';
 import 'package:voice_notes/feature/data/local/preferences/recording_preferences.dart';
@@ -35,6 +36,7 @@ class RecordingCubit extends Cubit<RecordingState> {
   final AsrService _asrService;
   final NoteRepository _noteRepository;
   final RecordingPreferences _preferences;
+  final AudioPlaybackController _playbackController;
 
   StreamSubscription<Duration>? _durationSubscription;
 
@@ -51,11 +53,13 @@ class RecordingCubit extends Cubit<RecordingState> {
     required AsrService asrService,
     required NoteRepository noteRepository,
     required RecordingPreferences preferences,
+    required AudioPlaybackController playbackController,
     this.folderId,
   }) : _recordingService = recordingService,
        _asrService = asrService,
        _noteRepository = noteRepository,
        _preferences = preferences,
+       _playbackController = playbackController,
        super(const RecordingIdleState());
 
   // ==================== Public API ====================
@@ -68,6 +72,8 @@ class RecordingCubit extends Cubit<RecordingState> {
     if (state is! RecordingIdleState) return;
 
     try {
+      await _playbackController.pause();
+
       // Генерируем uuid заранее: им будет именоваться файл на диске,
       // и та же строка станет uid заметки после транскрибации.
       _pendingNoteUuid = UuidManager.v1();

@@ -45,18 +45,19 @@ class FolderDetailScreen extends StatefulWidget implements AppRouteWrapper {
         ),
         BlocProvider(
           create: (_) => RecordingCubit(
+            folderId: folderId,
             recordingService: getIt<AudioRecordingService>(),
             asrService: getIt<AsrService>(),
             noteRepository: getIt<NoteRepository>(),
             preferences: getIt<RecordingPreferences>(),
-            folderId: folderId,
+            playbackController: getIt<AudioPlaybackController>(),
           ),
         ),
         BlocProvider(
           create: (_) => FolderPlaybackCubit(
+            folderId: folderId,
             controller: getIt<AudioPlaybackController>(),
             noteRepository: getIt<NoteRepository>(),
-            folderId: folderId,
           ),
         ),
       ],
