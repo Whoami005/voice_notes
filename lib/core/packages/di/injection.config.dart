@@ -17,18 +17,26 @@ import '../../../feature/data/local/data_sources/folder_local_data_source.dart'
     as _i377;
 import '../../../feature/data/local/data_sources/model_local_data_source.dart'
     as _i130;
+import '../../../feature/data/local/data_sources/note_audio_local_data_source.dart'
+    as _i790;
 import '../../../feature/data/local/data_sources/note_local_data_source.dart'
     as _i798;
 import '../../../feature/data/local/data_sources/tag_local_data_source.dart'
     as _i952;
+import '../../../feature/data/local/preferences/recording_preferences.dart'
+    as _i403;
 import '../../../feature/data/repositories/folder_repository_impl.dart'
     as _i749;
 import '../../../feature/data/repositories/model_repository_impl.dart' as _i465;
 import '../../../feature/data/repositories/note_repository_impl.dart' as _i910;
+import '../../../feature/data/repositories/storage_stats_repository_impl.dart'
+    as _i803;
 import '../../../feature/data/repositories/tag_repository_impl.dart' as _i775;
 import '../../../feature/domain/repositories/folder_repository.dart' as _i500;
 import '../../../feature/domain/repositories/model_repository.dart' as _i56;
 import '../../../feature/domain/repositories/note_repository.dart' as _i1032;
+import '../../../feature/domain/repositories/storage_stats_repository.dart'
+    as _i221;
 import '../../../feature/domain/repositories/tag_repository.dart' as _i484;
 import '../app_router/app_router.dart' as _i796;
 import '../asr/asr_service.dart' as _i233;
@@ -37,6 +45,8 @@ import '../audio/audio_recording_service.dart' as _i571;
 import '../db/object_box/objectbox_database.dart' as _i88;
 import '../db/transaction_manager.dart' as _i138;
 import '../downloader/download_manager.dart' as _i551;
+import '../player/audio_playback_controller.dart' as _i99;
+import '../player/just_audio_playback_controller.dart' as _i502;
 import 'modules/prefs_module.dart' as _i12;
 
 extension GetItInjectableX on _i174.GetIt {
@@ -70,6 +80,13 @@ extension GetItInjectableX on _i174.GetIt {
       dispose: (i) => i.close(),
     );
     gh.singleton<_i233.AsrService>(() => _i699.SherpaAsrService());
+    gh.singleton<_i790.NoteAudioLocalDataSource>(
+      () => _i790.NoteAudioLocalDataSourceImpl(gh<_i88.DatabaseClient>()),
+    );
+    gh.singleton<_i99.AudioPlaybackController>(
+      () => _i502.JustAudioPlaybackController(),
+      dispose: (i) => i.dispose(),
+    );
     gh.singleton<_i952.TagLocalDataSource>(
       () => _i952.TagLocalDataSourceImpl(gh<_i88.DatabaseClient>()),
     );
@@ -94,6 +111,15 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.singleton<_i1032.NoteRepository>(
       () => _i910.NoteRepositoryImpl(gh<_i798.NoteLocalDataSource>()),
+    );
+    gh.singleton<_i403.RecordingPreferences>(
+      () => _i403.RecordingPreferences(gh<_i460.SharedPreferences>()),
+    );
+    gh.singleton<_i221.StorageStatsRepository>(
+      () => _i803.StorageStatsRepositoryImpl(
+        gh<_i790.NoteAudioLocalDataSource>(),
+        gh<_i377.FolderLocalDataSource>(),
+      ),
     );
     gh.singleton<_i484.TagRepository>(
       () => _i775.TagRepositoryImpl(gh<_i952.TagLocalDataSource>()),

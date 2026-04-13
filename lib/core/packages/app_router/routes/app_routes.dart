@@ -48,4 +48,14 @@ class _SettingsRoutes {
 
   /// Путь для навигации: /settings/models
   String get models => '/settings/models';
+
+  /// Путь для навигации: /settings/general/storage
+  String get storage => '/settings/general/storage';
+
+  /// Путь для навигации: /settings/general/storage/:folderUid
+  ///
+  /// Передай пустую строку для группы «без папки» — она декодируется
+  /// обратно в null в `GoRoute` builder.
+  String folderStorage(String folderUid) =>
+      '/settings/general/storage/$folderUid';
 }

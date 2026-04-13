@@ -223,6 +223,8 @@
   "@dialogCancel": { "description": "Default cancel button text" },
   "dialogDelete": "Удалить",
   "@dialogDelete": { "description": "Delete button text" },
+  "dialogClear": "Очистить",
+  "@dialogClear": { "description": "Clear button text for confirm dialogs" },
   "dialogOk": "Понятно",
   "@dialogOk": { "description": "OK/Got it button text" },
 
@@ -305,5 +307,67 @@
   "asrReinitialize": "Переинициализировать",
   "@asrReinitialize": { "description": "Model card: reinitialize button when ASR init failed" },
   "asrNoModel": "Модель не выбрана",
-  "@asrNoModel": { "description": "ASR status: no model selected" }
+  "@asrNoModel": { "description": "ASR status: no model selected" },
+
+  "playerPlay": "Воспроизвести",
+  "@playerPlay": { "description": "Audio player play button tooltip" },
+  "playerPause": "Пауза",
+  "@playerPause": { "description": "Audio player pause button tooltip" },
+  "playerSpeed": "Скорость",
+  "@playerSpeed": { "description": "Audio player speed control label" },
+  "playerLoadingAudio": "Загрузка аудио...",
+  "@playerLoadingAudio": { "description": "Audio player loading indicator text" },
+  "playerFileNotFound": "Файл записи не найден",
+  "@playerFileNotFound": { "description": "Audio player error: source file missing" },
+
+  "settingsKeepOriginalsTitle": "Сохранять оригиналы",
+  "@settingsKeepOriginalsTitle": { "description": "Setting toggle: keep original recordings" },
+  "settingsKeepOriginalsSubtitle": "Позволяет прослушать оригинал заметки позже. Занимает ~2 МБ/мин",
+  "@settingsKeepOriginalsSubtitle": { "description": "Setting toggle subtitle explaining storage cost" },
+
+  "settingsStorageEntryTitle": "Хранилище",
+  "@settingsStorageEntryTitle": { "description": "Settings row: open storage management screen" },
+  "storageTitle": "Хранилище",
+  "@storageTitle": { "description": "Storage screen title" },
+  "storageTotalAudio": "Аудиозаписи",
+  "@storageTotalAudio": { "description": "Header label: total audio storage" },
+  "storageRecordingsCount": "{count, plural, one{{count} запись} few{{count} записи} many{{count} записей} other{{count} записей}}",
+  "@storageRecordingsCount": {
+    "description": "Recordings count pluralization",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "storageClearAllButton": "Очистить все оригиналы",
+  "@storageClearAllButton": { "description": "Button: clear all stored audio" },
+  "storageClearAllConfirmTitle": "Удалить все оригиналы?",
+  "@storageClearAllConfirmTitle": { "description": "Clear all confirm dialog title" },
+  "storageClearAllConfirmMessage": "Будут удалены все сохранённые аудиозаписи ({count} шт., {size}). Транскрипты заметок останутся.",
+  "@storageClearAllConfirmMessage": {
+    "description": "Clear all confirm dialog message",
+    "placeholders": {
+      "count": { "type": "int" },
+      "size": { "type": "String" }
+    }
+  },
+  "storageFoldersSectionTitle": "По папкам",
+  "@storageFoldersSectionTitle": { "description": "Section header: folders list on storage screen" },
+  "storageWithoutFolder": "Без папки",
+  "@storageWithoutFolder": { "description": "Folder group label for notes without a folder" },
+  "storageEmptyTitle": "Нет сохранённых оригиналов",
+  "@storageEmptyTitle": { "description": "Empty state on storage screen" },
+  "storageEmptySubtitle": "Включите сохранение оригиналов в настройках записи",
+  "@storageEmptySubtitle": { "description": "Empty state subtitle hint" },
+  "storageClearFolderButton": "Очистить аудио папки",
+  "@storageClearFolderButton": { "description": "Folder detail: clear button" },
+  "storageClearFolderConfirmTitle": "Удалить аудио папки?",
+  "@storageClearFolderConfirmTitle": { "description": "Clear folder confirm dialog title" },
+  "storageClearFolderConfirmMessage": "Будут удалены {count} аудиозаписей ({size}) в этой папке. Транскрипты заметок останутся.",
+  "@storageClearFolderConfirmMessage": {
+    "description": "Clear folder confirm dialog message",
+    "placeholders": {
+      "count": { "type": "int" },
+      "size": { "type": "String" }
+    }
+  },
+  "storageDeleteNoteAudio": "Удалить аудио",
+  "@storageDeleteNoteAudio": { "description": "Swipe action: delete single recording audio" }
 }

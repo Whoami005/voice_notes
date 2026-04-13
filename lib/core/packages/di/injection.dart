@@ -14,6 +14,7 @@ Future<AppInitializationResult> configureDependencies({
     if (reset) await getIt.reset();
 
     await getIt.init(environment: environment);
+
     return const AppInitializationSuccess();
   } catch (e, s) {
     print('configureDependencies: $e\n$s');

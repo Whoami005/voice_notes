@@ -113,6 +113,7 @@
   "dialogConfirm": "Confirm",
   "dialogCancel": "Cancel",
   "dialogDelete": "Delete",
+  "dialogClear": "Clear",
   "dialogOk": "Got it",
 
   "errorNetworkTitle": "No internet connection",
@@ -155,5 +156,45 @@
   "asrInitializing": "Initializing model...",
   "asrInitError": "Model initialization error",
   "asrReinitialize": "Reinitialize",
-  "asrNoModel": "No model selected"
+  "asrNoModel": "No model selected",
+
+  "playerPlay": "Play",
+  "playerPause": "Pause",
+  "playerSpeed": "Speed",
+  "playerLoadingAudio": "Loading audio...",
+  "playerFileNotFound": "Audio file not found",
+
+  "settingsKeepOriginalsTitle": "Keep original recordings",
+  "settingsKeepOriginalsSubtitle": "Lets you replay the original audio later. Uses ~2 MB/min",
+
+  "settingsStorageEntryTitle": "Storage",
+  "storageTitle": "Storage",
+  "storageTotalAudio": "Audio recordings",
+  "storageRecordingsCount": "{count, plural, one{{count} recording} other{{count} recordings}}",
+  "@storageRecordingsCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "storageClearAllButton": "Clear all originals",
+  "storageClearAllConfirmTitle": "Clear all originals?",
+  "storageClearAllConfirmMessage": "All stored audio recordings ({count} files, {size}) will be removed. Note transcripts will remain.",
+  "@storageClearAllConfirmMessage": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "size": { "type": "String" }
+    }
+  },
+  "storageFoldersSectionTitle": "By folders",
+  "storageWithoutFolder": "No folder",
+  "storageEmptyTitle": "No stored originals",
+  "storageEmptySubtitle": "Enable keeping originals in recording settings",
+  "storageClearFolderButton": "Clear folder audio",
+  "storageClearFolderConfirmTitle": "Clear folder audio?",
+  "storageClearFolderConfirmMessage": "{count} audio recordings ({size}) in this folder will be removed. Note transcripts will remain.",
+  "@storageClearFolderConfirmMessage": {
+    "placeholders": {
+      "count": { "type": "int" },
+      "size": { "type": "String" }
+    }
+  },
+  "storageDeleteNoteAudio": "Delete audio"
 }
