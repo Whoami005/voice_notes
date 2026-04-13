@@ -16,6 +16,7 @@ import 'package:objectbox_sync_flutter_libs/objectbox_sync_flutter_libs.dart';
 
 import '../../../../feature/data/local/models/downloaded_model_object.dart';
 import '../../../../feature/data/local/models/folder_object.dart';
+import '../../../../feature/data/local/models/note_audio_object.dart';
 import '../../../../feature/data/local/models/note_object.dart';
 import '../../../../feature/data/local/models/tag_object.dart';
 
@@ -93,7 +94,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(2, 423521120091770121),
     name: 'NoteObject',
-    lastPropertyId: const obx_int.IdUid(11, 8617244475630794606),
+    lastPropertyId: const obx_int.IdUid(12, 7493323197278838229),
     flags: 0,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -154,12 +155,6 @@ final _entities = <obx_int.ModelEntity>[
         flags: 0,
       ),
       obx_int.ModelProperty(
-        id: const obx_int.IdUid(10, 1654996073209143918),
-        name: 'hasAudio',
-        type: 1,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
         id: const obx_int.IdUid(11, 8617244475630794606),
         name: 'folderId',
         type: 11,
@@ -167,6 +162,15 @@ final _entities = <obx_int.ModelEntity>[
         indexId: const obx_int.IdUid(8, 4174505568149422228),
         relationField: 'folder',
         relationTarget: 'FolderObject',
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(12, 7493323197278838229),
+        name: 'audioId',
+        type: 11,
+        flags: 520,
+        indexId: const obx_int.IdUid(14, 1755020142853247948),
+        relationField: 'audio',
+        relationTarget: 'NoteAudioObject',
       ),
     ],
     relations: <obx_int.ModelRelation>[
@@ -273,6 +277,54 @@ final _entities = <obx_int.ModelEntity>[
     relations: <obx_int.ModelRelation>[],
     backlinks: <obx_int.ModelBacklink>[],
   ),
+  obx_int.ModelEntity(
+    id: const obx_int.IdUid(5, 8204965707487121265),
+    name: 'NoteAudioObject',
+    lastPropertyId: const obx_int.IdUid(6, 4790113320871467614),
+    flags: 0,
+    properties: <obx_int.ModelProperty>[
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(1, 6951209888339069593),
+        name: 'id',
+        type: 6,
+        flags: 1,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(2, 4343876194035748219),
+        name: 'folderUid',
+        type: 9,
+        flags: 2048,
+        indexId: const obx_int.IdUid(12, 5787657023071891329),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(3, 401171000199255096),
+        name: 'relativePath',
+        type: 9,
+        flags: 2080,
+        indexId: const obx_int.IdUid(13, 4332006373692970603),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(4, 8027888780589470466),
+        name: 'sizeBytes',
+        type: 6,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(5, 489062744405119048),
+        name: 'sampleRate',
+        type: 6,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(6, 4790113320871467614),
+        name: 'durationMs',
+        type: 6,
+        flags: 0,
+      ),
+    ],
+    relations: <obx_int.ModelRelation>[],
+    backlinks: <obx_int.ModelBacklink>[],
+  ),
 ];
 
 /// Shortcut for [obx.Store.new] that passes [getObjectBoxModel] and for Flutter
@@ -318,13 +370,13 @@ obx_int.ModelDefinition getObjectBoxModel() {
     // Typically, this is done with `dart run build_runner build`.
     generatorVersion: obx_int.GeneratorVersion.v2025_12_16,
     entities: _entities,
-    lastEntityId: const obx_int.IdUid(4, 2457836903512102065),
-    lastIndexId: const obx_int.IdUid(11, 682868758395135203),
+    lastEntityId: const obx_int.IdUid(5, 8204965707487121265),
+    lastIndexId: const obx_int.IdUid(14, 1755020142853247948),
     lastRelationId: const obx_int.IdUid(1, 3237763071504065953),
     lastSequenceId: const obx_int.IdUid(0, 0),
     retiredEntityUids: const [],
     retiredIndexUids: const [],
-    retiredPropertyUids: const [],
+    retiredPropertyUids: const [1654996073209143918],
     retiredRelationUids: const [],
     modelVersion: 5,
     modelVersionParserMinimum: 5,
@@ -426,7 +478,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
     ),
     NoteObject: obx_int.EntityDefinition<NoteObject>(
       model: _entities[1],
-      toOneRelations: (NoteObject object) => [object.folder],
+      toOneRelations: (NoteObject object) => [object.folder, object.audio],
       toManyRelations: (NoteObject object) => {
         obx_int.RelInfo<NoteObject>.toMany(1, object.id): object.tags,
       },
@@ -439,7 +491,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final textOffset = fbb.writeString(object.text);
         final modelNameOffset = fbb.writeString(object.modelName);
         final languageOffset = fbb.writeString(object.language);
-        fbb.startTable(12);
+        fbb.startTable(13);
         fbb.addInt64(0, object.id);
         fbb.addOffset(1, uidOffset);
         fbb.addOffset(2, textOffset);
@@ -449,8 +501,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
         fbb.addOffset(6, modelNameOffset);
         fbb.addOffset(7, languageOffset);
         fbb.addInt64(8, object.wordCount);
-        fbb.addBool(9, object.hasAudio);
         fbb.addInt64(10, object.folder.targetId);
+        fbb.addInt64(11, object.audio.targetId);
         fbb.finish(fbb.endTable());
         return object.id;
       },
@@ -497,12 +549,6 @@ obx_int.ModelDefinition getObjectBoxModel() {
           4,
           0,
         );
-        final hasAudioParam = const fb.BoolReader().vTableGet(
-          buffer,
-          rootOffset,
-          22,
-          false,
-        );
         final object = NoteObject(
           uid: uidParam,
           text: textParam,
@@ -513,7 +559,6 @@ obx_int.ModelDefinition getObjectBoxModel() {
           language: languageParam,
           wordCount: wordCountParam,
           id: idParam,
-          hasAudio: hasAudioParam,
         );
         object.folder.targetId = const fb.Int64Reader().vTableGet(
           buffer,
@@ -522,6 +567,13 @@ obx_int.ModelDefinition getObjectBoxModel() {
           0,
         );
         object.folder.attach(store);
+        object.audio.targetId = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          26,
+          0,
+        );
+        object.audio.attach(store);
         obx_int.InternalToManyAccess.setRelInfo<NoteObject>(
           object.tags,
           store,
@@ -650,6 +702,74 @@ obx_int.ModelDefinition getObjectBoxModel() {
         return object;
       },
     ),
+    NoteAudioObject: obx_int.EntityDefinition<NoteAudioObject>(
+      model: _entities[4],
+      toOneRelations: (NoteAudioObject object) => [],
+      toManyRelations: (NoteAudioObject object) => {},
+      getId: (NoteAudioObject object) => object.id,
+      setId: (NoteAudioObject object, int id) {
+        object.id = id;
+      },
+      objectToFB: (NoteAudioObject object, fb.Builder fbb) {
+        final folderUidOffset = object.folderUid == null
+            ? null
+            : fbb.writeString(object.folderUid!);
+        final relativePathOffset = fbb.writeString(object.relativePath);
+        fbb.startTable(7);
+        fbb.addInt64(0, object.id);
+        fbb.addOffset(1, folderUidOffset);
+        fbb.addOffset(2, relativePathOffset);
+        fbb.addInt64(3, object.sizeBytes);
+        fbb.addInt64(4, object.sampleRate);
+        fbb.addInt64(5, object.durationMs);
+        fbb.finish(fbb.endTable());
+        return object.id;
+      },
+      objectFromFB: (obx.Store store, ByteData fbData) {
+        final buffer = fb.BufferContext(fbData);
+        final rootOffset = buffer.derefObject(0);
+        final relativePathParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGet(buffer, rootOffset, 8, '');
+        final sizeBytesParam = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          10,
+          0,
+        );
+        final sampleRateParam = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          12,
+          0,
+        );
+        final durationMsParam = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          14,
+          0,
+        );
+        final folderUidParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 6);
+        final idParam = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          4,
+          0,
+        );
+        final object = NoteAudioObject(
+          relativePath: relativePathParam,
+          sizeBytes: sizeBytesParam,
+          sampleRate: sampleRateParam,
+          durationMs: durationMsParam,
+          folderUid: folderUidParam,
+          id: idParam,
+        );
+
+        return object;
+      },
+    ),
   };
 
   return obx_int.ModelDefinition(model, bindings);
@@ -750,13 +870,13 @@ class NoteObject_ {
     _entities[1].properties[8],
   );
 
-  /// See [NoteObject.hasAudio].
-  static final hasAudio = obx.QueryBooleanProperty<NoteObject>(
+  /// See [NoteObject.folder].
+  static final folder = obx.QueryRelationToOne<NoteObject, FolderObject>(
     _entities[1].properties[9],
   );
 
-  /// See [NoteObject.folder].
-  static final folder = obx.QueryRelationToOne<NoteObject, FolderObject>(
+  /// See [NoteObject.audio].
+  static final audio = obx.QueryRelationToOne<NoteObject, NoteAudioObject>(
     _entities[1].properties[10],
   );
 
@@ -824,5 +944,38 @@ class DownloadedModelObject_ {
   /// See [DownloadedModelObject.fileSizeBytes].
   static final fileSizeBytes = obx.QueryIntegerProperty<DownloadedModelObject>(
     _entities[3].properties[6],
+  );
+}
+
+/// [NoteAudioObject] entity fields to define ObjectBox queries.
+class NoteAudioObject_ {
+  /// See [NoteAudioObject.id].
+  static final id = obx.QueryIntegerProperty<NoteAudioObject>(
+    _entities[4].properties[0],
+  );
+
+  /// See [NoteAudioObject.folderUid].
+  static final folderUid = obx.QueryStringProperty<NoteAudioObject>(
+    _entities[4].properties[1],
+  );
+
+  /// See [NoteAudioObject.relativePath].
+  static final relativePath = obx.QueryStringProperty<NoteAudioObject>(
+    _entities[4].properties[2],
+  );
+
+  /// See [NoteAudioObject.sizeBytes].
+  static final sizeBytes = obx.QueryIntegerProperty<NoteAudioObject>(
+    _entities[4].properties[3],
+  );
+
+  /// See [NoteAudioObject.sampleRate].
+  static final sampleRate = obx.QueryIntegerProperty<NoteAudioObject>(
+    _entities[4].properties[4],
+  );
+
+  /// See [NoteAudioObject.durationMs].
+  static final durationMs = obx.QueryIntegerProperty<NoteAudioObject>(
+    _entities[4].properties[5],
   );
 }

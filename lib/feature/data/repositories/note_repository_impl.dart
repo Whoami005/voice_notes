@@ -1,8 +1,10 @@
 import 'package:injectable/injectable.dart';
+import 'package:voice_notes/core/packages/path/audio_paths.dart';
 import 'package:voice_notes/core/packages/uuid/uuid_manager.dart';
 import 'package:voice_notes/feature/data/local/data_sources/note_local_data_source.dart';
 import 'package:voice_notes/feature/data/local/mappers/note_mapper.dart';
 import 'package:voice_notes/feature/data/local/models/note_object.dart';
+import 'package:voice_notes/feature/domain/entities/note_audio_entity.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
 import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
 
@@ -47,14 +49,15 @@ class NoteRepositoryImpl implements NoteRepository {
     required String modelName,
     required String language,
     required int wordCount,
+    String? uid,
     String? folderUid,
     List<String> tagNames = const [],
-    bool hasAudio = true,
+    NoteAudioEntity? audio,
   }) async {
     final now = DateTime.now();
 
     final noteObject = NoteObject(
-      uid: UuidManager.v1(),
+      uid: uid ?? UuidManager.v1(),
       text: text,
       createdAt: now,
       updatedAt: now,
@@ -62,13 +65,13 @@ class NoteRepositoryImpl implements NoteRepository {
       modelName: modelName,
       language: language,
       wordCount: wordCount,
-      hasAudio: hasAudio,
     );
 
     final savedNote = await _noteDataSource.saveWithRelations(
       note: noteObject,
       folderUid: folderUid,
       tagNames: tagNames,
+      audio: audio,
     );
 
     return NoteMapper.toDomain(savedNote);
@@ -88,7 +91,15 @@ class NoteRepositoryImpl implements NoteRepository {
 
   @override
   Future<void> delete(String uid) async {
-    await _noteDataSource.delete(uid);
+    // DataSource транзакционно удаляет NoteObject + NoteAudioObject и
+    // возвращает относительный путь файла (или null, если аудио не было).
+    final audioRelativePath = await _noteDataSource.delete(uid);
+
+    // Удаление файла — вне транзакции, best-effort. deleteFile не throw'ит,
+    // поэтому БД остаётся консистентной даже если файл уже удалён извне.
+    if (audioRelativePath != null) {
+      await AudioPaths.deleteFile(audioRelativePath);
+    }
   }
 
   @override

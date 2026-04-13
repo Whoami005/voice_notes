@@ -1,3 +1,4 @@
+import 'package:voice_notes/feature/domain/entities/note_audio_entity.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
 
 /// Репозиторий для управления заметками
@@ -15,15 +16,24 @@ abstract interface class NoteRepository {
   Future<List<NoteEntity>> getWithoutFolder();
 
   /// Создать новую заметку
+  ///
+  /// Если указан [audio] — к заметке прицепляется сохранённый оригинал
+  /// аудиозаписи. Если null — заметка без аудио (текстовый ввод или
+  /// выключенная настройка «Сохранять оригиналы»).
+  ///
+  /// Если указан [uid] — будет использован вместо автогенерации. Нужно для
+  /// случая голосовой записи, когда uuid генерируется заранее (в момент
+  /// старта записи) и используется как имя аудиофайла на диске.
   Future<NoteEntity> create({
     required String text,
     required Duration duration,
     required String modelName,
     required String language,
     required int wordCount,
+    String? uid,
     String? folderUid,
     List<String> tagNames = const [],
-    bool hasAudio = true,
+    NoteAudioEntity? audio,
   });
 
   /// Обновить существующую заметку

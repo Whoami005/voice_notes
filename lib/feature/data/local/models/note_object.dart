@@ -1,5 +1,6 @@
 import 'package:objectbox/objectbox.dart';
 import 'package:voice_notes/feature/data/local/models/folder_object.dart';
+import 'package:voice_notes/feature/data/local/models/note_audio_object.dart';
 import 'package:voice_notes/feature/data/local/models/tag_object.dart';
 
 @Entity()
@@ -24,10 +25,10 @@ class NoteObject {
   String modelName;
   String language;
   int wordCount;
-  bool hasAudio;
 
   final folder = ToOne<FolderObject>();
   final tags = ToMany<TagObject>();
+  final audio = ToOne<NoteAudioObject>();
 
   NoteObject({
     required this.uid,
@@ -39,6 +40,5 @@ class NoteObject {
     required this.language,
     required this.wordCount,
     this.id = 0,
-    this.hasAudio = true,
   });
 }

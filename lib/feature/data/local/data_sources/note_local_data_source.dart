@@ -3,8 +3,11 @@ import 'package:voice_notes/core/error/app_exception.dart';
 import 'package:voice_notes/core/packages/db/object_box/dao/dao.dart';
 import 'package:voice_notes/core/packages/db/object_box/objectbox.g.dart';
 import 'package:voice_notes/core/packages/db/object_box/objectbox_database.dart';
+import 'package:voice_notes/feature/data/local/mappers/note_audio_mapper.dart';
+import 'package:voice_notes/feature/data/local/models/note_audio_object.dart';
 import 'package:voice_notes/feature/data/local/models/note_object.dart';
 import 'package:voice_notes/feature/data/local/models/tag_object.dart';
+import 'package:voice_notes/feature/domain/entities/note_audio_entity.dart';
 
 /// Локальный источник данных для работы с заметками
 abstract interface class NoteLocalDataSource {
@@ -26,8 +29,13 @@ abstract interface class NoteLocalDataSource {
   /// Обновить существующую заметку
   Future<NoteObject> update(NoteObject note);
 
-  /// Удалить заметку по UID
-  Future<void> delete(String uid);
+  /// Удалить заметку по UID.
+  ///
+  /// Если у заметки было аудио — удаляет и связанный [NoteAudioObject]
+  /// в той же транзакции. Возвращает относительный путь аудиофайла
+  /// (для последующего удаления с диска вне транзакции) или null, если
+  /// аудио не было.
+  Future<String?> delete(String uid);
 
   /// Переместить заметку в другую папку атомарно (обновляет обе папки)
   Future<NoteObject> moveToFolder({
@@ -44,11 +52,15 @@ abstract interface class NoteLocalDataSource {
   /// Стрим заметок без папки с реактивными обновлениями
   Stream<List<NoteObject>> watchWithoutFolder();
 
-  /// Сохранить заметку с папкой и тегами атомарно
+  /// Сохранить заметку с папкой, тегами и (опционально) аудио атомарно.
+  ///
+  /// Если передан [audio] — внутри транзакции создаётся `NoteAudioObject`
+  /// с денормализованным `folderUid` и прикрепляется к заметке через relation.
   Future<NoteObject> saveWithRelations({
     required NoteObject note,
     String? folderUid,
     List<String> tagNames,
+    NoteAudioEntity? audio,
   });
 
   /// Обновить заметку с тегами атомарно
@@ -104,15 +116,26 @@ class NoteLocalDataSourceImpl implements NoteLocalDataSource {
   }
 
   @override
-  Future<void> delete(String uid) async {
-    await _db.runInTransactionAsync((Store store, String noteUid) {
+  Future<String?> delete(String uid) async {
+    return _db.runInTransactionAsync((Store store, String noteUid) {
       final box = store.box;
       final note = _noteDao.findByUid(box, noteUid);
-      if (note == null) return;
+      if (note == null) return null;
+
+      // Захватываем аудио ДО удаления заметки, чтобы знать путь к файлу
+      // для последующей очистки и id для remove.
+      final audio = note.audio.target;
+      final audioRelativePath = audio?.relativePath;
 
       final folder = note.folder.target;
       _noteDao.remove(box, note.id);
+      if (audio != null) {
+        // ObjectBox не каскадит delete через ToOne — удаляем руками.
+        box<NoteAudioObject>().remove(audio.id);
+      }
       _folderDao.touch(box, folder);
+
+      return audioRelativePath;
     }, param: uid);
   }
 
@@ -137,6 +160,14 @@ class NoteLocalDataSourceImpl implements NoteLocalDataSource {
 
       note.folder.target = newFolder;
       note.updatedAt = DateTime.now();
+
+      // Синхронизируем денормализованный folderUid в audio relation —
+      // иначе Storage screen будет показывать аудио в старой папке.
+      final audio = note.audio.target;
+      if (audio != null) {
+        audio.folderUid = params.folderUid;
+      }
+
       _noteDao.put(box, note, mode: PutMode.update);
 
       _folderDao
@@ -180,10 +211,17 @@ class NoteLocalDataSourceImpl implements NoteLocalDataSource {
     required NoteObject note,
     String? folderUid,
     List<String> tagNames = const [],
+    NoteAudioEntity? audio,
   }) async {
     return _db.runInTransactionAsync((
       Store store,
-      ({NoteObject note, String? folderUid, List<String> tags}) p,
+      ({
+        NoteObject note,
+        String? folderUid,
+        List<String> tags,
+        NoteAudioEntity? audio,
+      })
+      p,
     ) {
       final box = store.box;
       final note = p.note;
@@ -204,11 +242,20 @@ class NoteLocalDataSourceImpl implements NoteLocalDataSource {
         note.tags.addAll(tags);
       }
 
+      // Аудио-relation: создаём NoteAudioObject с денормализованным folderUid
+      // и прицепляем к заметке. ObjectBox сохранит его каскадом при put(note).
+      if (p.audio != null) {
+        note.audio.target = NoteAudioMapper.toEntity(
+          entity: p.audio!,
+          folderUid: p.folderUid,
+        );
+      }
+
       _noteDao.put(box, note, mode: PutMode.insert);
       _folderDao.touch(box, targetFolder);
 
       return note;
-    }, param: (note: note, folderUid: folderUid, tags: tagNames));
+    }, param: (note: note, folderUid: folderUid, tags: tagNames, audio: audio));
   }
 
   @override
@@ -228,6 +275,7 @@ class NoteLocalDataSourceImpl implements NoteLocalDataSource {
 
       p.note.id = existing.id;
       p.note.folder.target = existing.folder.target;
+      p.note.audio.target = existing.audio.target;
 
       p.note.tags.clear();
       if (p.tagNames.isNotEmpty) {

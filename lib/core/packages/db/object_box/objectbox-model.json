@@ -62,7 +62,7 @@
     },
     {
       "id": "2:423521120091770121",
-      "lastPropertyId": "11:8617244475630794606",
+      "lastPropertyId": "12:7493323197278838229",
       "name": "NoteObject",
       "properties": [
         {
@@ -118,17 +118,20 @@
           "type": 6
         },
         {
-          "id": "10:1654996073209143918",
-          "name": "hasAudio",
-          "type": 1
-        },
-        {
           "id": "11:8617244475630794606",
           "name": "folderId",
           "indexId": "8:4174505568149422228",
           "type": 11,
           "flags": 520,
           "relationTarget": "FolderObject"
+        },
+        {
+          "id": "12:7493323197278838229",
+          "name": "audioId",
+          "indexId": "14:1755020142853247948",
+          "type": 11,
+          "flags": 520,
+          "relationTarget": "NoteAudioObject"
         }
       ],
       "relations": [
@@ -217,17 +220,62 @@
         }
       ],
       "relations": []
+    },
+    {
+      "id": "5:8204965707487121265",
+      "lastPropertyId": "6:4790113320871467614",
+      "name": "NoteAudioObject",
+      "properties": [
+        {
+          "id": "1:6951209888339069593",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:4343876194035748219",
+          "name": "folderUid",
+          "indexId": "12:5787657023071891329",
+          "type": 9,
+          "flags": 2048
+        },
+        {
+          "id": "3:401171000199255096",
+          "name": "relativePath",
+          "indexId": "13:4332006373692970603",
+          "type": 9,
+          "flags": 2080
+        },
+        {
+          "id": "4:8027888780589470466",
+          "name": "sizeBytes",
+          "type": 6
+        },
+        {
+          "id": "5:489062744405119048",
+          "name": "sampleRate",
+          "type": 6
+        },
+        {
+          "id": "6:4790113320871467614",
+          "name": "durationMs",
+          "type": 6
+        }
+      ],
+      "relations": []
     }
   ],
-  "lastEntityId": "4:2457836903512102065",
-  "lastIndexId": "11:682868758395135203",
+  "lastEntityId": "5:8204965707487121265",
+  "lastIndexId": "14:1755020142853247948",
   "lastRelationId": "1:3237763071504065953",
   "lastSequenceId": "0:0",
   "modelVersion": 5,
   "modelVersionParserMinimum": 5,
   "retiredEntityUids": [],
   "retiredIndexUids": [],
-  "retiredPropertyUids": [],
+  "retiredPropertyUids": [
+    1654996073209143918
+  ],
   "retiredRelationUids": [],
   "version": 1
 }

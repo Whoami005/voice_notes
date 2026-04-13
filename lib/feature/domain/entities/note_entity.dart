@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:voice_notes/feature/domain/entities/note_audio_entity.dart';
 import 'package:voice_notes/feature/domain/entities/tag_entity.dart';
 
 class NoteEntity extends Equatable {
@@ -10,7 +11,8 @@ class NoteEntity extends Equatable {
   final String language;
   final int wordCount;
   final List<TagEntity> tags;
-  final bool hasAudio;
+  final NoteAudioEntity? audio;
+
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -25,7 +27,7 @@ class NoteEntity extends Equatable {
     required this.wordCount,
     this.folderId,
     this.tags = const [],
-    this.hasAudio = true,
+    this.audio,
   });
 
   @override
@@ -40,7 +42,7 @@ class NoteEntity extends Equatable {
     language,
     wordCount,
     tags,
-    hasAudio,
+    audio,
   ];
 
   NoteEntity copyWith({
@@ -54,7 +56,7 @@ class NoteEntity extends Equatable {
     String? language,
     int? wordCount,
     List<TagEntity>? tags,
-    bool? hasAudio,
+    NoteAudioEntity? Function()? audio,
   }) {
     return NoteEntity(
       uuid: uuid ?? this.uuid,
@@ -67,7 +69,7 @@ class NoteEntity extends Equatable {
       language: language ?? this.language,
       wordCount: wordCount ?? this.wordCount,
       tags: tags ?? this.tags,
-      hasAudio: hasAudio ?? this.hasAudio,
+      audio: audio != null ? audio() : this.audio,
     );
   }
 }
