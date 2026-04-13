@@ -22,7 +22,9 @@ class AsyncStateBody<C extends AsyncCubit<T>, T> extends StatelessWidget {
   final Widget Function(BuildContext context, AppFailure failure)? onError;
   final Widget Function(BuildContext context)? onLoading;
   final Widget Function(BuildContext context)? onInitial;
+  final Widget Function(BuildContext context, T data)? onEmpty;
   final bool Function(AsyncState<T> previous, AsyncState<T> current)? buildWhen;
+  final bool buildAlways;
   final void Function(BuildContext, AsyncState<T>)? listener;
   final void Function(BuildContext, BaseEffect)? onEffect;
   final bool listenToEffects;
@@ -34,7 +36,9 @@ class AsyncStateBody<C extends AsyncCubit<T>, T> extends StatelessWidget {
     this.onError,
     this.onLoading,
     this.onInitial,
+    this.onEmpty,
     this.buildWhen,
+    this.buildAlways = false,
     this.listener,
     this.onEffect,
     this.listenToEffects = true,
@@ -48,7 +52,9 @@ class AsyncStateBody<C extends AsyncCubit<T>, T> extends StatelessWidget {
       onError: onError,
       onLoading: onLoading,
       onInitial: onInitial,
+      onEmpty: onEmpty,
       buildWhen: buildWhen,
+      buildAlways: buildAlways,
       listener: listener,
     );
 
@@ -78,7 +84,9 @@ class AsyncStateScaffold<C extends AsyncCubit<T>, T> extends StatelessWidget {
   final Widget Function(BuildContext context, AppFailure failure)? onError;
   final Widget Function(BuildContext context)? onLoading;
   final Widget Function(BuildContext context)? onInitial;
+  final Widget Function(BuildContext context, T data)? onEmpty;
   final bool Function(AsyncState<T> previous, AsyncState<T> current)? buildWhen;
+  final bool buildAlways;
   final void Function(BuildContext, AsyncState<T>)? listener;
   final void Function(BuildContext, BaseEffect)? onEffect;
   final bool listenToEffects;
@@ -93,7 +101,9 @@ class AsyncStateScaffold<C extends AsyncCubit<T>, T> extends StatelessWidget {
     this.onError,
     this.onLoading,
     this.onInitial,
+    this.onEmpty,
     this.buildWhen,
+    this.buildAlways = false,
     this.listener,
     this.onEffect,
     this.listenToEffects = true,
@@ -107,7 +117,9 @@ class AsyncStateScaffold<C extends AsyncCubit<T>, T> extends StatelessWidget {
       onError: onError,
       onLoading: onLoading,
       onInitial: onInitial,
+      onEmpty: onEmpty,
       buildWhen: buildWhen,
+      buildAlways: buildAlways,
       listener: listener,
       stateWrapper: (child) => StateScaffoldWrapper(
         appBar: appBar,
@@ -137,7 +149,9 @@ class _AsyncStateBuilder<C extends AsyncCubit<T>, T> extends StatelessWidget {
   final Widget Function(BuildContext, AppFailure)? onError;
   final Widget Function(BuildContext)? onLoading;
   final Widget Function(BuildContext)? onInitial;
+  final Widget Function(BuildContext, T)? onEmpty;
   final bool Function(AsyncState<T>, AsyncState<T>)? buildWhen;
+  final bool buildAlways;
   final void Function(BuildContext, AsyncState<T>)? listener;
 
   /// Опциональный wrapper для состояний loading/error/initial.
@@ -149,7 +163,9 @@ class _AsyncStateBuilder<C extends AsyncCubit<T>, T> extends StatelessWidget {
     this.onError,
     this.onLoading,
     this.onInitial,
+    this.onEmpty,
     this.buildWhen,
+    this.buildAlways = false,
     this.listener,
     this.stateWrapper,
   });
@@ -158,7 +174,7 @@ class _AsyncStateBuilder<C extends AsyncCubit<T>, T> extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocConsumer<C, AsyncState<T>>(
       bloc: bloc,
-      buildWhen: buildWhen ?? _defaultBuildWhen,
+      buildWhen: buildAlways ? null : (buildWhen ?? _defaultBuildWhen),
       listener: listener ?? (_, _) {},
       builder: (context, state) => switch (state) {
         AsyncInitial() => _wrap(
@@ -171,7 +187,10 @@ class _AsyncStateBuilder<C extends AsyncCubit<T>, T> extends StatelessWidget {
             onError?.call(context, failure) ??
                 StateDefaultErrorView<C>(bloc: bloc, failure: failure),
           ),
-        AsyncSuccess(:final data) => onSuccess(context, data),
+        AsyncSuccess(:final data, :final isEmpty) =>
+          isEmpty && onEmpty != null
+              ? onEmpty!(context, data)
+              : onSuccess(context, data),
       },
     );
   }

@@ -23,13 +23,14 @@ abstract class AsyncCubit<T> extends EffectCubit<AsyncState<T>, BaseEffect> {
   // Emitters
   // ═══════════════════════════════════════════════════════════════════
 
-  void emitInitial() => emit(const AsyncState.initial());
+  void emitInitial() => safeEmit(const AsyncState.initial());
 
-  void emitLoading() => emit(const AsyncState.loading());
+  void emitLoading() => safeEmit(const AsyncState.loading());
 
-  void emitSuccess(T data) => emit(AsyncState.success(data));
+  void emitSuccess(T data, {bool isEmpty = false}) =>
+      safeEmit(AsyncState.success(data, isEmpty: isEmpty));
 
-  void emitError(AppFailure failure) => emit(AsyncState.error(failure));
+  void emitError(AppFailure failure) => safeEmit(AsyncState.error(failure));
 
   // ═══════════════════════════════════════════════════════════════════
   // State Operations

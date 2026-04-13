@@ -17,7 +17,7 @@ sealed class AsyncState<T> extends Equatable {
 
   const factory AsyncState.loading() = AsyncLoading<T>;
 
-  const factory AsyncState.success(T data) = AsyncSuccess<T>;
+  const factory AsyncState.success(T data, {bool isEmpty}) = AsyncSuccess<T>;
 
   const factory AsyncState.error(AppFailure failure) = AsyncError<T>;
 
@@ -39,10 +39,13 @@ final class AsyncLoading<T> extends AsyncState<T> {
 final class AsyncSuccess<T> extends AsyncState<T> {
   final T data;
 
-  const AsyncSuccess(this.data);
+  /// Пустое состояние данных.
+  final bool isEmpty;
+
+  const AsyncSuccess(this.data, {this.isEmpty = false});
 
   @override
-  List<Object?> get props => [data];
+  List<Object?> get props => [data, isEmpty];
 }
 
 /// Состояние ошибки
@@ -66,6 +69,12 @@ extension AsyncStateX<T> on AsyncState<T> {
   bool get isSuccess => this is AsyncSuccess<T>;
 
   bool get isError => this is AsyncError<T>;
+
+  /// Пустое состояние данных
+  bool get isEmpty => switch (this) {
+    AsyncSuccess(:final isEmpty) => isEmpty,
+    _ => false,
+  };
 
   /// Данные или null
   T? get dataOrNull => switch (this) {

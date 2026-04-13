@@ -39,6 +39,9 @@ abstract class StatusState extends Equatable {
 
   const StatusState({this.status = Status.init, this.failure});
 
+  /// Пустое состояние данных.
+  bool get isEmpty => false;
+
   /// Обязательный copyWith для изменения состояния
   StatusState copyWith({Status? status, AppFailure? failure});
 

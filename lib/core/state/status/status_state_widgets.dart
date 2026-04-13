@@ -24,7 +24,9 @@ class StatusStateBody<C extends StatusCubit<S>, S extends StatusState>
   onError;
   final Widget Function(BuildContext context, S state)? onLoading;
   final Widget Function(BuildContext context, S state)? onInitial;
+  final Widget Function(BuildContext context, S state)? onEmpty;
   final bool Function(S previous, S current)? buildWhen;
+  final bool buildAlways;
   final void Function(BuildContext context, S state)? listener;
   final void Function(BuildContext, BaseEffect)? onEffect;
   final bool listenToEffects;
@@ -36,7 +38,9 @@ class StatusStateBody<C extends StatusCubit<S>, S extends StatusState>
     this.onError,
     this.onLoading,
     this.onInitial,
+    this.onEmpty,
     this.buildWhen,
+    this.buildAlways = false,
     this.listener,
     this.onEffect,
     this.listenToEffects = true,
@@ -50,7 +54,9 @@ class StatusStateBody<C extends StatusCubit<S>, S extends StatusState>
       onError: onError,
       onLoading: onLoading,
       onInitial: onInitial,
+      onEmpty: onEmpty,
       buildWhen: buildWhen,
+      buildAlways: buildAlways,
       listener: listener,
     );
 
@@ -82,7 +88,9 @@ class StatusStateScaffold<C extends StatusCubit<S>, S extends StatusState>
   onError;
   final Widget Function(BuildContext context, S state)? onLoading;
   final Widget Function(BuildContext context, S state)? onInitial;
+  final Widget Function(BuildContext context, S state)? onEmpty;
   final bool Function(S previous, S current)? buildWhen;
+  final bool buildAlways;
   final void Function(BuildContext context, S state)? listener;
   final void Function(BuildContext, BaseEffect)? onEffect;
   final bool listenToEffects;
@@ -97,7 +105,9 @@ class StatusStateScaffold<C extends StatusCubit<S>, S extends StatusState>
     this.onError,
     this.onLoading,
     this.onInitial,
+    this.onEmpty,
     this.buildWhen,
+    this.buildAlways = false,
     this.listener,
     this.onEffect,
     this.listenToEffects = true,
@@ -111,7 +121,9 @@ class StatusStateScaffold<C extends StatusCubit<S>, S extends StatusState>
       onError: onError,
       onLoading: onLoading,
       onInitial: onInitial,
+      onEmpty: onEmpty,
       buildWhen: buildWhen,
+      buildAlways: buildAlways,
       listener: listener,
       stateWrapper: (child) => StateScaffoldWrapper(
         appBar: appBar,
@@ -142,7 +154,9 @@ class _StatusStateBuilder<C extends StatusCubit<S>, S extends StatusState>
   final Widget Function(BuildContext, S, AppFailure?)? onError;
   final Widget Function(BuildContext, S)? onLoading;
   final Widget Function(BuildContext, S)? onInitial;
+  final Widget Function(BuildContext, S)? onEmpty;
   final bool Function(S, S)? buildWhen;
+  final bool buildAlways;
   final void Function(BuildContext, S)? listener;
 
   /// Опциональный wrapper для состояний loading/error/initial.
@@ -154,7 +168,9 @@ class _StatusStateBuilder<C extends StatusCubit<S>, S extends StatusState>
     this.onError,
     this.onLoading,
     this.onInitial,
+    this.onEmpty,
     this.buildWhen,
+    this.buildAlways = false,
     this.listener,
     this.stateWrapper,
   });
@@ -163,7 +179,7 @@ class _StatusStateBuilder<C extends StatusCubit<S>, S extends StatusState>
   Widget build(BuildContext context) {
     return BlocConsumer<C, S>(
       bloc: bloc,
-      buildWhen: buildWhen ?? _defaultBuildWhen,
+      buildWhen: buildAlways ? null : (buildWhen ?? _defaultBuildWhen),
       listener: listener ?? (_, _) {},
       builder: (context, state) => switch (state.status) {
         Status.init =>
@@ -176,7 +192,10 @@ class _StatusStateBuilder<C extends StatusCubit<S>, S extends StatusState>
               _wrap(
                 StateDefaultErrorView<C>(bloc: bloc, failure: state.failure),
               ),
-        Status.success => onSuccess(context, state),
+        Status.success =>
+          state.isEmpty && onEmpty != null
+              ? onEmpty!(context, state)
+              : onSuccess(context, state),
       },
     );
   }

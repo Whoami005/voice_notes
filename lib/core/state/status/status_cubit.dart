@@ -23,18 +23,18 @@ abstract class StatusCubit<S extends StatusState>
   // ═══════════════════════════════════════════════════════════════════
 
   /// Установить статус init и очистить ошибку
-  void emitInit() => emit(state.copyWith(status: Status.init) as S);
+  void emitInit() => safeEmit(state.copyWith(status: Status.init) as S);
 
   /// Установить статус loading и очистить ошибку
-  void emitLoading() => emit(state.copyWith(status: Status.loading) as S);
+  void emitLoading() => safeEmit(state.copyWith(status: Status.loading) as S);
 
   /// Установить статус success на новом состоянии и очистить ошибку
   void emitSuccess(S newState) =>
-      emit(newState.copyWith(status: Status.success) as S);
+      safeEmit(newState.copyWith(status: Status.success) as S);
 
   /// Установить статус error с ошибкой
   void emitError(AppFailure failure) =>
-      emit(state.copyWith(status: Status.error, failure: failure) as S);
+      safeEmit(state.copyWith(status: Status.error, failure: failure) as S);
 
   // ═══════════════════════════════════════════════════════════════════
   // State Operations
