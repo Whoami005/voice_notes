@@ -33,6 +33,7 @@ A mobile application for recording and transcribing voice notes using on-device 
 - **Text notes** — create and edit notes manually
 - **Tags and search** — filter notes by text, tags, or date
 - **Dark and light themes**
+- **Russian and English UI**
 
 ### Tech Stack
 
@@ -135,6 +136,7 @@ ObjectBox streams provide real-time updates — any change in the database autom
 - **Текстовые заметки** — создание и редактирование заметок вручную
 - **Теги и поиск** — фильтрация по тексту, тегам, дате
 - **Темная и светлая тема**
+- **Русский и английский интерфейс**
 
 ### Стек технологий
 
