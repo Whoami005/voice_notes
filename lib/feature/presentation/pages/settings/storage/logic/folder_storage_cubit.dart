@@ -10,7 +10,7 @@ import 'package:voice_notes/feature/domain/repositories/storage_stats_repository
 part 'folder_storage_state.dart';
 
 /// Cubit детального экрана хранилища (список записей одной папки).
-class FolderStorageCubit extends InitializableStatusCubit<FolderStorageState> {
+class FolderStorageCubit extends RefreshableStatusCubit<FolderStorageState> {
   final StorageStatsRepository _repository;
   final String? folderUid;
 
@@ -23,12 +23,15 @@ class FolderStorageCubit extends InitializableStatusCubit<FolderStorageState> {
   bool get isEmptyFolder => folderUid == null;
 
   @override
-  Future<void> init() async {
-    await load(() async {
-      final detail = await _repository.getFolderDetail(folderUid);
+  Future<void> init() => load(_fetchDetail);
 
-      return state.copyWith(folder: detail.folder, notes: detail.notes);
-    });
+  @override
+  Future<void> refresh() => guard(_fetchDetail);
+
+  Future<FolderStorageState> _fetchDetail() async {
+    final detail = await _repository.getFolderDetail(folderUid);
+
+    return state.copyWith(folder: detail.folder, notes: detail.notes);
   }
 
   Future<void> deleteNoteAudio(String noteUid) async {

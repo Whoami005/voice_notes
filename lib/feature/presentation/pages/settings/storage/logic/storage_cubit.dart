@@ -11,7 +11,7 @@ import 'package:voice_notes/feature/domain/repositories/storage_stats_repository
 part 'storage_state.dart';
 
 /// Cubit главного экрана хранилища.
-class StorageCubit extends InitializableStatusCubit<StorageState> {
+class StorageCubit extends RefreshableStatusCubit<StorageState> {
   final StorageStatsRepository _repository;
 
   StreamSubscription<StorageState>? _subscription;
@@ -34,6 +34,16 @@ class StorageCubit extends InitializableStatusCubit<StorageState> {
       emitError(logError(e, s));
     }
   }
+
+  @override
+  Future<void> refresh() => guard(() async {
+    final (overview, folders) = await (
+      _repository.getOverview(),
+      _repository.getFolderStats(),
+    ).wait;
+
+    return state.copyWith(overview: overview, folders: folders);
+  });
 
   Future<void> deleteFolderAudio(String? folderUid) async {
     try {

@@ -9,14 +9,12 @@ import 'package:voice_notes/core/packages/app_router/app_route_wrapper.dart';
 import 'package:voice_notes/core/packages/app_router/routes/app_routes.dart';
 import 'package:voice_notes/core/packages/di/injection.dart';
 import 'package:voice_notes/core/state/status/status_state_widgets.dart';
-import 'package:voice_notes/core/theme/app_typography.dart';
-import 'package:voice_notes/feature/domain/entities/folder_storage_stats.dart';
 import 'package:voice_notes/feature/domain/repositories/storage_stats_repository.dart';
+import 'package:voice_notes/feature/presentation/pages/settings/storage/components/storage_folders_section.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/storage/logic/storage_cubit.dart';
-import 'package:voice_notes/feature/presentation/pages/settings/storage/screens/folder_storage_screen.dart';
-import 'package:voice_notes/feature/presentation/pages/settings/storage/widgets/folder_storage_tile.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/storage/widgets/storage_overview_header.dart';
 import 'package:voice_notes/feature/presentation/widgets/dialogs/confirm_dialog.dart';
+import 'package:voice_notes/feature/presentation/widgets/refresh/refreshable_wrapper.dart';
 
 class StorageScreen extends StatelessWidget implements AppRouteWrapper {
   const StorageScreen({super.key});
@@ -55,10 +53,6 @@ class StorageScreen extends StatelessWidget implements AppRouteWrapper {
     }
   }
 
-  void _onFolderTap(BuildContext context, FolderStorageStats stats) {
-    FolderStorageScreen.go(context, folderUid: stats.folder?.uid);
-  }
-
   @override
   Widget build(BuildContext context) {
     final themeColors = context.themeColors;
@@ -72,57 +66,23 @@ class StorageScreen extends StatelessWidget implements AppRouteWrapper {
       ),
       body: StatusStateBody<StorageCubit, StorageState>(
         buildAlways: true,
-        onEmpty: (context, state) => const _EmptyState(),
+        onEmpty: (_, _) => const _EmptyState(),
         onSuccess: (context, state) {
-          return Padding(
-            padding: const EdgeInsets.all(AppSizes.screenPadding),
-            child: CustomScrollView(
-              slivers: [
-                SliverToBoxAdapter(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      StorageOverviewHeader(
-                        overview: state.overview,
-                        onClearAll: () => _onClearAllTap(context),
-                      ),
-                      AppSpacer.p24,
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AppSizes.p8,
-                        ),
-                        child: Text(
-                          l10n.storageFoldersSectionTitle,
-                          style: AppTypography.overline.copyWith(
-                            color: themeColors.textTertiary,
-                          ),
-                        ),
-                      ),
-                      AppSpacer.p8,
-                    ],
-                  ),
-                ),
-                DecoratedSliver(
-                  decoration: BoxDecoration(
-                    color: themeColors.bgSecondary,
-                    borderRadius: BorderRadius.circular(AppSizes.cardRadius),
-                    border: Border.all(color: themeColors.borderPrimary),
-                  ),
-                  sliver: SliverList.separated(
-                    itemCount: state.folders.length,
-                    itemBuilder: (_, i) => FolderStorageTile(
-                      stats: state.folders[i],
-                      onTap: () => _onFolderTap(context, state.folders[i]),
-                    ),
-                    separatorBuilder: (_, _) => Divider(
-                      height: 1,
-                      thickness: 1,
-                      color: themeColors.borderPrimary,
+          return RefreshableWrapper<StorageCubit>(
+            child: Padding(
+              padding: const EdgeInsets.all(AppSizes.screenPadding),
+              child: CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  SliverToBoxAdapter(
+                    child: StorageOverviewHeader(
+                      overview: state.overview,
+                      onClearAll: () => _onClearAllTap(context),
                     ),
                   ),
-                ),
-                const SliverToBoxAdapter(child: AppSpacer.p32),
-              ],
+                  const StorageFoldersSection(),
+                ],
+              ),
             ),
           );
         },

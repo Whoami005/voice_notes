@@ -30,9 +30,11 @@ class StorageOverviewHeader extends StatelessWidget {
         border: Border.all(color: themeColors.borderPrimary),
       ),
       child: Column(
+        spacing: AppSizes.p16,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            spacing: AppSizes.p12,
             children: [
               Container(
                 width: AppSizes.avatarMedium,
@@ -46,7 +48,6 @@ class StorageOverviewHeader extends StatelessWidget {
                   color: themeColors.accentPrimary,
                 ),
               ),
-              const SizedBox(width: AppSizes.p12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -77,8 +78,7 @@ class StorageOverviewHeader extends StatelessWidget {
               ),
             ],
           ),
-          if (!overview.isEmpty && onClearAll != null) ...[
-            AppSpacer.p16,
+          if (!overview.isEmpty && onClearAll != null)
             SizedBox(
               width: double.infinity,
               child: TextButton.icon(
@@ -95,7 +95,6 @@ class StorageOverviewHeader extends StatelessWidget {
                 ),
               ),
             ),
-          ],
         ],
       ),
     );

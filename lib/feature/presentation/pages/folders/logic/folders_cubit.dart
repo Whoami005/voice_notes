@@ -71,9 +71,9 @@ class FoldersCubit extends RefreshableAsyncCubit<FoldersState>
     await _repository.update(folder);
   });
 
-  /// Удалить папку
+  /// Удалить папку вместе со всеми заметками и аудиофайлами внутри.
   Future<void> deleteFolder(String uid) => guardAction((_) async {
-    await _repository.delete(uid);
+    await _repository.deleteWithNotes(uid);
   });
 
   @override

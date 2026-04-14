@@ -7,6 +7,9 @@ class FolderStorageState extends StatusState {
   /// Записи с аудио в папке, отсортированные по убыванию размера.
   final List<NoteAudioStats> notes;
 
+  @override
+  bool get isEmpty => notes.isEmpty;
+
   const FolderStorageState({
     super.status,
     super.failure,

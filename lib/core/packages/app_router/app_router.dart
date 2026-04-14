@@ -26,7 +26,6 @@ class AppRouter {
       initialLocation: AppRoutes.folders.root,
       debugLogDiagnostics: true,
       observers: observer != null ? [observer] : null,
-
       // Обработка ошибок навигации - редирект на корень ветки
       onException: (context, state, router) {
         final path = state.matchedLocation;
@@ -36,7 +35,6 @@ class AppRouter {
             ? router.go(AppRoutes.settings.general)
             : router.go(AppRoutes.folders.root);
       },
-
       // Редирект для невалидных путей
       redirect: (context, state) {
         final path = state.matchedLocation;
@@ -57,7 +55,6 @@ class AppRouter {
 
         return null;
       },
-
       routes: [
         StatefulShellRoute.indexedStack(
           parentNavigatorKey: rootNavigatorKey,
