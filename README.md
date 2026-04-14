@@ -22,6 +22,8 @@ A mobile application for recording and transcribing voice notes using on-device 
 
 - **Voice recording with automatic transcription** — offline, powered by Whisper and NeMo models
 - **Multiple ASR models** — choose between speed and accuracy
+- **Audio storage** — every recording is saved as a lossless WAV file and linked to its note
+- **Inline audio player** — play, seek, and visualize recordings directly inside a note, with a waveform scrubber
 - **Folder organization** — custom colors and icons for each folder
 - **Text notes** — create and edit notes manually
 - **Tags and search** — filter notes by text, tags, or date
@@ -38,6 +40,8 @@ A mobile application for recording and transcribing voice notes using on-device 
 | Speech Recognition | sherpa-onnx (offline) |
 | DI | injectable + get_it |
 | Audio Recording | record |
+| Audio Playback | just_audio |
+| Waveform | just_waveform |
 | Model Downloads | background_downloader |
 
 ### Getting Started
@@ -87,6 +91,16 @@ Speech recognition runs in a **long-lived Dart isolate** — it is created once 
 
 Models are downloaded on demand and stored locally. Downloads are managed through a **queue system** — models are downloaded sequentially, with progress tracking and the ability to cancel. This prevents concurrent large downloads from competing for bandwidth and ensures a predictable user experience.
 
+#### Audio Storage & Playback
+
+Recordings are saved as WAV files (16 kHz mono — the same format the ASR pipeline uses) inside the app's documents folder. File paths and basic metadata (size, duration, folder) are stored in ObjectBox alongside the note.
+
+Playback goes through a **single shared `AudioPlaybackController`** built on `just_audio` — switching between notes preserves each track's position without creating new players. Waveforms are generated once per file via `just_waveform` and drawn by a custom painter that supports tap and drag to seek.
+
+#### Storage Management
+
+The **Storage** screen in settings shows disk usage per folder in real time. Users can drill into a folder, review individual recordings, and delete audio one by one, by folder, or all at once. Everything updates live via ObjectBox streams.
+
 #### State Management
 
 BLoC/Cubit pattern with custom base classes:
@@ -110,6 +124,8 @@ ObjectBox streams provide real-time updates — any change in the database autom
 
 - **Запись голоса с автоматической транскрипцией** — офлайн, на базе моделей Whisper и NeMo
 - **Несколько моделей распознавания** — выбор между скоростью и точностью
+- **Хранение аудио** — каждая запись сохраняется как lossless WAV и привязана к заметке
+- **Встроенный аудиоплеер** — воспроизведение, перемотка и визуализация волны прямо в заметке
 - **Организация по папкам** — настраиваемые цвета и иконки
 - **Текстовые заметки** — создание и редактирование заметок вручную
 - **Теги и поиск** — фильтрация по тексту, тегам, дате
@@ -126,6 +142,8 @@ ObjectBox streams provide real-time updates — any change in the database autom
 | Распознавание речи | sherpa-onnx (офлайн) |
 | DI | injectable + get_it |
 | Запись аудио | record |
+| Воспроизведение аудио | just_audio |
+| Волна | just_waveform |
 | Загрузка моделей | background_downloader |
 
 ### Быстрый старт
@@ -174,6 +192,16 @@ lib/
 | Whisper Medium | OpenAI Whisper | 1.5 ГБ | 99 языков |
 
 Модели загружаются по требованию и хранятся локально. Загрузки управляются через **систему очередей** — модели скачиваются последовательно, с отслеживанием прогресса и возможностью отмены. Это предотвращает конкуренцию за пропускную способность при одновременной загрузке нескольких моделей.
+
+#### Хранение и воспроизведение аудио
+
+Записи сохраняются как WAV-файлы (16 кГц mono — тот же формат, что использует ASR-пайплайн) в папке документов приложения. Пути к файлам и базовые метаданные (размер, длительность, папка) хранятся в ObjectBox рядом с заметкой.
+
+Воспроизведение идёт через **единый общий `AudioPlaybackController`** поверх `just_audio` — при переключении между заметками позиция каждого трека сохраняется, новые плееры не создаются. Волны генерируются один раз на файл через `just_waveform` и отрисовываются кастомным painter'ом с поддержкой перемотки тапом и свайпом.
+
+#### Управление хранилищем
+
+Экран **Хранилище** в настройках показывает использование диска по папкам в реальном времени. Пользователь может провалиться в папку, посмотреть отдельные записи и удалить аудио — поштучно, по папке или всё сразу. Всё обновляется на лету через потоки ObjectBox.
 
 #### Управление состоянием
 
