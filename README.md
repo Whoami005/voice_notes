@@ -1,11 +1,16 @@
 <table>
   <tr>
-    <td><img width="240" alt="Снимок экрана 2026-03-31 в 01 46 13" src="https://github.com/user-attachments/assets/dd4bafc2-3c06-4a8a-8335-6e38ef1a9679" /></td>
-    <td><img width="240" alt="Снимок экрана 2026-03-31 в 01 46 22" src="https://github.com/user-attachments/assets/9b18cd14-9f26-444b-8806-463667b2e48b" /></td>
-    <td><img width="240" alt="Снимок экрана 2026-03-31 в 01 46 28" src="https://github.com/user-attachments/assets/a3b3fc58-aac7-4ebc-8a46-738ae83901e3" /></td>
-    <td><img width="240" alt="Снимок экрана 2026-03-31 в 01 46 31" src="https://github.com/user-attachments/assets/83cc91c7-fe30-4f26-a56d-f842b2ee5d01" /></td>
+    <td><img src="https://github.com/user-attachments/assets/cac1c323-4aa1-4ae3-8832-eedbfac71a67" width="250"/></td>
+    <td><img src="https://github.com/user-attachments/assets/0efefa57-7322-4e17-bc89-905f6f401a07" width="250"/></td>
+    <td><img src="https://github.com/user-attachments/assets/f053ebe9-8018-4c94-b890-74cc9f8f3dc4" width="250"/></td>
+    <td><img src="https://github.com/user-attachments/assets/b191a680-2bd9-4654-af87-df046f6ae219" width="250"/></td>
   </tr>
 </table>
+<p align="center">
+  <img src="https://github.com/user-attachments/assets/a2239e37-c648-4ca3-80bd-1b62453faf9f" width="250"/>
+  <img src="https://github.com/user-attachments/assets/44c0eec0-3634-43f7-ae76-8c256952be47" width="250"/>
+  <img src="https://github.com/user-attachments/assets/11f20e11-d84b-4e8d-a53c-6ab15aaea45b" width="250"/>
+</p>
 
 
 # Voice Notes
