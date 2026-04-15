@@ -3,16 +3,17 @@ import 'dart:io';
 
 import 'package:equatable/equatable.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:voice_notes/core/error/app_failure.dart';
+import 'package:voice_notes/core/extensions/string_extensions.dart';
 import 'package:voice_notes/core/packages/asr/asr_exception.dart';
 import 'package:voice_notes/core/packages/asr/asr_service.dart';
 import 'package:voice_notes/core/packages/audio/audio_recording_exception.dart';
 import 'package:voice_notes/core/packages/audio/audio_recording_service.dart';
-import 'package:voice_notes/core/packages/player/audio_playback_controller.dart';
 import 'package:voice_notes/core/packages/path/audio_paths.dart';
+import 'package:voice_notes/core/packages/player/audio_playback_controller.dart';
+import 'package:voice_notes/core/packages/transcription/transcription_queue_service.dart';
 import 'package:voice_notes/core/packages/uuid/uuid_manager.dart';
-import 'package:voice_notes/feature/data/local/preferences/recording_preferences.dart';
+import 'package:voice_notes/core/state/core/base_cubit.dart';
 import 'package:voice_notes/feature/domain/entities/note_audio_entity.dart';
 import 'package:voice_notes/feature/domain/enums/recording_state.dart'
     show RecordingInputState;
@@ -26,19 +27,15 @@ part 'recording_state.dart';
 /// - Запись аудио через AudioRecordingService
 /// - Транскрибацию через AsrService
 /// - Создание заметок в папках или копирование в буфер обмена
-///
-/// Будущие улучшения:
-/// - Сохранение аудио файлов с заметками
-/// - Режим редактирования перед сохранением
-/// - Настройки папок (язык по умолчанию, модель)
-class RecordingCubit extends Cubit<RecordingState> {
+class RecordingCubit extends BaseCubit<RecordingState> {
   final AudioRecordingService _recordingService;
   final AsrService _asrService;
   final NoteRepository _noteRepository;
-  final RecordingPreferences _preferences;
   final AudioPlaybackController _playbackController;
+  final TranscriptionQueueService _queue;
 
   StreamSubscription<Duration>? _durationSubscription;
+  Timer? _idleResetTimer;
 
   /// ID папки для записи в папку (null = Quick Record в буфер обмена)
   final String? folderId;
@@ -52,14 +49,14 @@ class RecordingCubit extends Cubit<RecordingState> {
     required AudioRecordingService recordingService,
     required AsrService asrService,
     required NoteRepository noteRepository,
-    required RecordingPreferences preferences,
     required AudioPlaybackController playbackController,
+    required TranscriptionQueueService queue,
     this.folderId,
   }) : _recordingService = recordingService,
        _asrService = asrService,
        _noteRepository = noteRepository,
-       _preferences = preferences,
        _playbackController = playbackController,
+       _queue = queue,
        super(const RecordingIdleState());
 
   // ==================== Public API ====================
@@ -102,8 +99,7 @@ class RecordingCubit extends Cubit<RecordingState> {
       emit(const RecordingErrorState(RecordingFailure.alreadyRecording()));
     } catch (e, s) {
       _pendingNoteUuid = null;
-      addError(e, s);
-      emit(RecordingErrorState(AppFailure.from(e, s)));
+      safeEmit(RecordingErrorState(logError(e, s)));
       _resetToIdleDelayed();
     }
   }
@@ -134,10 +130,11 @@ class RecordingCubit extends Cubit<RecordingState> {
         ),
       );
 
-      // Транскрибируем в фоне — заметка сохранится
-      // даже если пользователь выйдет
+      // Для folder-режима: сразу создаём pending-заметку и отдаём в очередь,
+      // UI освобождается мгновенно (messenger-like UX). Quick Record остаётся
+      // синхронным — он не создаёт заметку, только транскрибирует в clipboard.
       unawaited(
-        _transcribeAndProcess(
+        _scheduleTranscription(
           noteUuid: noteUuid,
           filePath: result.filePath,
           duration: result.duration,
@@ -147,8 +144,7 @@ class RecordingCubit extends Cubit<RecordingState> {
       if (isClosed) return;
 
       _pendingNoteUuid = null;
-      addError(e, s);
-      emit(RecordingErrorState(AppFailure.from(e, s)));
+      safeEmit(RecordingErrorState(logError(e, s)));
       _resetToIdleDelayed();
     }
   }
@@ -188,7 +184,7 @@ class RecordingCubit extends Cubit<RecordingState> {
     if (folderId == null) return;
 
     try {
-      final wordCount = _countWords(trimmedText);
+      final wordCount = trimmedText.wordCount;
 
       await _noteRepository.create(
         text: trimmedText,
@@ -209,128 +205,118 @@ class RecordingCubit extends Cubit<RecordingState> {
 
       _resetToIdleDelayed();
     } catch (e, s) {
-      addError(e, s);
-      emit(RecordingErrorState(AppFailure.from(e, s)));
+      safeEmit(RecordingErrorState(logError(e, s)));
       _resetToIdleDelayed();
     }
   }
 
   // ==================== Private методы ====================
 
-  Future<void> _transcribeAndProcess({
+  /// Планирование транскрибации после остановки записи.
+  ///
+  /// - Folder-режим: мгновенно создаём pending-заметку с аудио, ставим в
+  ///   очередь и возвращаем UI в idle. Транскрибация и финальный статус —
+  ///   задача [TranscriptionQueueService].
+  /// - Quick Record (`folderId == null`): синхронный путь через ASR →
+  ///   clipboard. Заметка не создаётся.
+  Future<void> _scheduleTranscription({
+    required String noteUuid,
+    required String filePath,
+    required Duration duration,
+  }) async {
+    final folder = folderId;
+    if (folder == null) {
+      await _processQuickRecord(
+        noteUuid: noteUuid,
+        filePath: filePath,
+        duration: duration,
+      );
+      return;
+    }
+
+    try {
+      // Аудио сохраняем до ready — даже при keepOriginals=false. Нужно для
+      // retry на failed; очередь удалит файл при переходе в ready.
+      final audio = await _buildAudioEntity(
+        noteUuid: noteUuid,
+        filePath: filePath,
+        duration: duration,
+      );
+
+      if (audio == null) {
+        _failRecording(
+          filePath: filePath,
+          failure: const RecordingFailure.transcriptionFailed(),
+        );
+        return;
+      }
+
+      await _noteRepository.createPending(
+        uid: noteUuid,
+        folderUid: folder,
+        duration: duration,
+        audio: audio,
+      );
+
+      await _queue.enqueue(noteUuid);
+
+      _pendingNoteUuid = null;
+      // Success-state не эмитим — UX-фидбек даёт pending-бабл в списке.
+      _idleResetTimer?.cancel();
+      safeEmit(const RecordingIdleState());
+    } catch (e, s) {
+      _failRecording(filePath: filePath, failure: logError(e, s));
+    }
+  }
+
+  /// Quick Record: синхронная транскрибация и копирование в буфер обмена.
+  /// Заметка не создаётся. Если очередь не пуста — команда транскрибации
+  /// всё равно встанет в хвост FIFO-команд изолята; пользователь увидит
+  /// ожидание через toast в UI (показывается в `VoiceRecordButton`).
+  Future<void> _processQuickRecord({
     required String noteUuid,
     required String filePath,
     required Duration duration,
   }) async {
     try {
-      // Проверяем инициализирован ли ASR сервис
       if (!_asrService.isInitialized) {
-        _deleteAudioFile(filePath);
-        _safeEmit(
-          const RecordingErrorState(RecordingFailure.noModelSelected()),
+        _failRecording(
+          filePath: filePath,
+          failure: const RecordingFailure.noModelSelected(),
         );
-        _resetToIdleDelayed();
         return;
       }
 
-      // Транскрибируем аудио файл
       final asrResult = await _asrService.transcribeFile(filePath);
 
-      // Подсчитываем слова
-      final wordCount = _countWords(asrResult.text);
-
-      if (folderId != null) {
-        // Голосовая заметка в папке — сохраняем с audio-метаданными.
-        // Для Quick Record (folderId == null) файл всё равно удаляем —
-        // это режим копирования в буфер обмена, не создание заметки.
-        await _createVoiceNote(
-          noteUuid: noteUuid,
-          filePath: filePath,
-          duration: duration,
-          language: asrResult.detectedLanguage,
-          text: asrResult.text,
-          wordCount: wordCount,
-        );
-      } else {
-        await _copyToClipboard(asrResult.text);
-        _deleteAudioFile(filePath);
-      }
+      await _copyToClipboard(asrResult.text);
+      _deleteAudioFile(filePath);
 
       _pendingNoteUuid = null;
-      _safeEmit(
+      safeEmit(
         RecordingSuccessState(
           text: asrResult.text,
           duration: duration,
           language: asrResult.detectedLanguage,
-          wordCount: wordCount,
+          wordCount: asrResult.text.wordCount,
         ),
       );
-
       _resetToIdleDelayed();
     } on AsrNotInitializedException catch (e, s) {
-      _deleteAudioFile(filePath);
-      _pendingNoteUuid = null;
       addError(e, s);
-      _safeEmit(const RecordingErrorState(RecordingFailure.noModelSelected()));
-      _resetToIdleDelayed();
-    } on AsrException catch (e, s) {
-      _deleteAudioFile(filePath);
-      _pendingNoteUuid = null;
-      addError(e, s);
-      _safeEmit(
-        const RecordingErrorState(RecordingFailure.transcriptionFailed()),
-      );
-      _resetToIdleDelayed();
-    } catch (e, s) {
-      _deleteAudioFile(filePath);
-      _pendingNoteUuid = null;
-      addError(e, s);
-      _safeEmit(RecordingErrorState(AppFailure.from(e, s)));
-      _resetToIdleDelayed();
-    }
-  }
-
-  Future<void> _createVoiceNote({
-    required String noteUuid,
-    required String filePath,
-    required Duration duration,
-    required int wordCount,
-    required String text,
-    String? language,
-  }) async {
-    final currentModel = _asrService.currentModel;
-    if (folderId == null || currentModel == null) {
-      // Без активной модели не сохраняем заметку — но и файл удаляем,
-      // чтобы не оставить сироту.
-      _deleteAudioFile(filePath);
-      return;
-    }
-
-    // Пользовательская настройка: сохранять оригинал или выбросить после
-    // транскрибации. Влияет только на новые записи.
-    final keepOriginal = _preferences.keepOriginals;
-
-    NoteAudioEntity? audio;
-    if (keepOriginal) {
-      audio = await _buildAudioEntity(
-        noteUuid: noteUuid,
+      _failRecording(
         filePath: filePath,
-        duration: duration,
+        failure: const RecordingFailure.noModelSelected(),
       );
-    } else {
-      _deleteAudioFile(filePath);
+    } on AsrException catch (e, s) {
+      addError(e, s);
+      _failRecording(
+        filePath: filePath,
+        failure: const RecordingFailure.transcriptionFailed(),
+      );
+    } catch (e, s) {
+      _failRecording(filePath: filePath, failure: logError(e, s));
     }
-
-    await _noteRepository.create(
-      uid: noteUuid,
-      text: text,
-      duration: duration,
-      folderUid: folderId,
-      language: language ?? '',
-      modelName: currentModel.name,
-      wordCount: wordCount,
-      audio: audio,
-    );
   }
 
   /// Собирает [NoteAudioEntity] из фактического файла на диске.
@@ -371,29 +357,31 @@ class RecordingCubit extends Cubit<RecordingState> {
       final file = File(filePath);
       if (file.existsSync()) unawaited(file.delete());
     } catch (e, s) {
-      AppFailure.from(e, s);
+      addError(e, s);
     }
   }
 
-  int _countWords(String text) {
-    if (text.isEmpty) return 0;
-    return text.trim().split(RegExp(r'\s+')).length;
+  /// Общий cleanup для failed-путей: стираем аудиофайл, сбрасываем uuid,
+  /// эмитим ошибку и откатываем экран в idle.
+  void _failRecording({required String filePath, required AppFailure failure}) {
+    _deleteAudioFile(filePath);
+    _pendingNoteUuid = null;
+
+    safeEmit(RecordingErrorState(failure));
+    _resetToIdleDelayed();
   }
 
   void _resetToIdleDelayed() {
-    // Сбрасываем в idle через небольшую задержку для показа success/error
-    Future.delayed(const Duration(seconds: 2), () {
+    // Таймер храним, чтобы отменить при close — не эмитим после закрытия.
+    _idleResetTimer?.cancel();
+    _idleResetTimer = Timer(const Duration(seconds: 2), () {
       if (!isClosed) emit(const RecordingIdleState());
     });
   }
 
-  /// Безопасный emit — игнорирует если cubit закрыт
-  void _safeEmit(RecordingState state) {
-    if (!isClosed) emit(state);
-  }
-
   @override
   Future<void> close() async {
+    _idleResetTimer?.cancel();
     await _durationSubscription?.cancel();
     // Отменяем активную запись (сбрасывает _isRecording в singleton)
     await _recordingService.cancelRecording();
