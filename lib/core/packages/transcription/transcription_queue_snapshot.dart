@@ -4,7 +4,7 @@ import 'package:equatable/equatable.dart';
 /// каждой заметки — БД, не снапшот.
 class TranscriptionQueueSnapshot extends Equatable {
   /// FIFO-порядок ожидающих заметок.
-  final List<String> pending;
+  final List<String> queued;
 
   final String? processing;
 
@@ -12,13 +12,13 @@ class TranscriptionQueueSnapshot extends Equatable {
   final bool paused;
 
   const TranscriptionQueueSnapshot({
-    this.pending = const [],
+    this.queued = const [],
     this.processing,
     this.paused = false,
   });
 
-  int get total => pending.length + (processing != null ? 1 : 0);
+  int get total => queued.length + (processing != null ? 1 : 0);
 
   @override
-  List<Object?> get props => [pending, processing, paused];
+  List<Object?> get props => [queued, processing, paused];
 }

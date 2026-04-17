@@ -18,7 +18,7 @@ import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
 /// очередь хранит только порядок обработки.
 ///
 /// Гейт drain'а — `_asrReady`: пока модель не готова, заметки копятся в
-/// `_pending`, но не фейлятся с `noModelSelected`. См. `docs/transcription_queue_flow.md`.
+/// `_queue`, но не фейлятся с `noModelSelected`. См. `docs/transcription_queue_flow.md`.
 @Singleton()
 class TranscriptionQueueService {
   /// Порог circuit breaker: сколько подряд провалов переводит очередь
@@ -34,7 +34,7 @@ class TranscriptionQueueService {
   final AsrService _asrService;
   final RecordingPreferences _preferences;
 
-  final Queue<String> _pending = Queue<String>();
+  final Queue<String> _queue = Queue<String>();
   final Set<String> _enqueued = <String>{};
   final Set<String> _cancelled = <String>{};
   String? _processing;
@@ -43,9 +43,13 @@ class TranscriptionQueueService {
   bool _paused = false;
   bool _asrReady = false;
 
-  /// Сигнализирует, что [start] завершил seed из БД и подписку на onDeleted.
-  /// Все публичные методы ждут этот completer, чтобы исключить race с UI,
-  /// который успел вызвать `enqueue` до окончания старта.
+  /// Сигнализирует, что [start] прошёл seed из БД и подписался на `onDeleted`.
+  /// Публичные методы (`enqueue`, `cancel`, `retry`) ждут этот completer, чтобы
+  /// первый `_drain()` увидел объединённое множество uid: in-memory + seed.
+  ///
+  /// ASR-готовность здесь не при чём: `start()` вызывается безусловно из
+  /// `TranscriptionQueueCubit.init()` (до готовности модели), drain гейтится
+  /// отдельным флагом `_asrReady`.
   final Completer<void> _ready = Completer<void>();
 
   StreamSubscription<String>? _deleteSub;
@@ -88,13 +92,13 @@ class TranscriptionQueueService {
       _asrSub ??= _asrService.stateStream.listen(_onAsrReadyChanged);
 
       await _noteRepository.resetTranscribingToQueued();
-      final pending = await _noteRepository.getPending();
+      final queued = await _noteRepository.getQueued();
 
       // audio == null обработает _processOne → failTranscription. Заранее
       // фейлить здесь — N лишних транзакций на seed.
-      for (final note in pending) {
+      for (final note in queued) {
         if (!_enqueued.contains(note.uuid) && _processing != note.uuid) {
-          _pending.add(note.uuid);
+          _queue.add(note.uuid);
           _enqueued.add(note.uuid);
         }
       }
@@ -127,7 +131,7 @@ class TranscriptionQueueService {
     await _ready.future;
     if (_enqueued.contains(uid) || _processing == uid) return;
 
-    _pending.add(uid);
+    _queue.add(uid);
     _enqueued.add(uid);
     _emitSnapshot();
 
@@ -149,7 +153,7 @@ class TranscriptionQueueService {
     await _noteRepository.markQueued(uid);
 
     if (!_enqueued.contains(uid) && _processing != uid) {
-      _pending.add(uid);
+      _queue.add(uid);
       _enqueued.add(uid);
     }
     _emitSnapshot();
@@ -162,10 +166,10 @@ class TranscriptionQueueService {
   Future<void> cancel(String uid) async {
     await _ready.future;
 
-    final wasPending = _pending.remove(uid);
+    final wasQueued = _queue.remove(uid);
     _enqueued.remove(uid);
 
-    if (wasPending) {
+    if (wasQueued) {
       await _noteRepository.markCancelled(uid);
       _emitSnapshot();
       return;
@@ -185,7 +189,7 @@ class TranscriptionQueueService {
 
     _draining = true;
     try {
-      while (_pending.isNotEmpty) {
+      while (_queue.isNotEmpty) {
         if (!_asrReady) break;
 
         if (_consecutiveFailures >= _circuitBreakerThreshold) {
@@ -200,7 +204,7 @@ class TranscriptionQueueService {
           break;
         }
 
-        final uid = _pending.removeFirst();
+        final uid = _queue.removeFirst();
         _enqueued.remove(uid);
         _processing = uid;
         _emitSnapshot();
@@ -288,9 +292,9 @@ class TranscriptionQueueService {
   }
 
   void _onNoteDeleted(String uid) {
-    // В _cancelled кладём только in-flight uid: из `_pending` он уже
+    // В _cancelled кладём только in-flight uid: из `_queue` он уже
     // удалён и `_processOne` его не увидит, поэтому метки cancel не требует.
-    if (_pending.remove(uid)) {
+    if (_queue.remove(uid)) {
       _enqueued.remove(uid);
     } else if (_processing == uid) {
       _cancelled.add(uid);
@@ -312,7 +316,7 @@ class TranscriptionQueueService {
   }
 
   TranscriptionQueueSnapshot _buildSnapshot() => TranscriptionQueueSnapshot(
-    pending: List.unmodifiable(_pending),
+    queued: List.unmodifiable(_queue),
     processing: _processing,
     paused: _paused,
   );

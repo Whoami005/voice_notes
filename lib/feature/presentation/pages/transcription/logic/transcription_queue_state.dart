@@ -1,6 +1,17 @@
 part of 'transcription_queue_cubit.dart';
 
-enum QueueStatus { initial, waitingForModel, initializing, ready }
+/// `initial` — `init()` ещё не завершил seed; публичные команды кубита
+/// (`retry`/`cancel`) ранний-выход'ят. `ready` — seed выполнен, очередь
+/// принимает команды (готовность ASR-модели — отдельная ось, читать из
+/// `AsrCubit`).
+enum QueueStatus {
+  initial,
+  ready;
+
+  bool get isReady => this == QueueStatus.ready;
+
+  bool get isInitial => this == QueueStatus.initial;
+}
 
 class TranscriptionQueueState extends Equatable {
   final QueueStatus status;
@@ -10,12 +21,6 @@ class TranscriptionQueueState extends Equatable {
     this.status = QueueStatus.initial,
     this.snapshot = const TranscriptionQueueSnapshot(),
   });
-
-  bool get isInitializing => status == QueueStatus.initializing;
-
-  bool get isReady => status == QueueStatus.ready;
-
-  bool get isWaitingForModel => status == QueueStatus.waitingForModel;
 
   TranscriptionQueueState copyWith({
     QueueStatus? status,
