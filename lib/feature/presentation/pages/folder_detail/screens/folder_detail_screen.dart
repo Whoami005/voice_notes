@@ -7,9 +7,9 @@ import 'package:voice_notes/core/packages/app_router/routes/app_routes.dart';
 import 'package:voice_notes/core/packages/asr/asr_service.dart';
 import 'package:voice_notes/core/packages/audio/audio_recording_service.dart';
 import 'package:voice_notes/core/packages/di/injection.dart';
+import 'package:voice_notes/core/packages/note_ingestion/note_ingestion_service.dart';
 import 'package:voice_notes/core/packages/player/audio_playback_controller.dart';
 import 'package:voice_notes/core/state/async/async_state_widgets.dart';
-import 'package:voice_notes/feature/data/local/preferences/recording_preferences.dart';
 import 'package:voice_notes/feature/domain/repositories/folder_repository.dart';
 import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/components/notes_list_section.dart';
@@ -27,7 +27,6 @@ class FolderDetailScreen extends StatefulWidget implements AppRouteWrapper {
 
   const FolderDetailScreen({required this.folderId, super.key});
 
-  /// Навигация на экран деталей папки
   static void go(BuildContext context, {required String folderId}) {
     context.router.go(AppRoutes.folders.detail(folderId));
   }
@@ -49,8 +48,8 @@ class FolderDetailScreen extends StatefulWidget implements AppRouteWrapper {
             recordingService: getIt<AudioRecordingService>(),
             asrService: getIt<AsrService>(),
             noteRepository: getIt<NoteRepository>(),
-            preferences: getIt<RecordingPreferences>(),
             playbackController: getIt<AudioPlaybackController>(),
+            ingestionService: getIt<NoteIngestionService>(),
           ),
         ),
         BlocProvider(
