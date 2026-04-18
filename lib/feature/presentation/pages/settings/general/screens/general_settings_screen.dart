@@ -2,6 +2,7 @@ import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:rxdart/rxdart.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
@@ -10,11 +11,12 @@ import 'package:voice_notes/core/packages/app_router/routes/app_routes.dart';
 import 'package:voice_notes/core/packages/di/injection.dart';
 import 'package:voice_notes/core/theme/theme_cubit.dart';
 import 'package:voice_notes/feature/data/local/preferences/recording_preferences.dart';
+import 'package:voice_notes/feature/domain/entities/note_entity.dart';
 import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
+import 'package:voice_notes/feature/presentation/pages/queue/screens/queue_management_screen.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/general/widgets/settings_row.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/general/widgets/settings_section.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/storage/screens/storage_screen.dart';
-import 'package:voice_notes/feature/presentation/pages/transcription/screens/queue_management_screen.dart';
 import 'package:voice_notes/feature/presentation/widgets/dialogs/language_dialog.dart';
 import 'package:voice_notes/feature/presentation/widgets/dialogs/theme_dialog.dart';
 
@@ -88,6 +90,20 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
 
   void _onClearCacheTap() {
     // TODO(settings): Show confirm dialog
+  }
+
+  /// Количество заметок во всех «активных» состояниях пайплайна:
+  /// queued + transcribing + failed + cancelled. Используется бейджем очереди
+  /// в общих настройках, чтобы показать реальный backlog, а не только провалы.
+  Stream<int> _queueBadgeStream(NoteRepository repo) {
+    return Rx.combineLatestList<List<NoteEntity>>([
+          repo.watchQueued(),
+          repo.watchTranscribing(),
+          repo.watchFailed(),
+          repo.watchCancelled(),
+        ])
+        .map((lists) => lists.fold<int>(0, (acc, l) => acc + l.length))
+        .distinct();
   }
 
   @override
@@ -208,9 +224,7 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
             title: l10n.queueSettingsSection,
             children: [
               StreamBuilder<int>(
-                stream: getIt<NoteRepository>().watchFailed().map(
-                  (notes) => notes.length,
-                ),
+                stream: _queueBadgeStream(getIt<NoteRepository>()),
                 initialData: 0,
                 builder: (context, snapshot) {
                   final count = snapshot.data ?? 0;

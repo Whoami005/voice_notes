@@ -86,6 +86,11 @@ abstract interface class NoteRepository {
 
   Stream<List<NoteEntity>> watchCancelled();
 
+  /// Заметки в статусе `transcribing`. 0 или 1 элемент. Нужен
+  /// `QueueManagementCubit`, чтобы тайл «Сейчас обрабатывается» реактивно
+  /// обновлялся при изменениях сущности (title, folder).
+  Stream<List<NoteEntity>> watchTranscribing();
+
   /// Эмит ДО фактического удаления — даёт подписчикам (очередь
   /// транскрибации) шанс отменить in-flight операции.
   Stream<String> get onDeleted;

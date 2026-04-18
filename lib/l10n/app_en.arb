@@ -245,15 +245,13 @@
   "@queueAsrReady": { "description": "ASR status on queue screen: model loaded" },
   "queueAsrNotReady": "Model not loaded",
   "@queueAsrNotReady": { "description": "ASR status on queue screen: model unavailable" },
-  "queueFailedSection": "Failed ({count})",
+  "queueFailedSection": "Failed",
   "@queueFailedSection": {
-    "description": "Queue screen: failed section header with count",
-    "placeholders": { "count": { "type": "int" } }
+    "description": "Queue screen: failed section header (count shown separately)"
   },
-  "queueCancelledSection": "Cancelled ({count})",
+  "queueCancelledSection": "Cancelled",
   "@queueCancelledSection": {
-    "description": "Queue screen: cancelled section header with count",
-    "placeholders": { "count": { "type": "int" } }
+    "description": "Queue screen: cancelled section header (count shown separately)"
   },
   "queueRetryAll": "Retry all",
   "@queueRetryAll": { "description": "Button: requeue all failed notes" },
@@ -263,8 +261,11 @@
   "@queueEmptyFailed": { "description": "Empty state for failed section" },
   "queueEmptyCancelled": "No cancelled transcriptions",
   "@queueEmptyCancelled": { "description": "Empty state for cancelled section" },
-  "queueItemUntitled": "Untitled note",
-  "@queueItemUntitled": { "description": "Fallback title for empty-text notes on queue screen" },
+  "queueItemDefaultTitle": "Note {date}",
+  "@queueItemDefaultTitle": {
+    "description": "Fallback title for empty-text notes on queue screen; {date} is a short timestamp like 14.04 09:11",
+    "placeholders": { "date": { "type": "String" } }
+  },
   "noteActionRetry": "Retry",
   "@noteActionRetry": { "description": "Retry button on failed/cancelled note bubble" },
   "noteActionCancel": "Cancel",
@@ -277,5 +278,72 @@
     "placeholders": { "count": { "type": "int" } }
   },
   "transcriptionQueueInitializingTitle": "Connecting to transcription queue…",
-  "@transcriptionQueueInitializingTitle": { "description": "Banner shown while the transcription queue is booting up (seed phase)" }
+  "@transcriptionQueueInitializingTitle": { "description": "Banner shown while the transcription queue is booting up (seed phase)" },
+
+  "queueProcessingSection": "Processing now",
+  "@queueProcessingSection": { "description": "Queue screen · section header for the currently-transcribing note" },
+  "queueQueuedSection": "In queue",
+  "@queueQueuedSection": {
+    "description": "Queue screen · section header for notes waiting in queue (count shown separately)"
+  },
+  "queueEmptyQueued": "Queue is empty",
+  "@queueEmptyQueued": { "description": "Queue screen · empty-state hint for queued section" },
+  "queueEmptyProcessing": "No active transcription",
+  "@queueEmptyProcessing": { "description": "Queue screen · empty-state hint for processing group" },
+  "queueItemProcessingSubtitle": "Transcribing…",
+  "@queueItemProcessingSubtitle": { "description": "Queue screen · subtitle for the tile in 'processing' section" },
+  "queueItemCancelling": "Cancelling…",
+  "@queueItemCancelling": { "description": "Queue screen · transient label while cancel request is being applied" },
+  "queueCancelAll": "Cancel all",
+  "@queueCancelAll": { "description": "Queue screen · bulk action: cancel all queued" },
+  "queueRetryAllCancelled": "Retry all",
+  "@queueRetryAllCancelled": { "description": "Queue screen · bulk action in Cancelled section: re-queue all" },
+  "queueDeleteAllCancelled": "Delete all",
+  "@queueDeleteAllCancelled": { "description": "Queue screen · bulk action in Cancelled section: permanent delete" },
+  "queueDeleteCancelledConfirmTitle": "Delete cancelled note?",
+  "@queueDeleteCancelledConfirmTitle": { "description": "Queue screen · confirm-dialog title for single cancelled delete" },
+  "queueDeleteCancelledConfirmBody": "The note and its audio will be permanently removed.",
+  "@queueDeleteCancelledConfirmBody": { "description": "Queue screen · confirm-dialog body for single cancelled delete" },
+  "queueDeleteAllCancelledConfirmTitle": "Delete all cancelled?",
+  "@queueDeleteAllCancelledConfirmTitle": { "description": "Queue screen · confirm-dialog title for bulk delete" },
+  "queueDeleteAllCancelledConfirmBody": "{count} notes and their audio will be permanently removed. This cannot be undone.",
+  "@queueDeleteAllCancelledConfirmBody": {
+    "description": "Queue screen · confirm-dialog body for bulk delete",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "queueCancelAllQueuedConfirmTitle": "Cancel all queued?",
+  "@queueCancelAllQueuedConfirmTitle": { "description": "Queue screen · confirm-dialog title for bulk queued cancel" },
+  "queueCancelAllQueuedConfirmBody": "{count} notes will move to Cancelled.",
+  "@queueCancelAllQueuedConfirmBody": {
+    "description": "Queue screen · confirm-dialog body for bulk queued cancel",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "queueCounterLabelProcessing": "Processing",
+  "@queueCounterLabelProcessing": { "description": "Queue screen · header counter label above the processing count" },
+  "queueCounterLabelQueued": "Queued",
+  "@queueCounterLabelQueued": { "description": "Queue screen · header counter label above the queued count" },
+  "queueCounterLabelFailed": "Failed",
+  "@queueCounterLabelFailed": { "description": "Queue screen · header counter label above the failed count" },
+  "queueCounterLabelCancelled": "Cancelled",
+  "@queueCounterLabelCancelled": { "description": "Queue screen · header counter label above the cancelled count" },
+  "queueConfirmDelete": "Delete",
+  "@queueConfirmDelete": { "description": "Queue screen · destructive confirm-dialog primary button" },
+  "queueConfirmCancel": "Cancel",
+  "@queueConfirmCancel": { "description": "Queue screen · destructive confirm-dialog primary button (cancel)" },
+  "queueConfirmKeep": "No",
+  "@queueConfirmKeep": { "description": "Queue screen · confirm-dialog secondary button" },
+  "queueSystemQueueTitle": "Queue",
+  "@queueSystemQueueTitle": { "description": "Queue screen · status header row title for the queue subsystem" },
+  "queueSystemModelTitle": "ASR model",
+  "@queueSystemModelTitle": { "description": "Queue screen · status header row title for the ASR model subsystem" },
+  "queueSystemActionRetry": "Retry",
+  "@queueSystemActionRetry": { "description": "Queue screen · trailing action on queue status row when paused/error" },
+  "queueSystemActionModelSettings": "Settings",
+  "@queueSystemActionModelSettings": { "description": "Queue screen · trailing action on ASR row when model not ready — opens settings" },
+  "queueBannerBootstrapError": "Queue is unavailable. Try reinitializing.",
+  "@queueBannerBootstrapError": { "description": "Queue screen · warning banner text when bootstrap fails" },
+  "queueBannerAwaitingModel": "Queue is waiting for the ASR model. Open settings to pick / download a model — processing will resume automatically.",
+  "@queueBannerAwaitingModel": { "description": "Queue screen · warning banner text when awaiting ASR model" },
+  "queueBannerBreakerTripped": "Queue paused after repeated failures. Tap Retry to resume.",
+  "@queueBannerBreakerTripped": { "description": "Queue screen · warning banner text when circuit breaker tripped" }
 }

@@ -268,6 +268,29 @@ class TranscriptionQueueService {
     }
   }
 
+  /// Массовая отмена всей очереди (queued). `processing` НЕ трогает —
+  /// отмена in-flight — отдельное намеренное решение (per-note cancel).
+  /// Стиль консистентен с [retryAll]: один `_emitSnapshot` в конце.
+  Future<void> cancelAll() async {
+    if (!_bootstrapState.isReady || _queue.isEmpty) return;
+
+    for (final uid in _queue) {
+      try {
+        _queue.remove(uid);
+        await _noteRepository.markCancelled(uid);
+      } catch (error, stackTrace) {
+        developer.log(
+          'TranscriptionQueueService.cancelAll failed for $uid',
+          error: error,
+          stackTrace: stackTrace,
+          name: 'TranscriptionQueue',
+        );
+      }
+    }
+
+    _emitSnapshot();
+  }
+
   /// Массовое «убрать с глаз» всех failed → cancelled. Мягкое действие:
   /// данные и аудио сохраняются, пользователь всё ещё может retry'нуть
   /// индивидуальную заметку.

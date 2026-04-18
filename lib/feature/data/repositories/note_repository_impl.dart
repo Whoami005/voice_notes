@@ -289,6 +289,11 @@ class NoteRepositoryImpl implements NoteRepository {
   }
 
   @override
+  Stream<List<NoteEntity>> watchTranscribing() {
+    return _noteDataSource.watchTranscribing().map(NoteMapper.toDomainList);
+  }
+
+  @override
   @disposeMethod
   Future<void> dispose() async {
     await _deletedController.close();

@@ -6,7 +6,7 @@ import 'package:voice_notes/core/packages/app_router/route_builder.dart';
 import 'package:voice_notes/core/packages/app_router/routes/app_routes.dart';
 import 'package:voice_notes/core/packages/app_router/routes/folders_routes.dart';
 import 'package:voice_notes/core/packages/app_router/routes/settings_routes.dart';
-import 'package:voice_notes/feature/presentation/pages/transcription/screens/queue_management_screen.dart';
+import 'package:voice_notes/feature/presentation/pages/queue/screens/queue_management_screen.dart';
 
 /// AppRouter - класс для управления навигацией в приложении.
 ///
@@ -64,6 +64,7 @@ class AppRouter {
               RootScreen(navigationShell: navigationShell),
           branches: [FoldersRouteModule.branch(), SettingsRouteModule.branch()],
         ),
+
         ///TODO: узнать нормально ли это в go_router когда экран глобал
         GoRoute(
           path: AppRoutes.queue.pattern,

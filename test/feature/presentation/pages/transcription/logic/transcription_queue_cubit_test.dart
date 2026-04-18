@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:voice_notes/core/packages/transcription/transcription_queue_service.dart';
 import 'package:voice_notes/core/packages/transcription/transcription_queue_snapshot.dart';
-import 'package:voice_notes/feature/presentation/pages/transcription/logic/transcription_queue_cubit.dart';
+import 'package:voice_notes/feature/presentation/pages/queue/logic/transcription_queue_cubit.dart';
 
 void main() {
   group('TranscriptionQueueCubit (thin adapter)', () {

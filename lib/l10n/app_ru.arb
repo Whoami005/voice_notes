@@ -418,15 +418,13 @@
   "@queueAsrReady": { "description": "ASR status on queue screen: model loaded" },
   "queueAsrNotReady": "Модель не загружена",
   "@queueAsrNotReady": { "description": "ASR status on queue screen: model unavailable" },
-  "queueFailedSection": "Провалившиеся ({count})",
+  "queueFailedSection": "Провалившиеся",
   "@queueFailedSection": {
-    "description": "Queue screen: failed section header with count",
-    "placeholders": { "count": { "type": "int" } }
+    "description": "Queue screen: failed section header (count shown separately)"
   },
-  "queueCancelledSection": "Отменённые ({count})",
+  "queueCancelledSection": "Отменённые",
   "@queueCancelledSection": {
-    "description": "Queue screen: cancelled section header with count",
-    "placeholders": { "count": { "type": "int" } }
+    "description": "Queue screen: cancelled section header (count shown separately)"
   },
   "queueRetryAll": "Повторить все",
   "@queueRetryAll": { "description": "Button: requeue all failed notes" },
@@ -436,8 +434,11 @@
   "@queueEmptyFailed": { "description": "Empty state for failed section" },
   "queueEmptyCancelled": "Нет отменённых расшифровок",
   "@queueEmptyCancelled": { "description": "Empty state for cancelled section" },
-  "queueItemUntitled": "Без названия",
-  "@queueItemUntitled": { "description": "Fallback title for empty-text notes on queue screen" },
+  "queueItemDefaultTitle": "Заметка {date}",
+  "@queueItemDefaultTitle": {
+    "description": "Fallback title for empty-text notes on queue screen; {date} is a short timestamp like 14.04 09:11",
+    "placeholders": { "date": { "type": "String" } }
+  },
   "noteActionRetry": "Повторить",
   "@noteActionRetry": { "description": "Retry button on failed/cancelled note bubble" },
   "noteActionCancel": "Отменить",
@@ -450,5 +451,72 @@
     "placeholders": { "count": { "type": "int" } }
   },
   "transcriptionQueueInitializingTitle": "Подключаемся к очереди расшифровки…",
-  "@transcriptionQueueInitializingTitle": { "description": "Banner shown while the transcription queue is booting up (seed phase)" }
+  "@transcriptionQueueInitializingTitle": { "description": "Banner shown while the transcription queue is booting up (seed phase)" },
+
+  "queueProcessingSection": "Сейчас обрабатывается",
+  "@queueProcessingSection": { "description": "Queue screen · section header for the currently-transcribing note" },
+  "queueQueuedSection": "В очереди",
+  "@queueQueuedSection": {
+    "description": "Queue screen · section header for notes waiting in queue (count shown separately)"
+  },
+  "queueEmptyQueued": "Очередь пуста",
+  "@queueEmptyQueued": { "description": "Queue screen · empty-state hint for queued section" },
+  "queueEmptyProcessing": "Нет активной расшифровки",
+  "@queueEmptyProcessing": { "description": "Queue screen · empty-state hint for processing group" },
+  "queueItemProcessingSubtitle": "Идёт расшифровка…",
+  "@queueItemProcessingSubtitle": { "description": "Queue screen · subtitle for the tile in 'processing' section" },
+  "queueItemCancelling": "Отмена…",
+  "@queueItemCancelling": { "description": "Queue screen · transient label while cancel request is being applied" },
+  "queueCancelAll": "Отменить все",
+  "@queueCancelAll": { "description": "Queue screen · bulk action: cancel all queued" },
+  "queueRetryAllCancelled": "Повторить все",
+  "@queueRetryAllCancelled": { "description": "Queue screen · bulk action in Cancelled section: re-queue all" },
+  "queueDeleteAllCancelled": "Удалить все",
+  "@queueDeleteAllCancelled": { "description": "Queue screen · bulk action in Cancelled section: permanent delete" },
+  "queueDeleteCancelledConfirmTitle": "Удалить отменённую заметку?",
+  "@queueDeleteCancelledConfirmTitle": { "description": "Queue screen · confirm-dialog title for single cancelled delete" },
+  "queueDeleteCancelledConfirmBody": "Запись и связанное аудио будут удалены безвозвратно.",
+  "@queueDeleteCancelledConfirmBody": { "description": "Queue screen · confirm-dialog body for single cancelled delete" },
+  "queueDeleteAllCancelledConfirmTitle": "Удалить все отменённые?",
+  "@queueDeleteAllCancelledConfirmTitle": { "description": "Queue screen · confirm-dialog title for bulk delete" },
+  "queueDeleteAllCancelledConfirmBody": "Будут удалены {count} записей и связанные аудио. Действие необратимо.",
+  "@queueDeleteAllCancelledConfirmBody": {
+    "description": "Queue screen · confirm-dialog body for bulk delete",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "queueCancelAllQueuedConfirmTitle": "Отменить все в очереди?",
+  "@queueCancelAllQueuedConfirmTitle": { "description": "Queue screen · confirm-dialog title for bulk queued cancel" },
+  "queueCancelAllQueuedConfirmBody": "{count} запис(и) перейдут в статус «Отменённые».",
+  "@queueCancelAllQueuedConfirmBody": {
+    "description": "Queue screen · confirm-dialog body for bulk queued cancel",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "queueCounterLabelProcessing": "Сейчас",
+  "@queueCounterLabelProcessing": { "description": "Queue screen · header counter label above the processing count" },
+  "queueCounterLabelQueued": "В очереди",
+  "@queueCounterLabelQueued": { "description": "Queue screen · header counter label above the queued count" },
+  "queueCounterLabelFailed": "Провалившиеся",
+  "@queueCounterLabelFailed": { "description": "Queue screen · header counter label above the failed count" },
+  "queueCounterLabelCancelled": "Отменённые",
+  "@queueCounterLabelCancelled": { "description": "Queue screen · header counter label above the cancelled count" },
+  "queueConfirmDelete": "Удалить",
+  "@queueConfirmDelete": { "description": "Queue screen · destructive confirm-dialog primary button" },
+  "queueConfirmCancel": "Отменить",
+  "@queueConfirmCancel": { "description": "Queue screen · destructive confirm-dialog primary button (cancel)" },
+  "queueConfirmKeep": "Нет",
+  "@queueConfirmKeep": { "description": "Queue screen · confirm-dialog secondary button" },
+  "queueSystemQueueTitle": "Очередь",
+  "@queueSystemQueueTitle": { "description": "Queue screen · status header row title for the queue subsystem" },
+  "queueSystemModelTitle": "ASR-модель",
+  "@queueSystemModelTitle": { "description": "Queue screen · status header row title for the ASR model subsystem" },
+  "queueSystemActionRetry": "Повторить",
+  "@queueSystemActionRetry": { "description": "Queue screen · trailing action on queue status row when paused/error" },
+  "queueSystemActionModelSettings": "Настройки",
+  "@queueSystemActionModelSettings": { "description": "Queue screen · trailing action on ASR row when model not ready — opens settings" },
+  "queueBannerBootstrapError": "Очередь недоступна. Попробуй повторить инициализацию.",
+  "@queueBannerBootstrapError": { "description": "Queue screen · warning banner text when bootstrap fails" },
+  "queueBannerAwaitingModel": "Очередь ждёт ASR-модель. Открой настройки, чтобы выбрать/загрузить модель — после этого обработка продолжится автоматически.",
+  "@queueBannerAwaitingModel": { "description": "Queue screen · warning banner text when awaiting ASR model" },
+  "queueBannerBreakerTripped": "Очередь приостановлена после нескольких ошибок подряд. Нажми «Повторить», чтобы продолжить.",
+  "@queueBannerBreakerTripped": { "description": "Queue screen · warning banner text when circuit breaker tripped" }
 }

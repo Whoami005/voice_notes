@@ -67,6 +67,12 @@ abstract interface class NoteLocalDataSource {
 
   Stream<List<NoteObject>> watchCancelled();
 
+  /// Заметки в статусе `transcribing`. 0 или 1 элемент (инвариант сервиса).
+  /// Нужен для реактивного тайла «Сейчас обрабатывается» на экране очереди.
+  Future<List<NoteObject>> getTranscribing();
+
+  Stream<List<NoteObject>> watchTranscribing();
+
   /// Cold-start recovery: подбирает заметки, застрявшие в transcribing
   /// после kill'а изолята.
   Future<void> resetTranscribingToQueued();
@@ -351,6 +357,19 @@ class NoteLocalDataSourceImpl implements NoteLocalDataSource {
   Stream<List<NoteObject>> watchCancelled() {
     return _noteDao
         .queryCancelled(_db.box)
+        .watch(triggerImmediately: true)
+        .map((q) => q.find());
+  }
+
+  @override
+  Future<List<NoteObject>> getTranscribing() async {
+    return _noteDao.findTranscribing(_db.box);
+  }
+
+  @override
+  Stream<List<NoteObject>> watchTranscribing() {
+    return _noteDao
+        .queryTranscribing(_db.box)
         .watch(triggerImmediately: true)
         .map((q) => q.find());
   }

@@ -14,7 +14,7 @@ import 'package:voice_notes/core/theme/app_theme.dart';
 import 'package:voice_notes/core/theme/theme_cubit.dart';
 import 'package:voice_notes/feature/domain/repositories/model_repository.dart';
 import 'package:voice_notes/feature/presentation/pages/error/initialization_error_screen.dart';
-import 'package:voice_notes/feature/presentation/pages/transcription/logic/transcription_queue_cubit.dart';
+import 'package:voice_notes/feature/presentation/pages/queue/logic/transcription_queue_cubit.dart';
 import 'package:voice_notes/l10n/app_localizations.dart';
 
 class AppInitializer extends StatefulWidget {

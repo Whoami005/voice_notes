@@ -31,6 +31,8 @@ class TranscriptionQueueCubit extends BaseCubit<TranscriptionQueueState> {
 
   Future<void> retryAll() => _service.retryAll();
 
+  Future<void> cancelAll() => _service.cancelAll();
+
   Future<void> clearFailedAll() => _service.clearFailedAll();
 
   Future<void> dismissFailed(String uid) => _service.dismissFailed(uid);

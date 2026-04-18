@@ -15,7 +15,7 @@ import 'package:voice_notes/core/theme/app_colors.dart';
 import 'package:voice_notes/core/theme/app_typography.dart';
 import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/logic/recording_cubit.dart';
-import 'package:voice_notes/feature/presentation/pages/transcription/logic/transcription_queue_cubit.dart';
+import 'package:voice_notes/feature/presentation/pages/queue/logic/transcription_queue_cubit.dart';
 import 'package:voice_notes/feature/presentation/widgets/dialogs/error_dialog.dart';
 import 'package:voice_notes/feature/presentation/widgets/dialogs/success_dialog.dart';
 import 'package:voice_notes/feature/presentation/widgets/toasts/app_toast.dart';

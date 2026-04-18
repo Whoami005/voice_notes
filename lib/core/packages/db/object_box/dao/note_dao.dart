@@ -77,9 +77,7 @@ class NoteDao {
   /// вернёт их в queued до того, как этот метод вызовется.
   List<NoteObject> findQueued(BoxProvider box) {
     final query = box<NoteObject>()
-        .query(
-          NoteObject_.statusValue.equals(TranscriptionStatus.queued.value),
-        )
+        .query(NoteObject_.statusValue.equals(TranscriptionStatus.queued.value))
         .order(NoteObject_.createdAt)
         .build();
 
@@ -180,6 +178,34 @@ class NoteDao {
     return box<NoteObject>()
         .query(
           NoteObject_.statusValue.equals(TranscriptionStatus.cancelled.value),
+        )
+        .order(NoteObject_.updatedAt, flags: Order.descending);
+  }
+
+  /// Заметки в статусе `transcribing`. На практике 0 или 1 — сервис
+  /// обрабатывает строго одну. Сортируем по updatedAt DESC для консистентности.
+  List<NoteObject> findTranscribing(BoxProvider box) {
+    final query = box<NoteObject>()
+        .query(
+          NoteObject_.statusValue.equals(
+            TranscriptionStatus.transcribing.value,
+          ),
+        )
+        .order(NoteObject_.updatedAt, flags: Order.descending)
+        .build();
+
+    final result = query.find();
+    query.close();
+
+    return result;
+  }
+
+  QueryBuilder<NoteObject> queryTranscribing(BoxProvider box) {
+    return box<NoteObject>()
+        .query(
+          NoteObject_.statusValue.equals(
+            TranscriptionStatus.transcribing.value,
+          ),
         )
         .order(NoteObject_.updatedAt, flags: Order.descending);
   }

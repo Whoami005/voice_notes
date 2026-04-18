@@ -7,9 +7,9 @@ import 'package:voice_notes/core/packages/transcription/transcription_queue_snap
 import 'package:voice_notes/core/state/status/status_state.dart';
 import 'package:voice_notes/core/theme/app_colors.dart';
 import 'package:voice_notes/core/theme/app_typography.dart';
+import 'package:voice_notes/feature/presentation/pages/queue/logic/transcription_queue_cubit.dart';
+import 'package:voice_notes/feature/presentation/pages/queue/screens/queue_management_screen.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/models/screens/models_settings_screen.dart';
-import 'package:voice_notes/feature/presentation/pages/transcription/logic/transcription_queue_cubit.dart';
-import 'package:voice_notes/feature/presentation/pages/transcription/screens/queue_management_screen.dart';
 import 'package:voice_notes/feature/presentation/widgets/conditional/conditional_wrapper.dart';
 
 /// Баннер статуса ASR сервиса и bootstrap'а очереди транскрибации.
