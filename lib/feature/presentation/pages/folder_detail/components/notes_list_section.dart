@@ -11,6 +11,7 @@ import 'package:voice_notes/feature/presentation/pages/folder_detail/logic/folde
 import 'package:voice_notes/feature/presentation/pages/folder_detail/widgets/date_separator.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/widgets/note_bubble.dart';
 import 'package:voice_notes/feature/presentation/pages/note_detail/screens/note_detail_screen.dart';
+import 'package:voice_notes/feature/presentation/pages/transcription/logic/transcription_queue_cubit.dart';
 import 'package:voice_notes/feature/presentation/widgets/lists/bloc_grouped_sliver_list.dart';
 
 class NotesListSection extends StatelessWidget {
@@ -20,6 +21,8 @@ class NotesListSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = context.l10n;
     final localeCode = Localizations.localeOf(context).languageCode;
+    final queueCubit = context.read<TranscriptionQueueCubit>();
+    final playbackCubit = context.read<FolderPlaybackCubit>();
 
     return BlocGroupedSliverList<
       FolderDetailCubit,
@@ -36,7 +39,7 @@ class NotesListSection extends StatelessWidget {
         left: AppSizes.screenPadding,
         right: AppSizes.screenPadding,
         top: AppSizes.p8,
-        bottom: 130,
+        bottom: AppSizes.listBottomSafeForFab,
       ),
       headerBuilder: (context, label) => DateSeparator(date: label),
       itemBuilder: (context, note, index) {
@@ -51,7 +54,6 @@ class NotesListSection extends StatelessWidget {
             state.waveform(note.uuid),
           ),
           builder: (context, record) {
-            final playbackCubit = context.read<FolderPlaybackCubit>();
             final (isPlaying, trackState, waveformData) = record;
             final audioExists = note.audio != null;
 
@@ -75,6 +77,12 @@ class NotesListSection extends StatelessWidget {
                   noteId: note.uuid,
                 );
               },
+              onRetry: (note.isFailed || note.isCancelled)
+                  ? () => queueCubit.retry(note.uuid)
+                  : null,
+              onCancel: (note.isQueued || note.isTranscribing)
+                  ? () => queueCubit.cancel(note.uuid)
+                  : null,
               onCopy: () => Clipboard.setData(ClipboardData(text: note.text)),
               onShare: () {},
             );

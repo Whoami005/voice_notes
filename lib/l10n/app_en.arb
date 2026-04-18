@@ -237,6 +237,8 @@
   "@queueStatusActive": { "description": "Queue status: ready and accepting work" },
   "queueStatusPaused": "Paused after failures",
   "@queueStatusPaused": { "description": "Queue status: circuit breaker engaged" },
+  "queueStatusAwaitingModel": "Awaiting model",
+  "@queueStatusAwaitingModel": { "description": "Queue status: ASR model unavailable (not selected or switching)" },
   "queueStatusLoading": "Initializing…",
   "@queueStatusLoading": { "description": "Queue status: bootstrap in progress" },
   "queueAsrReady": "Model ready",

@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
+import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
+import 'package:voice_notes/core/l10n/transcription_failure_reason_l10n.dart';
+import 'package:voice_notes/core/packages/asr/asr_cubit.dart';
 import 'package:voice_notes/core/packages/player/audio_playback_controller.dart';
+import 'package:voice_notes/core/packages/transcription/asr_rtf_estimates.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
+import 'package:voice_notes/feature/domain/enums/transcription_failure_reason.dart';
 import 'package:voice_notes/feature/presentation/widgets/audio/audio_inline_player.dart';
 import 'package:voice_notes/feature/presentation/widgets/chips/tag_chip.dart';
 
@@ -16,6 +22,8 @@ class NoteBubble extends StatelessWidget {
   final VoidCallback? onTap;
   final VoidCallback? onCopy;
   final VoidCallback? onShare;
+  final VoidCallback? onRetry;
+  final VoidCallback? onCancel;
 
   final EdgeInsetsGeometry? margin;
 
@@ -29,20 +37,21 @@ class NoteBubble extends StatelessWidget {
     this.onTap,
     this.onCopy,
     this.onShare,
-    super.key,
+    this.onRetry,
+    this.onCancel,
     this.margin,
+    super.key,
   });
 
   @override
   Widget build(BuildContext context) {
-    final textTheme = context.textTheme;
     final themeColors = context.themeColors;
     final screenWidth = context.screenSize.width;
 
     return Align(
       alignment: Alignment.centerRight,
       child: GestureDetector(
-        onTap: onTap,
+        onTap: note.isCompleted ? onTap : null,
         child: Container(
           constraints: BoxConstraints(maxWidth: screenWidth * 0.85),
           padding: const EdgeInsets.symmetric(
@@ -78,13 +87,8 @@ class NoteBubble extends StatelessWidget {
                   onSeek: onSeek ?? (_) {},
                   waveformData: waveformData,
                 ),
-              Text(
-                note.text,
-                style: textTheme.bodyMedium?.copyWith(height: 1.5),
-                maxLines: 5,
-                overflow: TextOverflow.ellipsis,
-              ),
-              if (note.tags.isNotEmpty)
+              _StatusContent(note: note, onRetry: onRetry, onCancel: onCancel),
+              if (note.isCompleted && note.tags.isNotEmpty)
                 Wrap(
                   spacing: AppSizes.p6,
                   runSpacing: AppSizes.p6,
@@ -102,6 +106,190 @@ class NoteBubble extends StatelessWidget {
   }
 }
 
+class _StatusContent extends StatelessWidget {
+  final NoteEntity note;
+  final VoidCallback? onRetry;
+  final VoidCallback? onCancel;
+
+  const _StatusContent({
+    required this.note,
+    required this.onRetry,
+    required this.onCancel,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (note.isCompleted) {
+      final textTheme = context.textTheme;
+
+      return Text(
+        note.text,
+        style: textTheme.bodyMedium?.copyWith(height: 1.5),
+        maxLines: 5,
+        overflow: TextOverflow.ellipsis,
+      );
+    }
+
+    final themeColors = context.themeColors;
+    final l10n = context.l10n;
+
+    final cancel = onCancel;
+    final cancelAction = cancel == null
+        ? null
+        : _StatusAction(
+            icon: Icons.close,
+            label: l10n.noteActionCancel,
+            color: themeColors.textSecondary,
+            onPressed: cancel,
+          );
+
+    if (note.isQueued) {
+      return _StatusLine(
+        icon: Icons.schedule_outlined,
+        label: l10n.noteStatusQueued,
+        color: themeColors.textSecondary,
+        italic: true,
+        action: cancelAction,
+      );
+    }
+
+    if (note.isTranscribing) {
+      return _StatusLine(
+        showSpinner: true,
+        label: _transcribingLabel(context),
+        color: themeColors.textSecondary,
+        italic: true,
+        action: cancelAction,
+      );
+    }
+
+    final retry = onRetry;
+    final retryAction = retry == null
+        ? null
+        : _StatusAction(
+            icon: Icons.refresh,
+            label: l10n.noteActionRetry,
+            color: themeColors.accentPrimary,
+            onPressed: retry,
+          );
+
+    if (note.isCancelled) {
+      return _StatusLine(
+        icon: Icons.block_outlined,
+        label: l10n.noteStatusCancelled,
+        color: themeColors.textTertiary,
+        action: retryAction,
+      );
+    }
+
+    final reason = note.failureReason ?? TranscriptionFailureReason.unknown;
+    return _StatusLine(
+      icon: Icons.error_outline,
+      label: reason.title(l10n),
+      color: themeColors.error,
+      action: reason.isPermanent ? null : retryAction,
+    );
+  }
+
+  String _transcribingLabel(BuildContext context) {
+    final l10n = context.l10n;
+    final modelType = context.read<AsrCubit>().state.modelType;
+    if (modelType == null) return l10n.noteStatusTranscribing;
+
+    final eta = AsrRtfEstimates.estimate(note.duration, modelType);
+    return l10n.noteStatusTranscribingEta(eta.inSeconds);
+  }
+}
+
+/// Строка статуса с иконкой/спиннером, подписью и опциональной кнопкой.
+class _StatusLine extends StatelessWidget {
+  final IconData? icon;
+  final bool showSpinner;
+  final String label;
+  final Color color;
+  final bool italic;
+  final _StatusAction? action;
+
+  const _StatusLine({
+    required this.label,
+    required this.color,
+    this.icon,
+    this.showSpinner = false,
+    this.italic = false,
+    this.action,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = context.textTheme;
+    final action = this.action;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          spacing: AppSizes.p8,
+          children: [
+            if (showSpinner)
+              SizedBox(
+                width: AppSizes.p16,
+                height: AppSizes.p16,
+                child: CircularProgressIndicator(
+                  strokeWidth: AppSizes.strokeThin,
+                  color: color,
+                ),
+              )
+            else if (icon != null)
+              Icon(icon, size: AppSizes.p16, color: color),
+            Flexible(
+              child: Text(
+                label,
+                style: textTheme.bodyMedium?.copyWith(
+                  color: color,
+                  fontStyle: italic ? FontStyle.italic : null,
+                  height: 1.5,
+                ),
+              ),
+            ),
+          ],
+        ),
+        if (action != null) ...[
+          AppSpacer.p8,
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: action.onPressed,
+              icon: Icon(action.icon, size: AppSizes.p16),
+              label: Text(action.label),
+              style: TextButton.styleFrom(
+                foregroundColor: action.color,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSizes.p12,
+                  vertical: AppSizes.p6,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _StatusAction {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onPressed;
+
+  const _StatusAction({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onPressed,
+  });
+}
+
 class _MetaInfo extends StatelessWidget {
   final NoteEntity note;
 
@@ -117,8 +305,10 @@ class _MetaInfo extends StatelessWidget {
         Text(_formatTime(note.createdAt), style: metaStyle),
         const _Dot(),
         Text(_formatDuration(note.duration), style: metaStyle),
-        const _Dot(),
-        Text(note.language, style: metaStyle),
+        if (note.language.isNotEmpty) ...[
+          const _Dot(),
+          Text(note.language, style: metaStyle),
+        ],
       ],
     );
   }
