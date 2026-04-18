@@ -1,14 +1,11 @@
 part of 'recording_cubit.dart';
 
-/// Состояние сессии записи
-///
-/// Представляет полный жизненный цикл записи:
-/// idle -> recording -> transcribing -> success/error -> idle
+/// Жизненный цикл записи: idle → recording → transcribing → success/error
+/// → idle.
 sealed class RecordingState extends Equatable {
   const RecordingState();
 }
 
-/// Idle состояние — готов к записи
 final class RecordingIdleState extends RecordingState {
   const RecordingIdleState();
 
@@ -16,12 +13,8 @@ final class RecordingIdleState extends RecordingState {
   List<Object?> get props => [];
 }
 
-/// Запись в процессе
 final class RecordingActiveState extends RecordingState {
-  /// Текущая длительность записи
   final Duration duration;
-
-  /// Амплитуда для визуализации (для будущей анимации waveform)
   final double? amplitude;
 
   const RecordingActiveState({this.duration = Duration.zero, this.amplitude});
@@ -37,15 +30,9 @@ final class RecordingActiveState extends RecordingState {
   }
 }
 
-/// Транскрибирование записанного аудио
 final class RecordingTranscribingState extends RecordingState {
-  /// Промежуточный результат транскрибации (для streaming в будущем)
   final String? partialText;
-
-  /// Путь к аудио файлу
   final String filePath;
-
-  /// Длительность записи
   final Duration duration;
 
   const RecordingTranscribingState({
@@ -58,21 +45,11 @@ final class RecordingTranscribingState extends RecordingState {
   List<Object?> get props => [filePath, duration, partialText];
 }
 
-/// Транскрибация завершена успешно
 final class RecordingSuccessState extends RecordingState {
-  /// Распознанный текст
   final String text;
-
-  /// Длительность записи
   final Duration duration;
-
-  /// Путь к аудио файлу (для сохранения с заметкой в будущем)
   final String? audioFilePath;
-
-  /// Определённый язык
   final String? language;
-
-  /// Количество слов
   final int wordCount;
 
   const RecordingSuccessState({
@@ -93,7 +70,6 @@ final class RecordingSuccessState extends RecordingState {
   ];
 }
 
-/// Ошибка во время записи или транскрибации
 final class RecordingErrorState extends RecordingState {
   final AppFailure failure;
 
@@ -105,7 +81,6 @@ final class RecordingErrorState extends RecordingState {
   List<Object?> get props => [failure];
 }
 
-/// Extension для удобной проверки состояния
 extension RecordingStateX on RecordingState {
   bool get isIdle => this is RecordingIdleState;
 
@@ -117,16 +92,17 @@ extension RecordingStateX on RecordingState {
 
   bool get isError => this is RecordingErrorState;
 
-  /// Конвертация в UI состояние для RecordingInput виджета
+  /// `RecordingTranscribingState` используется только Quick Record'ом (там
+  /// UI-биндинг через флаг `isTranscribing`). В folder-баре этот state
+  /// никогда не эмитится, поэтому маппим его в `idle`.
   RecordingInputState get uiState => switch (this) {
     RecordingIdleState() => RecordingInputState.idle,
     RecordingActiveState() => RecordingInputState.recording,
-    RecordingTranscribingState() => RecordingInputState.transcribing,
+    RecordingTranscribingState() => RecordingInputState.idle,
     RecordingSuccessState() => RecordingInputState.idle,
     RecordingErrorState() => RecordingInputState.idle,
   };
 
-  /// Получить длительность если доступна
   Duration? get durationOrNull => switch (this) {
     RecordingActiveState(:final duration) => duration,
     RecordingTranscribingState(:final duration) => duration,

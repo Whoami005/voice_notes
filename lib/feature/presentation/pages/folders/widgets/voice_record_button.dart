@@ -9,25 +9,30 @@ import 'package:voice_notes/core/packages/asr/asr_cubit.dart';
 import 'package:voice_notes/core/packages/asr/asr_service.dart';
 import 'package:voice_notes/core/packages/audio/audio_recording_service.dart';
 import 'package:voice_notes/core/packages/di/injection.dart';
+import 'package:voice_notes/core/packages/note_ingestion/note_ingestion_service.dart';
 import 'package:voice_notes/core/packages/player/audio_playback_controller.dart';
 import 'package:voice_notes/core/theme/app_colors.dart';
-import 'package:voice_notes/feature/data/local/preferences/recording_preferences.dart';
+import 'package:voice_notes/core/theme/app_typography.dart';
 import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/logic/recording_cubit.dart';
+import 'package:voice_notes/feature/presentation/pages/transcription/logic/transcription_queue_cubit.dart';
 import 'package:voice_notes/feature/presentation/widgets/dialogs/error_dialog.dart';
 import 'package:voice_notes/feature/presentation/widgets/dialogs/success_dialog.dart';
+import 'package:voice_notes/feature/presentation/widgets/toasts/app_toast.dart';
 
 abstract final class _Styles {
-  static const buttonSize = 60.0;
-  static const maxRipples = 4;
-  static const pulseDuration = Duration(milliseconds: 1500);
-  static const gradientDuration = Duration(milliseconds: 2000);
-  static const rippleSpawnInterval = Duration(milliseconds: 600);
-  static const rippleDuration = Duration(milliseconds: 1800);
-  static const darkShadowBlur = 32.0;
-  static const lightShadowBlur = 16.0;
-  static const glowBlurRadius = 30.0;
-  static const shadowOffset = Offset(0, 8);
+  static const double buttonSize = 60;
+  static const int maxRipples = 4;
+  static const Duration pulseDuration = Duration(milliseconds: 1500);
+  static const Duration gradientDuration = Duration(milliseconds: 2000);
+  static const Duration rippleSpawnInterval = Duration(milliseconds: 600);
+  static const Duration rippleDuration = Duration(milliseconds: 1800);
+  static const double darkShadowBlur = AppSizes.blurXXL;
+  static const double lightShadowBlur = AppSizes.blurLarge;
+  static const double glowBlurRadius = AppSizes.blurXL;
+  static const Offset shadowOffset = Offset(0, 8);
+  static const double timerBadgeOffset = 10;
+  static const double rippleExpansion = 80;
 }
 
 class VoiceRecordButton extends StatelessWidget {
@@ -44,8 +49,8 @@ class VoiceRecordButton extends StatelessWidget {
         recordingService: getIt<AudioRecordingService>(),
         asrService: getIt<AsrService>(),
         noteRepository: getIt<NoteRepository>(),
-        preferences: getIt<RecordingPreferences>(),
         playbackController: getIt<AudioPlaybackController>(),
+        ingestionService: getIt<NoteIngestionService>(),
       ),
       child: BlocListener<RecordingCubit, RecordingState>(
         listener: _handleStateChange,
@@ -56,6 +61,22 @@ class VoiceRecordButton extends StatelessWidget {
 
   void _handleStateChange(BuildContext context, RecordingState state) {
     switch (state) {
+      ///TODO: для быстрой транскрибации давать приоритет и класть в начало очереди.
+      case RecordingTranscribingState():
+        // Quick Record синхронен и идёт через ту же FIFO-очередь команд
+        // изолята, что и заметки пользователя в других папках. Если там
+        // что-то есть — сообщим, что ждать придётся дольше.
+        final queueTotal = context
+            .read<TranscriptionQueueCubit>()
+            .state
+            .snapshot
+            .total;
+        if (queueTotal > 0) {
+          AppToast.info(
+            context,
+            message: context.l10n.quickRecordWaitingQueue(queueTotal),
+          );
+        }
       case RecordingSuccessState(:final text):
         SuccessDialog.showClipboardSuccess(context, text: text);
       case RecordingErrorState(:final failure):
@@ -162,13 +183,17 @@ class _VoiceRecordButtonContentState extends State<_VoiceRecordButtonContent>
     controller
       ..addStatusListener((status) {
         if (status == AnimationStatus.completed) {
-          setState(() => _ripples.remove(ripple));
+          if (mounted) {
+            setState(() => _ripples.remove(ripple));
+          } else {
+            _ripples.remove(ripple);
+          }
           controller.dispose();
         }
       })
       ..forward();
 
-    setState(() {});
+    if (mounted) setState(() {});
   }
 
   void _onTap() {
@@ -204,7 +229,10 @@ class _VoiceRecordButtonContentState extends State<_VoiceRecordButtonContent>
                 for (final ripple in _ripples)
                   Positioned.fill(
                     child: Center(
-                      child: _RippleWidget(animation: ripple.controller),
+                      child: _RippleWidget(
+                        animation: ripple.controller,
+                        colors: _vbColors(context),
+                      ),
                     ),
                   ),
               AnimatedBuilder(
@@ -226,8 +254,13 @@ class _VoiceRecordButtonContentState extends State<_VoiceRecordButtonContent>
                 Positioned(
                   left: 0,
                   right: 0,
-                  bottom: _Styles.buttonSize + 10,
-                  child: Center(child: _TimerBadge(duration: duration)),
+                  bottom: _Styles.buttonSize + _Styles.timerBadgeOffset,
+                  child: Center(
+                    child: _TimerBadge(
+                      duration: duration,
+                      colors: _vbColors(context),
+                    ),
+                  ),
                 ),
             ],
           ),
@@ -235,6 +268,10 @@ class _VoiceRecordButtonContentState extends State<_VoiceRecordButtonContent>
       },
     );
   }
+
+  VoiceButtonColors _vbColors(BuildContext context) => context.isDarkMode
+      ? AppColors.dark.voiceButton
+      : AppColors.light.voiceButton;
 }
 
 class _AnimatedButton extends StatelessWidget {
@@ -286,10 +323,10 @@ class _AnimatedButton extends StatelessWidget {
             child: Center(
               child: isTranscribing
                   ? SizedBox(
-                      width: 24,
-                      height: 24,
+                      width: AppSizes.iconLarge,
+                      height: AppSizes.iconLarge,
                       child: CircularProgressIndicator(
-                        strokeWidth: 2.5,
+                        strokeWidth: AppSizes.strokeMedium,
                         color: vb.icon,
                       ),
                     )
@@ -336,19 +373,17 @@ class _RippleData {
 
 class _RippleWidget extends StatelessWidget {
   final Animation<double> animation;
+  final VoiceButtonColors colors;
 
-  const _RippleWidget({required this.animation});
+  const _RippleWidget({required this.animation, required this.colors});
 
   @override
   Widget build(BuildContext context) {
-    final vb = context.isDarkMode
-        ? AppColors.dark.voiceButton
-        : AppColors.light.voiceButton;
-
     return AnimatedBuilder(
       animation: animation,
       builder: (context, child) {
-        final size = _Styles.buttonSize + (80 * animation.value);
+        final size =
+            _Styles.buttonSize + (_Styles.rippleExpansion * animation.value);
 
         return Opacity(
           opacity: 1.0 - animation.value,
@@ -358,7 +393,7 @@ class _RippleWidget extends StatelessWidget {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               gradient: RadialGradient(
-                colors: [vb.ripple, AppColors.transparent],
+                colors: [colors.ripple, AppColors.transparent],
               ),
             ),
           ),
@@ -370,30 +405,32 @@ class _RippleWidget extends StatelessWidget {
 
 class _TimerBadge extends StatelessWidget {
   final Duration duration;
+  final VoiceButtonColors colors;
 
-  const _TimerBadge({required this.duration});
+  const _TimerBadge({required this.duration, required this.colors});
 
   @override
   Widget build(BuildContext context) {
-    final vb = context.isDarkMode
-        ? AppColors.dark.voiceButton
-        : AppColors.light.voiceButton;
-
     return ClipRRect(
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
       child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+        filter: ImageFilter.blur(
+          sigmaX: AppSizes.blurModerate,
+          sigmaY: AppSizes.blurModerate,
+        ),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSizes.p12,
+            vertical: AppSizes.p6,
+          ),
           decoration: BoxDecoration(
-            color: vb.timerBg,
-            borderRadius: BorderRadius.circular(12),
+            color: colors.timerBg,
+            borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
           ),
           child: Text(
             _formatDuration(duration),
-            style: TextStyle(
-              color: vb.timerText,
-              fontSize: 13,
+            style: AppTypography.caption.copyWith(
+              color: colors.timerText,
               fontWeight: FontWeight.w500,
               fontFeatures: const [FontFeature.tabularFigures()],
             ),

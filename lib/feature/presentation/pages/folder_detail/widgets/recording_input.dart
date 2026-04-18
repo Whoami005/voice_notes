@@ -13,10 +13,7 @@ class RecordingInput extends StatelessWidget {
   final VoidCallback? onCancelRecording;
   final VoidCallback? onUploadFile;
 
-  /// Controller for text input in idle state
   final TextEditingController? textController;
-
-  /// Callback when user submits text note
   final ValueChanged<String>? onTextSubmit;
 
   const RecordingInput({
@@ -45,9 +42,6 @@ class RecordingInput extends StatelessWidget {
         duration: recordingDuration,
         onStopRecording: onStopRecording,
         onCancelRecording: onCancelRecording,
-      ),
-      RecordingInputState.transcribing => _TranscribingState(
-        text: transcribingText,
       ),
     };
   }
@@ -113,6 +107,7 @@ class _IdleStateState extends State<_IdleState> {
     final textTheme = context.textTheme;
 
     return Row(
+      spacing: AppSizes.p12,
       children: [
         _CircleButton(
           icon: Icons.upload_file_outlined,
@@ -121,7 +116,6 @@ class _IdleStateState extends State<_IdleState> {
           iconColor: themeColors.textSecondary,
           onTap: widget.onUploadFile,
         ),
-        AppSpacer.p12,
         Expanded(
           child: Container(
             padding: const EdgeInsets.symmetric(
@@ -154,7 +148,6 @@ class _IdleStateState extends State<_IdleState> {
             ),
           ),
         ),
-        AppSpacer.p12,
         _ActionButton(
           hasText: _hasText,
           onSend: _onSubmit,
@@ -241,51 +234,6 @@ class _RecordingState extends StatelessWidget {
   }
 }
 
-class _TranscribingState extends StatelessWidget {
-  final String? text;
-
-  const _TranscribingState({this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    final themeColors = context.themeColors;
-    final textTheme = context.textTheme;
-
-    return Container(
-      padding: const EdgeInsets.all(AppSizes.p16),
-      decoration: BoxDecoration(
-        color: themeColors.bgSecondary,
-        borderRadius: BorderRadius.circular(AppSizes.bubbleRadius),
-        border: Border.all(color: themeColors.borderPrimary),
-      ),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 20,
-            height: 20,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: themeColors.accentPrimary,
-            ),
-          ),
-          AppSpacer.p12,
-          Expanded(
-            child: Text(
-              text ?? context.l10n.transcribing,
-              style: textTheme.bodyMedium?.copyWith(
-                color: themeColors.textSecondary,
-              ),
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Animated action button that switches between mic and send icons
 class _ActionButton extends StatelessWidget {
   final bool hasText;
   final VoidCallback? onSend;
@@ -399,7 +347,6 @@ class _WaveformBars extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Static bars for basic structure (animations can be added later)
     final heights = [
       8.0,
       16.0,
