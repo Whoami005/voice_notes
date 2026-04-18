@@ -94,7 +94,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(2, 423521120091770121),
     name: 'NoteObject',
-    lastPropertyId: const obx_int.IdUid(12, 7493323197278838229),
+    lastPropertyId: const obx_int.IdUid(14, 4750715028724720631),
     flags: 0,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -171,6 +171,19 @@ final _entities = <obx_int.ModelEntity>[
         indexId: const obx_int.IdUid(14, 1755020142853247948),
         relationField: 'audio',
         relationTarget: 'NoteAudioObject',
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(13, 4576765689992024680),
+        name: 'statusValue',
+        type: 6,
+        flags: 8,
+        indexId: const obx_int.IdUid(15, 2964124524824995311),
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(14, 4750715028724720631),
+        name: 'failureReasonValue',
+        type: 6,
+        flags: 0,
       ),
     ],
     relations: <obx_int.ModelRelation>[
@@ -371,7 +384,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
     generatorVersion: obx_int.GeneratorVersion.v2025_12_16,
     entities: _entities,
     lastEntityId: const obx_int.IdUid(5, 8204965707487121265),
-    lastIndexId: const obx_int.IdUid(14, 1755020142853247948),
+    lastIndexId: const obx_int.IdUid(15, 2964124524824995311),
     lastRelationId: const obx_int.IdUid(1, 3237763071504065953),
     lastSequenceId: const obx_int.IdUid(0, 0),
     retiredEntityUids: const [],
@@ -491,7 +504,7 @@ obx_int.ModelDefinition getObjectBoxModel() {
         final textOffset = fbb.writeString(object.text);
         final modelNameOffset = fbb.writeString(object.modelName);
         final languageOffset = fbb.writeString(object.language);
-        fbb.startTable(13);
+        fbb.startTable(15);
         fbb.addInt64(0, object.id);
         fbb.addOffset(1, uidOffset);
         fbb.addOffset(2, textOffset);
@@ -503,6 +516,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
         fbb.addInt64(8, object.wordCount);
         fbb.addInt64(10, object.folder.targetId);
         fbb.addInt64(11, object.audio.targetId);
+        fbb.addInt64(12, object.statusValue);
+        fbb.addInt64(13, object.failureReasonValue);
         fbb.finish(fbb.endTable());
         return object.id;
       },
@@ -543,6 +558,14 @@ obx_int.ModelDefinition getObjectBoxModel() {
           20,
           0,
         );
+        final statusValueParam = const fb.Int64Reader().vTableGet(
+          buffer,
+          rootOffset,
+          28,
+          0,
+        );
+        final failureReasonValueParam = const fb.Int64Reader()
+            .vTableGetNullable(buffer, rootOffset, 30);
         final idParam = const fb.Int64Reader().vTableGet(
           buffer,
           rootOffset,
@@ -558,6 +581,8 @@ obx_int.ModelDefinition getObjectBoxModel() {
           modelName: modelNameParam,
           language: languageParam,
           wordCount: wordCountParam,
+          statusValue: statusValueParam,
+          failureReasonValue: failureReasonValueParam,
           id: idParam,
         );
         object.folder.targetId = const fb.Int64Reader().vTableGet(
@@ -878,6 +903,16 @@ class NoteObject_ {
   /// See [NoteObject.audio].
   static final audio = obx.QueryRelationToOne<NoteObject, NoteAudioObject>(
     _entities[1].properties[10],
+  );
+
+  /// See [NoteObject.statusValue].
+  static final statusValue = obx.QueryIntegerProperty<NoteObject>(
+    _entities[1].properties[11],
+  );
+
+  /// See [NoteObject.failureReasonValue].
+  static final failureReasonValue = obx.QueryIntegerProperty<NoteObject>(
+    _entities[1].properties[12],
   );
 
   /// see [NoteObject.tags]

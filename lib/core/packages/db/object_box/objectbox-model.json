@@ -62,7 +62,7 @@
     },
     {
       "id": "2:423521120091770121",
-      "lastPropertyId": "12:7493323197278838229",
+      "lastPropertyId": "14:4750715028724720631",
       "name": "NoteObject",
       "properties": [
         {
@@ -132,6 +132,18 @@
           "type": 11,
           "flags": 520,
           "relationTarget": "NoteAudioObject"
+        },
+        {
+          "id": "13:4576765689992024680",
+          "name": "statusValue",
+          "indexId": "15:2964124524824995311",
+          "type": 6,
+          "flags": 8
+        },
+        {
+          "id": "14:4750715028724720631",
+          "name": "failureReasonValue",
+          "type": 6
         }
       ],
       "relations": [
@@ -266,7 +278,7 @@
     }
   ],
   "lastEntityId": "5:8204965707487121265",
-  "lastIndexId": "14:1755020142853247948",
+  "lastIndexId": "15:2964124524824995311",
   "lastRelationId": "1:3237763071504065953",
   "lastSequenceId": "0:0",
   "modelVersion": 5,

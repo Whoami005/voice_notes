@@ -26,6 +26,11 @@ class NoteObject {
   String language;
   int wordCount;
 
+  @Index()
+  int statusValue;
+
+  int? failureReasonValue;
+
   final folder = ToOne<FolderObject>();
   final tags = ToMany<TagObject>();
   final audio = ToOne<NoteAudioObject>();
@@ -39,6 +44,8 @@ class NoteObject {
     required this.modelName,
     required this.language,
     required this.wordCount,
+    required this.statusValue,
+    this.failureReasonValue,
     this.id = 0,
   });
 }

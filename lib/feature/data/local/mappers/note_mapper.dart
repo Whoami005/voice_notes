@@ -2,6 +2,8 @@ import 'package:voice_notes/feature/data/local/mappers/note_audio_mapper.dart';
 import 'package:voice_notes/feature/data/local/mappers/tag_mapper.dart';
 import 'package:voice_notes/feature/data/local/models/note_object.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
+import 'package:voice_notes/feature/domain/enums/transcription_failure_reason.dart';
+import 'package:voice_notes/feature/domain/enums/transcription_status.dart';
 
 abstract final class NoteMapper {
   static NoteEntity toDomain(NoteObject e) {
@@ -17,6 +19,10 @@ abstract final class NoteMapper {
       wordCount: e.wordCount,
       tags: TagMapper.toDomainList(e.tags.toList()),
       audio: audioObj != null ? NoteAudioMapper.toDomain(audioObj) : null,
+      status: TranscriptionStatus.fromValue(e.statusValue),
+      failureReason: e.failureReasonValue == null
+          ? null
+          : TranscriptionFailureReason.fromValue(e.failureReasonValue!),
       createdAt: e.createdAt.toLocal(),
       updatedAt: e.updatedAt.toLocal(),
     );
@@ -31,12 +37,14 @@ abstract final class NoteMapper {
       modelName: n.modelName,
       language: n.language,
       wordCount: n.wordCount,
+      statusValue: n.status.value,
+      failureReasonValue: n.failureReason?.value,
       createdAt: n.createdAt,
       updatedAt: n.updatedAt,
     );
     // NB: audio relation НЕ устанавливается здесь — это будет делать
-    // NoteLocalDataSource.saveWithRelations в Этапе 2, когда появится
-    // фактический flow создания записи с сохранённым аудио.
+    // NoteLocalDataSource.saveWithRelations, когда появится фактический
+    // flow создания записи с сохранённым аудио.
   }
 
   /// Обновляет существующую entity значениями из domain-модели.
@@ -51,7 +59,9 @@ abstract final class NoteMapper {
       ..durationMs = note.duration.inMilliseconds
       ..modelName = note.modelName
       ..language = note.language
-      ..wordCount = note.wordCount;
+      ..wordCount = note.wordCount
+      ..statusValue = note.status.value
+      ..failureReasonValue = note.failureReason?.value;
   }
 
   static List<NoteEntity> toDomainList(List<NoteObject> entities) {

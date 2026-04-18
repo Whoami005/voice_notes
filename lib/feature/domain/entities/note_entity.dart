@@ -1,6 +1,8 @@
 import 'package:equatable/equatable.dart';
 import 'package:voice_notes/feature/domain/entities/note_audio_entity.dart';
 import 'package:voice_notes/feature/domain/entities/tag_entity.dart';
+import 'package:voice_notes/feature/domain/enums/transcription_failure_reason.dart';
+import 'package:voice_notes/feature/domain/enums/transcription_status.dart';
 
 class NoteEntity extends Equatable {
   final String uuid;
@@ -12,6 +14,9 @@ class NoteEntity extends Equatable {
   final int wordCount;
   final List<TagEntity> tags;
   final NoteAudioEntity? audio;
+
+  final TranscriptionStatus status;
+  final TranscriptionFailureReason? failureReason;
 
   final DateTime createdAt;
   final DateTime updatedAt;
@@ -25,10 +30,22 @@ class NoteEntity extends Equatable {
     required this.modelName,
     required this.language,
     required this.wordCount,
+    required this.status,
     this.folderId,
     this.tags = const [],
     this.audio,
+    this.failureReason,
   });
+
+  bool get isCompleted => status.isCompleted;
+
+  bool get isQueued => status.isQueued;
+
+  bool get isTranscribing => status.isTranscribing;
+
+  bool get isFailed => status.isFailed;
+
+  bool get isCancelled => status.isCancelled;
 
   @override
   List<Object?> get props => [
@@ -43,6 +60,8 @@ class NoteEntity extends Equatable {
     wordCount,
     tags,
     audio,
+    status,
+    failureReason,
   ];
 
   NoteEntity copyWith({
@@ -57,6 +76,8 @@ class NoteEntity extends Equatable {
     int? wordCount,
     List<TagEntity>? tags,
     NoteAudioEntity? Function()? audio,
+    TranscriptionStatus? status,
+    TranscriptionFailureReason? Function()? failureReason,
   }) {
     return NoteEntity(
       uuid: uuid ?? this.uuid,
@@ -70,6 +91,10 @@ class NoteEntity extends Equatable {
       wordCount: wordCount ?? this.wordCount,
       tags: tags ?? this.tags,
       audio: audio != null ? audio() : this.audio,
+      status: status ?? this.status,
+      failureReason: failureReason != null
+          ? failureReason()
+          : this.failureReason,
     );
   }
 }
