@@ -13,7 +13,6 @@ abstract class AppRoutes {
 
   static const folders = _FoldersRoutes();
   static const settings = _SettingsRoutes();
-  static const queue = _QueueRoutes();
 }
 
 /// Пути для раздела Folders
@@ -59,14 +58,7 @@ class _SettingsRoutes {
   /// обратно в null в `GoRoute` builder.
   String folderStorage(String folderUid) =>
       '/settings/general/storage/$folderUid';
-}
 
-/// Пути для экрана управления очередью транскрибации.
-class _QueueRoutes {
-  const _QueueRoutes();
-
-  /// Шаблон / путь для GoRoute: /queue
-  String get pattern => '/queue';
-
-  String get root => '/queue';
+  /// Путь для навигации: /settings/general/queue
+  String get queue => '/settings/general/queue';
 }

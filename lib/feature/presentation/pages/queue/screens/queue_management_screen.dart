@@ -21,7 +21,7 @@ class QueueManagementScreen extends StatelessWidget implements AppRouteWrapper {
   const QueueManagementScreen({super.key});
 
   static void go(BuildContext context) {
-    context.push(AppRoutes.queue.root);
+    context.push(AppRoutes.settings.queue);
   }
 
   @override
