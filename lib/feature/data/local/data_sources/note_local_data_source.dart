@@ -8,54 +8,38 @@ import 'package:voice_notes/feature/data/local/models/note_audio_object.dart';
 import 'package:voice_notes/feature/data/local/models/note_object.dart';
 import 'package:voice_notes/feature/data/local/models/tag_object.dart';
 import 'package:voice_notes/feature/domain/entities/note_audio_entity.dart';
+import 'package:voice_notes/feature/domain/enums/transcription_status.dart';
 
-/// Локальный источник данных для работы с заметками
 abstract interface class NoteLocalDataSource {
-  /// Получить все заметки, отсортированные по createdAt DESC
   Future<List<NoteObject>> getAll();
 
-  /// Получить заметку по UID
   Future<NoteObject> getByUid(String uid);
 
-  /// Получить заметки по UID папки
+  Future<NoteObject?> findByUidOrNull(String uid);
+
   Future<List<NoteObject>> getByFolderUid(String folderUid);
 
-  /// Получить заметки без папки
   Future<List<NoteObject>> getWithoutFolder();
 
-  /// Сохранить новую заметку
   Future<NoteObject> save(NoteObject note);
 
-  /// Обновить существующую заметку
   Future<NoteObject> update(NoteObject note);
 
-  /// Удалить заметку по UID.
-  ///
-  /// Если у заметки было аудио — удаляет и связанный [NoteAudioObject]
-  /// в той же транзакции. Возвращает относительный путь аудиофайла
-  /// (для последующего удаления с диска вне транзакции) или null, если
-  /// аудио не было.
+  /// Возвращает относительный путь аудио (или null) — файл удаляется
+  /// вне транзакции, чтобы БД оставалась консистентной при ошибке I/O.
   Future<String?> delete(String uid);
 
-  /// Переместить заметку в другую папку атомарно (обновляет обе папки)
   Future<NoteObject> moveToFolder({
     required String noteUid,
     String? targetFolderUid,
   });
 
-  /// Стрим всех заметок с реактивными обновлениями
   Stream<List<NoteObject>> watchAll();
 
-  /// Стрим заметок по UID папки с реактивными обновлениями
   Stream<List<NoteObject>> watchByFolderUid(String folderUid);
 
-  /// Стрим заметок без папки с реактивными обновлениями
   Stream<List<NoteObject>> watchWithoutFolder();
 
-  /// Сохранить заметку с папкой, тегами и (опционально) аудио атомарно.
-  ///
-  /// Если передан [audio] — внутри транзакции создаётся `NoteAudioObject`
-  /// с денормализованным `folderUid` и прикрепляется к заметке через relation.
   Future<NoteObject> saveWithRelations({
     required NoteObject note,
     String? folderUid,
@@ -63,14 +47,53 @@ abstract interface class NoteLocalDataSource {
     NoteAudioEntity? audio,
   });
 
-  /// Обновить заметку с тегами атомарно
   Future<NoteObject> updateWithTags({
     required NoteObject note,
     required List<String> tagNames,
   });
+
+  /// Только queued, createdAt ASC.
+  Future<List<NoteObject>> getQueued();
+
+  Stream<List<NoteObject>> watchQueued();
+
+  /// Заметки в статусе `failed`. Свежие — первыми (updatedAt DESC).
+  Future<List<NoteObject>> getFailed();
+
+  Stream<List<NoteObject>> watchFailed();
+
+  /// Заметки в статусе `cancelled`. Свежие — первыми (updatedAt DESC).
+  Future<List<NoteObject>> getCancelled();
+
+  Stream<List<NoteObject>> watchCancelled();
+
+  /// Cold-start recovery: подбирает заметки, застрявшие в transcribing
+  /// после kill'а изолята.
+  Future<void> resetTranscribingToQueued();
+
+  /// [resetFailureReason] = true — зануляет причину прошлого провала
+  /// (failed → queued/cancelled).
+  Future<NoteObject?> updateStatus({
+    required String uid,
+    required int statusValue,
+    int? failureReasonValue,
+    bool resetFailureReason = false,
+  });
+
+  /// Возвращает `audioRelativePath` (или null) для внетранзакционного
+  /// удаления файла. Если `clearAudio` — relation обнуляется и audio
+  /// object удаляется в той же транзакции.
+  Future<({NoteObject? note, String? audioRelativePath})>
+  completeTranscription({
+    required String uid,
+    required String text,
+    required String language,
+    required String modelName,
+    required int wordCount,
+    required bool clearAudio,
+  });
 }
 
-/// Реализация на основе ObjectBox
 @Singleton(as: NoteLocalDataSource)
 class NoteLocalDataSourceImpl implements NoteLocalDataSource {
   final DatabaseClient _db;
@@ -89,6 +112,11 @@ class NoteLocalDataSourceImpl implements NoteLocalDataSource {
     return _noteDao
         .findByUid(_db.box, uid)
         .orThrowNotFound(EntityType.note, uid);
+  }
+
+  @override
+  Future<NoteObject?> findByUidOrNull(String uid) async {
+    return _noteDao.findByUid(_db.box, uid);
   }
 
   @override
@@ -286,5 +314,158 @@ class NoteLocalDataSourceImpl implements NoteLocalDataSource {
       _noteDao.put(box, p.note, mode: PutMode.update);
       return p.note;
     }, param: (note: note, tagNames: tagNames));
+  }
+
+  @override
+  Future<List<NoteObject>> getQueued() async {
+    return _noteDao.findQueued(_db.box);
+  }
+
+  @override
+  Stream<List<NoteObject>> watchQueued() {
+    return _noteDao
+        .queryQueued(_db.box)
+        .watch(triggerImmediately: true)
+        .map((q) => q.find());
+  }
+
+  @override
+  Future<List<NoteObject>> getFailed() async {
+    return _noteDao.findFailed(_db.box);
+  }
+
+  @override
+  Stream<List<NoteObject>> watchFailed() {
+    return _noteDao
+        .queryFailed(_db.box)
+        .watch(triggerImmediately: true)
+        .map((q) => q.find());
+  }
+
+  @override
+  Future<List<NoteObject>> getCancelled() async {
+    return _noteDao.findCancelled(_db.box);
+  }
+
+  @override
+  Stream<List<NoteObject>> watchCancelled() {
+    return _noteDao
+        .queryCancelled(_db.box)
+        .watch(triggerImmediately: true)
+        .map((q) => q.find());
+  }
+
+  @override
+  Future<void> resetTranscribingToQueued() async {
+    await _db.runInTransactionAsync<void, Object?>((Store store, _) {
+      _noteDao.resetTranscribingToQueued(store.box);
+    }, param: null);
+  }
+
+  @override
+  Future<NoteObject?> updateStatus({
+    required String uid,
+    required int statusValue,
+    int? failureReasonValue,
+    bool resetFailureReason = false,
+  }) async {
+    return _db.runInTransactionAsync(
+      (
+        Store store,
+        ({
+          String uid,
+          int statusValue,
+          int? failureReasonValue,
+          bool resetFailureReason,
+        })
+        p,
+      ) {
+        final box = store.box;
+        final note = _noteDao.findByUid(box, p.uid);
+        if (note == null) return null;
+
+        note.statusValue = p.statusValue;
+        if (p.resetFailureReason) {
+          note.failureReasonValue = null;
+        } else if (p.failureReasonValue != null) {
+          note.failureReasonValue = p.failureReasonValue;
+        }
+        note.updatedAt = DateTime.now();
+
+        _noteDao.put(box, note, mode: PutMode.update);
+        return note;
+      },
+      param: (
+        uid: uid,
+        statusValue: statusValue,
+        failureReasonValue: failureReasonValue,
+        resetFailureReason: resetFailureReason,
+      ),
+    );
+  }
+
+  @override
+  Future<({NoteObject? note, String? audioRelativePath})>
+  completeTranscription({
+    required String uid,
+    required String text,
+    required String language,
+    required String modelName,
+    required int wordCount,
+    required bool clearAudio,
+  }) async {
+    return _db.runInTransactionAsync(
+      (
+        Store store,
+        ({
+          String uid,
+          String text,
+          String language,
+          String modelName,
+          int wordCount,
+          bool clearAudio,
+        })
+        p,
+      ) {
+        final box = store.box;
+        final note = _noteDao.findByUid(box, p.uid);
+        if (note == null) return (note: null, audioRelativePath: null);
+
+        note
+          ..text = p.text
+          ..language = p.language
+          ..modelName = p.modelName
+          ..wordCount = p.wordCount
+          ..statusValue = TranscriptionStatus.completed.value
+          ..failureReasonValue = null
+          ..updatedAt = DateTime.now();
+
+        String? audioRelativePath;
+        int? removedAudioId;
+        if (p.clearAudio) {
+          final audio = note.audio.target;
+          if (audio != null) {
+            audioRelativePath = audio.relativePath;
+            removedAudioId = audio.id;
+            note.audio.target = null;
+          }
+        }
+
+        _noteDao.put(box, note, mode: PutMode.update);
+        if (removedAudioId != null) {
+          box<NoteAudioObject>().remove(removedAudioId);
+        }
+
+        return (note: note, audioRelativePath: audioRelativePath);
+      },
+      param: (
+        uid: uid,
+        text: text,
+        language: language,
+        modelName: modelName,
+        wordCount: wordCount,
+        clearAudio: clearAudio,
+      ),
+    );
   }
 }

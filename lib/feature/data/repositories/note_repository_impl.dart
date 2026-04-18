@@ -65,6 +65,18 @@ class NoteRepositoryImpl implements NoteRepository {
   }
 
   @override
+  Future<List<NoteEntity>> getFailed() async {
+    final objects = await _noteDataSource.getFailed();
+    return NoteMapper.toDomainList(objects);
+  }
+
+  @override
+  Future<List<NoteEntity>> getCancelled() async {
+    final objects = await _noteDataSource.getCancelled();
+    return NoteMapper.toDomainList(objects);
+  }
+
+  @override
   Future<NoteEntity> create({
     required String text,
     required Duration duration,
@@ -264,6 +276,16 @@ class NoteRepositoryImpl implements NoteRepository {
   @override
   Stream<List<NoteEntity>> watchQueued() {
     return _noteDataSource.watchQueued().map(NoteMapper.toDomainList);
+  }
+
+  @override
+  Stream<List<NoteEntity>> watchFailed() {
+    return _noteDataSource.watchFailed().map(NoteMapper.toDomainList);
+  }
+
+  @override
+  Stream<List<NoteEntity>> watchCancelled() {
+    return _noteDataSource.watchCancelled().map(NoteMapper.toDomainList);
   }
 
   @override

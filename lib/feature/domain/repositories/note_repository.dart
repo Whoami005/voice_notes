@@ -16,6 +16,12 @@ abstract interface class NoteRepository {
   /// Только queued, createdAt ASC.
   Future<List<NoteEntity>> getQueued();
 
+  /// Заметки в статусе `failed`, updatedAt DESC.
+  Future<List<NoteEntity>> getFailed();
+
+  /// Заметки в статусе `cancelled`, updatedAt DESC.
+  Future<List<NoteEntity>> getCancelled();
+
   Future<NoteEntity> create({
     required String text,
     required Duration duration,
@@ -75,6 +81,10 @@ abstract interface class NoteRepository {
   Stream<List<NoteEntity>> watchWithoutFolder();
 
   Stream<List<NoteEntity>> watchQueued();
+
+  Stream<List<NoteEntity>> watchFailed();
+
+  Stream<List<NoteEntity>> watchCancelled();
 
   /// Эмит ДО фактического удаления — даёт подписчикам (очередь
   /// транскрибации) шанс отменить in-flight операции.

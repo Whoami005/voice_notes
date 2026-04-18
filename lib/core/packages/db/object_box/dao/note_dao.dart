@@ -3,6 +3,7 @@ import 'package:voice_notes/core/packages/db/object_box/dao/box_provider.dart';
 import 'package:voice_notes/core/packages/db/object_box/objectbox.g.dart'
     hide Order;
 import 'package:voice_notes/feature/data/local/models/note_object.dart';
+import 'package:voice_notes/feature/domain/enums/transcription_status.dart';
 
 /// DAO для работы с заметками
 class NoteDao {
@@ -70,6 +71,46 @@ class NoteDao {
   /// Удалить заметку по ID
   void remove(BoxProvider box, int id) => box<NoteObject>().remove(id);
 
+  /// Только queued, createdAt ASC. Transcribing сюда не попадают: они
+  /// либо прямо сейчас обрабатываются (живой `_processing` в очереди),
+  /// либо осиротевшие после крэша — и тогда `resetTranscribingToQueued`
+  /// вернёт их в queued до того, как этот метод вызовется.
+  List<NoteObject> findQueued(BoxProvider box) {
+    final query = box<NoteObject>()
+        .query(
+          NoteObject_.statusValue.equals(TranscriptionStatus.queued.value),
+        )
+        .order(NoteObject_.createdAt)
+        .build();
+
+    final result = query.find();
+    query.close();
+
+    return result;
+  }
+
+  /// Recovery после kill'а изолята: transcribing → queued. Сам FFI-вызов
+  /// возобновить нельзя, но ноту можно перезапустить с нуля.
+  void resetTranscribingToQueued(BoxProvider box) {
+    final transcribingValue = TranscriptionStatus.transcribing.value;
+    final query = box<NoteObject>()
+        .query(NoteObject_.statusValue.equals(transcribingValue))
+        .build();
+
+    final notes = query.find();
+    query.close();
+
+    if (notes.isEmpty) return;
+
+    final now = DateTime.now();
+    for (final note in notes) {
+      note
+        ..statusValue = TranscriptionStatus.queued.value
+        ..updatedAt = now;
+    }
+    box<NoteObject>().putMany(notes, mode: PutMode.update);
+  }
+
   // === Query Builders для watch ===
 
   /// Query builder для всех заметок
@@ -92,5 +133,54 @@ class NoteDao {
     return box<NoteObject>()
         .query(NoteObject_.folder.isNull())
         .order(NoteObject_.createdAt, flags: Order.descending);
+  }
+
+  QueryBuilder<NoteObject> queryQueued(BoxProvider box) {
+    return box<NoteObject>()
+        .query(NoteObject_.statusValue.equals(TranscriptionStatus.queued.value))
+        .order(NoteObject_.createdAt);
+  }
+
+  /// Заметки, провалившиеся транскрибацией. Сортировка — свежие сверху,
+  /// чтобы пользователь видел последние ошибки первыми.
+  List<NoteObject> findFailed(BoxProvider box) {
+    final query = box<NoteObject>()
+        .query(NoteObject_.statusValue.equals(TranscriptionStatus.failed.value))
+        .order(NoteObject_.updatedAt, flags: Order.descending)
+        .build();
+
+    final result = query.find();
+    query.close();
+
+    return result;
+  }
+
+  QueryBuilder<NoteObject> queryFailed(BoxProvider box) {
+    return box<NoteObject>()
+        .query(NoteObject_.statusValue.equals(TranscriptionStatus.failed.value))
+        .order(NoteObject_.updatedAt, flags: Order.descending);
+  }
+
+  /// Заметки, отменённые пользователем. Свежие — первыми.
+  List<NoteObject> findCancelled(BoxProvider box) {
+    final query = box<NoteObject>()
+        .query(
+          NoteObject_.statusValue.equals(TranscriptionStatus.cancelled.value),
+        )
+        .order(NoteObject_.updatedAt, flags: Order.descending)
+        .build();
+
+    final result = query.find();
+    query.close();
+
+    return result;
+  }
+
+  QueryBuilder<NoteObject> queryCancelled(BoxProvider box) {
+    return box<NoteObject>()
+        .query(
+          NoteObject_.statusValue.equals(TranscriptionStatus.cancelled.value),
+        )
+        .order(NoteObject_.updatedAt, flags: Order.descending);
   }
 }

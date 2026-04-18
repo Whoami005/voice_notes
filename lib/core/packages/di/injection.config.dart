@@ -45,8 +45,10 @@ import '../audio/audio_recording_service.dart' as _i571;
 import '../db/object_box/objectbox_database.dart' as _i88;
 import '../db/transaction_manager.dart' as _i138;
 import '../downloader/download_manager.dart' as _i551;
+import '../note_ingestion/note_ingestion_service.dart' as _i165;
 import '../player/audio_playback_controller.dart' as _i99;
 import '../player/just_audio_playback_controller.dart' as _i502;
+import '../transcription/transcription_queue_service.dart' as _i909;
 import 'modules/prefs_module.dart' as _i12;
 
 extension GetItInjectableX on _i174.GetIt {
@@ -111,9 +113,22 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.singleton<_i1032.NoteRepository>(
       () => _i910.NoteRepositoryImpl(gh<_i798.NoteLocalDataSource>()),
+      dispose: (i) => i.dispose(),
     );
     gh.singleton<_i403.RecordingPreferences>(
       () => _i403.RecordingPreferences(gh<_i460.SharedPreferences>()),
+    );
+    await gh.singletonAsync<_i909.TranscriptionQueueService>(
+      () {
+        final i = _i909.TranscriptionQueueService(
+          noteRepository: gh<_i1032.NoteRepository>(),
+          asrService: gh<_i233.AsrService>(),
+          preferences: gh<_i403.RecordingPreferences>(),
+        );
+        return i.start().then((_) => i);
+      },
+      preResolve: true,
+      dispose: (i) => i.dispose(),
     );
     gh.singleton<_i221.StorageStatsRepository>(
       () => _i803.StorageStatsRepositoryImpl(
@@ -126,6 +141,11 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.singleton<_i138.TransactionManager>(
       () => _i138.TransactionManager(gh<_i88.DatabaseClient>()),
+    );
+    gh.singleton<_i165.NoteIngestionService>(
+      () => _i165.NoteIngestionService(
+        noteRepository: gh<_i1032.NoteRepository>(),
+      ),
     );
     return this;
   }
