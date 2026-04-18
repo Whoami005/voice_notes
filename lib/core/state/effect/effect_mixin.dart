@@ -4,9 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:voice_notes/core/state/effect/effect_bloc_observer.dart';
 
-/// Mixin для добавления one-shot эффектов в Cubit/Bloc.
-///
-/// Эффекты — это события, которые не влияют на состояние,
+/// One-shot эффекты для Cubit/Bloc — события, которые не влияют на состояние,
 /// но требуют реакции UI (диалоги, snackbar, навигация).
 ///
 /// ```dart
@@ -24,22 +22,25 @@ mixin EffectMixin<E> on Closable {
     return observer is EffectBlocObserver ? observer : null;
   }
 
-  /// Стрим эффектов для подписки в UI
   Stream<E> get effects => _effectController.stream;
 
-  /// Проверка, закрыт ли контроллер эффектов
   bool get isEffectsClosed => _effectController.isClosed;
 
-  /// Эмитнуть эффект для UI
   @protected
   void emitEffect(E effect) {
     if (isClosed || isEffectsClosed) {
-      if (kDebugMode) {
-        debugPrint('Warning: emitEffect called after close: $effect');
-      }
-      return;
+      throw StateError('emitEffect called after close');
     }
 
+    // ignore: invalid_use_of_protected_member
+    _effectsBlocObserver?.onEffect(this, effect as Object);
+    _effectController.add(effect);
+  }
+
+  void safeEmitEffect(E effect) {
+    if (isClosed || isEffectsClosed) return;
+
+    // Called from mixin, not a subclass — intentional cross-boundary call.
     // ignore: invalid_use_of_protected_member
     _effectsBlocObserver?.onEffect(this, effect as Object);
     _effectController.add(effect);

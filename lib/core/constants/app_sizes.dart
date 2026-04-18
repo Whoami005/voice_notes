@@ -45,6 +45,16 @@ class AppSizes {
   static const double iconMedium = 20;
   static const double iconLarge = 24;
 
+  // Strokes
+  static const double strokeThin = 2;
+  static const double strokeMedium = 2.5;
+
+  // Blur (BackdropFilter / shadow)
+  static const double blurModerate = 10;
+  static const double blurLarge = 16;
+  static const double blurXL = 30;
+  static const double blurXXL = 32;
+
   // Avatars / Icon containers
   static const double avatarSmall = 40;
   static const double avatarMedium = 44;
@@ -64,6 +74,9 @@ class AppSizes {
 
   // Bottom Nav
   static const double bottomNavHeight = 84;
+
+  // List padding that reserves space for floating action controls
+  static const double listBottomSafeForFab = 130;
 
   // Bottom Sheet
   static const double bottomSheetRadius = 24;

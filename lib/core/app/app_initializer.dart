@@ -9,10 +9,12 @@ import 'package:voice_notes/core/packages/app_router/app_router.dart';
 import 'package:voice_notes/core/packages/asr/asr_cubit.dart';
 import 'package:voice_notes/core/packages/asr/asr_service.dart';
 import 'package:voice_notes/core/packages/di/di.dart';
+import 'package:voice_notes/core/packages/transcription/transcription_queue_service.dart';
 import 'package:voice_notes/core/theme/app_theme.dart';
 import 'package:voice_notes/core/theme/theme_cubit.dart';
 import 'package:voice_notes/feature/domain/repositories/model_repository.dart';
 import 'package:voice_notes/feature/presentation/pages/error/initialization_error_screen.dart';
+import 'package:voice_notes/feature/presentation/pages/transcription/logic/transcription_queue_cubit.dart';
 import 'package:voice_notes/l10n/app_localizations.dart';
 
 class AppInitializer extends StatefulWidget {
@@ -82,10 +84,40 @@ class _SplashScreen extends StatelessWidget {
   }
 }
 
-class VoiceNotesApp extends StatelessWidget {
+/// Транслирует lifecycle-события (resume) в [TranscriptionQueueCubit], чтобы
+/// не обращаться к сервисам напрямую.
+class VoiceNotesApp extends StatefulWidget {
   final GoRouter router;
 
   const VoiceNotesApp({required this.router, super.key});
+
+  @override
+  State<VoiceNotesApp> createState() => _VoiceNotesAppState();
+}
+
+class _VoiceNotesAppState extends State<VoiceNotesApp>
+    with WidgetsBindingObserver {
+  late TranscriptionQueueCubit _queueCubit;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _queueCubit = TranscriptionQueueCubit(
+      service: getIt<TranscriptionQueueService>(),
+    );
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _queueCubit.onResume();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -106,6 +138,10 @@ class VoiceNotesApp extends StatelessWidget {
             modelRepository: getIt<ModelRepository>(),
           ),
         ),
+        BlocProvider<TranscriptionQueueCubit>(
+          lazy: false,
+          create: (_) => _queueCubit,
+        ),
       ],
       child: Builder(
         builder: (context) {
@@ -125,7 +161,7 @@ class VoiceNotesApp extends StatelessWidget {
               theme: AppTheme.light,
               darkTheme: AppTheme.dark,
               themeMode: theme.themeMode,
-              routerConfig: router,
+              routerConfig: widget.router,
               locale: locale,
               supportedLocales: AppLocalizations.supportedLocales,
               localizationsDelegates: AppLocalizations.localizationsDelegates,
