@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:voice_notes/core/error/app_failure.dart';
+import 'package:voice_notes/feature/domain/enums/queue_runtime_reason.dart';
 
 /// Фаза жизненного цикла сервиса очереди. `_recoverQueuedNotes` →
 /// подписки → `ready`; любой сбой в bootstrap'е — `error(failure)`,
@@ -55,21 +56,26 @@ class TranscriptionQueueSnapshot extends Equatable {
   /// обновится только когда текущий ASR-пасс завершится.
   final Set<String> cancelRequested;
 
-  /// Circuit breaker: 3 подряд ошибки. Автоматически снимается при
-  /// появлении ASR-ready или пользовательским retry().
-  final bool paused;
+  /// Причина, по которой дренаж не идёт.
+  /// - [QueueRuntimeReason.awaitingModel] — ждём выбор/загрузку ASR-модели.
+  /// - [QueueRuntimeReason.breakerTripped] — circuit breaker (3 подряд
+  ///   провала); снимается автоматически при появлении ASR-ready или
+  ///   пользовательским retry().
+  final QueueRuntimeReason runtimeReason;
 
   const TranscriptionQueueSnapshot({
     this.bootstrapState = const QueueBootstrapNotStarted(),
     this.queued = const [],
     this.processing,
     this.cancelRequested = const {},
-    this.paused = false,
+    this.runtimeReason = QueueRuntimeReason.none,
   });
 
   int get total => queued.length + (processing != null ? 1 : 0);
 
   bool isCancelRequested(String uid) => cancelRequested.contains(uid);
+
+  bool get paused => runtimeReason != QueueRuntimeReason.none;
 
   @override
   List<Object?> get props => [
@@ -77,6 +83,6 @@ class TranscriptionQueueSnapshot extends Equatable {
     queued,
     processing,
     cancelRequested,
-    paused,
+    runtimeReason,
   ];
 }

@@ -15,6 +15,7 @@ import 'package:voice_notes/core/packages/transcription/transcription_queue_snap
 import 'package:voice_notes/feature/data/local/preferences/recording_preferences.dart';
 import 'package:voice_notes/feature/domain/entities/note_audio_entity.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
+import 'package:voice_notes/feature/domain/enums/queue_runtime_reason.dart';
 import 'package:voice_notes/feature/domain/enums/transcription_failure_reason.dart';
 import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
 
@@ -307,12 +308,9 @@ class TranscriptionQueueService {
     }
   }
 
-  // ==================== Internals ====================
-
   void _onQueuedChanged(List<NoteEntity> queued) {
-    // In-flight
-    // uid исключаем явно: он не в `_queue`, но дубль в очередь не должен
-    // попасть.
+    // In-flight uid исключаем явно: его нет в `_queue`, но дубль в очередь
+    // попадать не должен.
     final processing = _processing;
     final added = _queue.addAll([
       for (final note in queued)
@@ -379,6 +377,15 @@ class TranscriptionQueueService {
           noteUid,
           TranscriptionFailureReason.audioFileMissing,
         );
+        return;
+      }
+
+      // Pre-empt перед стартом ASR: между top-of-loop `_asrReady` и этой
+      // точкой были await'ы (getByUidOrNull, _consumeAbort, audio-check),
+      // модель могла пропасть.
+      if (!_asrService.isInitialized) {
+        _asrReady = false;
+        _queue.addFirst(noteUid);
         return;
       }
 
@@ -469,18 +476,27 @@ class TranscriptionQueueService {
     _breaker.recordFailure();
   }
 
-  void _onAsrReadyChanged(bool ready) {
+  Future<void> _onAsrReadyChanged(bool ready) async {
     if (_asrReady == ready) return;
 
     _asrReady = ready;
+    _emitSnapshot();
 
-    if (ready) {
-      // Безусловный reset: появление модели == fresh start для очереди.
-      // Если decode-failures пойдут снова и накопятся 3 подряд — breaker
-      // снова встанет, это OK.
-      _breaker.reset();
-      _scheduleDrain();
+    if (!ready) return;
+
+    // Модель стала доступна, а bootstrap в error — шанс поднять сервис
+    // заново без участия пользователя. Если retryBootstrap снова
+    // упадёт — состояние опять `error`, UI-кнопка остаётся.
+    if (_bootstrapState.isError) {
+      await retryBootstrap();
+      return;
     }
+
+    // Безусловный reset: появление модели == fresh start для очереди.
+    // Если decode-failures пойдут снова и накопятся 3 подряд — breaker
+    // снова встанет, это OK.
+    _breaker.reset();
+    _scheduleDrain();
     _emitSnapshot();
   }
 
@@ -505,8 +521,19 @@ class TranscriptionQueueService {
     queued: List.unmodifiable(_queue),
     processing: _processing,
     cancelRequested: Set.unmodifiable(_cancelRequested),
-    paused: _breaker.isPaused,
+    runtimeReason: _computeRuntimeReason(),
   );
+
+  /// Причина простоя дренажа. Breaker приоритетнее, т.к. он — следствие
+  /// реальных провалов и требует явного сигнала пользователю.
+  QueueRuntimeReason _computeRuntimeReason() {
+    if (_breaker.isPaused) return QueueRuntimeReason.breakerTripped;
+    if (_bootstrapState.isReady && !_asrReady) {
+      return QueueRuntimeReason.awaitingModel;
+    }
+
+    return QueueRuntimeReason.none;
+  }
 
   void _emitSnapshot() {
     if (_snapshotController.isClosed) return;
