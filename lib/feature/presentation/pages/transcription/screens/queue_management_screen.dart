@@ -15,6 +15,7 @@ import 'package:voice_notes/core/state/status/status_state.dart';
 import 'package:voice_notes/core/theme/app_colors_extension.dart';
 import 'package:voice_notes/core/theme/app_typography.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
+import 'package:voice_notes/feature/domain/enums/queue_runtime_reason.dart';
 import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
 import 'package:voice_notes/feature/presentation/pages/transcription/logic/queue_management_cubit.dart';
 import 'package:voice_notes/feature/presentation/pages/transcription/logic/transcription_queue_cubit.dart';
@@ -75,8 +76,8 @@ class _StatusHeader extends StatelessWidget {
     final bootstrap = context.select(
       (TranscriptionQueueCubit c) => c.state.snapshot.bootstrapState,
     );
-    final paused = context.select(
-      (TranscriptionQueueCubit c) => c.state.snapshot.paused,
+    final runtimeReason = context.select(
+      (TranscriptionQueueCubit c) => c.state.snapshot.runtimeReason,
     );
     final asrState = context.select(
       (AsrCubit c) => (status: c.state.status, hasModel: c.state.hasModel),
@@ -85,7 +86,7 @@ class _StatusHeader extends StatelessWidget {
     final (queueText, queueColor) = _queueStatusLabel(
       l10n: l10n,
       bootstrap: bootstrap,
-      paused: paused,
+      runtimeReason: runtimeReason,
       themeColors: themeColors,
     );
     final (asrText, asrColor) = _asrStatusLabel(
@@ -119,17 +120,27 @@ class _StatusHeader extends StatelessWidget {
   (String, Color) _queueStatusLabel({
     required AppLocalizations l10n,
     required QueueBootstrapState bootstrap,
-    required bool paused,
+    required QueueRuntimeReason runtimeReason,
     required AppColorsExtension themeColors,
   }) {
     return switch (bootstrap) {
       QueueBootstrapError() => (l10n.queueBootstrapError, themeColors.error),
       QueueBootstrapLoading() ||
       QueueBootstrapNotStarted() => (l10n.queueStatusLoading, themeColors.info),
-      QueueBootstrapReady() =>
-        paused
-            ? (l10n.queueStatusPaused, themeColors.warning)
-            : (l10n.queueStatusActive, themeColors.success),
+      QueueBootstrapReady() => switch (runtimeReason) {
+        QueueRuntimeReason.breakerTripped => (
+          l10n.queueStatusPaused,
+          themeColors.warning,
+        ),
+        QueueRuntimeReason.awaitingModel => (
+          l10n.queueStatusAwaitingModel,
+          themeColors.warning,
+        ),
+        QueueRuntimeReason.none => (
+          l10n.queueStatusActive,
+          themeColors.success,
+        ),
+      },
     };
   }
 

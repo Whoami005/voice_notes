@@ -10,9 +10,11 @@ import 'package:voice_notes/core/packages/app_router/routes/app_routes.dart';
 import 'package:voice_notes/core/packages/di/injection.dart';
 import 'package:voice_notes/core/theme/theme_cubit.dart';
 import 'package:voice_notes/feature/data/local/preferences/recording_preferences.dart';
+import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/general/widgets/settings_row.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/general/widgets/settings_section.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/storage/screens/storage_screen.dart';
+import 'package:voice_notes/feature/presentation/pages/transcription/screens/queue_management_screen.dart';
 import 'package:voice_notes/feature/presentation/widgets/dialogs/language_dialog.dart';
 import 'package:voice_notes/feature/presentation/widgets/dialogs/theme_dialog.dart';
 
@@ -198,6 +200,30 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
                 trailing: const SettingsToggle(value: false),
                 isEnabled: false,
                 showDivider: false,
+              ),
+            ],
+          ),
+          AppSpacer.p20,
+          SettingsSection(
+            title: l10n.queueSettingsSection,
+            children: [
+              StreamBuilder<int>(
+                stream: getIt<NoteRepository>().watchFailed().map(
+                  (notes) => notes.length,
+                ),
+                initialData: 0,
+                builder: (context, snapshot) {
+                  final count = snapshot.data ?? 0;
+                  final value = count > 0 ? '$count' : null;
+
+                  return SettingsRow(
+                    icon: Icons.queue_outlined,
+                    title: l10n.queueSettingsRowTitle,
+                    trailing: SettingsChevron(value: value),
+                    onTap: () => QueueManagementScreen.go(context),
+                    showDivider: false,
+                  );
+                },
               ),
             ],
           ),
