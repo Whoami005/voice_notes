@@ -10,18 +10,11 @@ import 'package:voice_notes/feature/domain/repositories/model_repository.dart';
 
 part 'asr_state.dart';
 
-/// Глобальный cubit для управления жизненным циклом ASR сервиса.
+/// Глобальный cubit жизненного цикла ASR сервиса.
 ///
-/// Отвечает за:
-/// - Инициализацию [AsrService] при старте приложения
-/// - Реактивное переключение модели при изменении в БД (local-first)
-/// - Предоставление статуса готовности ASR для UI
-///
-/// Коммуникация с ModelsCubit — через БД:
-/// ```dart
-/// ModelsCubit.selectModel() → repo.selectModel() → БД
-///   → watchSelectedModel() → AsrCubit._onSelectedModelChanged()
-/// ```
+/// Коммуникация с ModelsCubit — только через БД:
+/// `ModelsCubit.selectModel()` → repo → `watchSelectedModel()` →
+/// `_onSelectedModelChanged()`. Прямой связи между кубитами нет.
 class AsrCubit extends InitializableStatusCubit<AsrState> {
   final AsrService _asrService;
   final ModelRepository _modelRepository;
@@ -46,15 +39,10 @@ class AsrCubit extends InitializableStatusCubit<AsrState> {
     _subscribeToModelChanges();
   }
 
-  /// Повторить инициализацию после ошибки
   Future<void> retry() async {
     final model = await _modelRepository.getSelectedModel();
     if (model != null) await _initializeWithModel(model);
   }
-
-  // ===========================================================================
-  // Приватные методы
-  // ===========================================================================
 
   void _subscribeToModelChanges() {
     _modelSubscription?.cancel();
@@ -66,9 +54,8 @@ class AsrCubit extends InitializableStatusCubit<AsrState> {
 
   Future<void> _onSelectedModelChanged(AsrModelEntity? model) async {
     if (model == null) {
-      // Модель снята с выбора (удалена) — dispose без блокировки
       try {
-        await _asrService.dispose();
+        await _asrService.unloadModel();
       } catch (e, s) {
         logError(e, s);
       }
@@ -76,7 +63,6 @@ class AsrCubit extends InitializableStatusCubit<AsrState> {
       return;
     }
 
-    // Модель изменилась — переинициализируем
     if (model.uuid != _asrService.currentModel?.uuid) {
       await _initializeWithModel(model);
     }
