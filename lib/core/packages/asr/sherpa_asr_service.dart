@@ -40,10 +40,18 @@ class SherpaAsrService implements AsrService {
   final _streamingResultsController =
       StreamController<AsrStreamingResult>.broadcast();
 
+  // Stream готовности сервиса для подписчиков (очередь транскрибации).
+  // Дедуп по [_lastReadyEmit], чтобы не будить drain без реальной смены.
+  final _stateController = StreamController<bool>.broadcast();
+  bool _lastReadyEmit = false;
+
   // ==================== Getters ====================
 
   @override
   bool get isInitialized => _isolateRunner?.isRunning ?? false;
+
+  @override
+  Stream<bool> get stateStream => _stateController.stream;
 
   @override
   AsrModelEntity? get currentModel => _currentModel;
@@ -58,6 +66,14 @@ class SherpaAsrService implements AsrService {
   Stream<AsrStreamingResult> get streamingResults =>
       _streamingResultsController.stream;
 
+  void _emitReadyState() {
+    final current = isInitialized;
+    if (current == _lastReadyEmit) return;
+
+    _lastReadyEmit = current;
+    if (!_stateController.isClosed) _stateController.add(current);
+  }
+
   // ==================== Lifecycle ====================
 
   @override
@@ -70,6 +86,8 @@ class SherpaAsrService implements AsrService {
     // Сохраняем для lazy init streaming recognizer
     _currentModel = model;
     _currentModelPath = modelPath;
+
+    _emitReadyState();
   }
 
   @override
@@ -80,8 +98,10 @@ class SherpaAsrService implements AsrService {
     // Освобождаем текущие ресурсы
     _freeRecognizers();
     await _isolateRunner?.close();
+    _isolateRunner = null;
+    _emitReadyState();
 
-    // Инициализируем с новой моделью
+    // Инициализируем с новой моделью (initialize сам эмитит ready=true)
     await initialize(newModel, newModelPath);
   }
 
@@ -96,6 +116,10 @@ class SherpaAsrService implements AsrService {
     _isolateRunner = null;
     _currentModel = null;
     _currentModelPath = null;
+
+    // Финальный `false` перед close не гарантирует доставку подписчикам —
+    // полагаемся на onDone как сигнал «сервис остановлен».
+    if (!_stateController.isClosed) await _stateController.close();
   }
 
   void _freeRecognizers() {

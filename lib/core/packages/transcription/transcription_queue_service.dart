@@ -2,8 +2,10 @@ import 'dart:async';
 import 'dart:developer' as developer;
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:injectable/injectable.dart';
 import 'package:voice_notes/core/collections/unique_queue.dart';
+import 'package:voice_notes/core/error/app_failure.dart';
 import 'package:voice_notes/core/extensions/string_extensions.dart';
 import 'package:voice_notes/core/packages/asr/asr_exception.dart';
 import 'package:voice_notes/core/packages/asr/asr_result.dart';
@@ -12,14 +14,25 @@ import 'package:voice_notes/core/packages/path/audio_paths.dart';
 import 'package:voice_notes/core/packages/transcription/transcription_queue_snapshot.dart';
 import 'package:voice_notes/feature/data/local/preferences/recording_preferences.dart';
 import 'package:voice_notes/feature/domain/entities/note_audio_entity.dart';
+import 'package:voice_notes/feature/domain/entities/note_entity.dart';
 import 'package:voice_notes/feature/domain/enums/transcription_failure_reason.dart';
 import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
 
-/// FIFO-диспетчер очереди транскрибации. Source of truth по статусам — БД;
-/// очередь хранит только порядок обработки.
+/// FIFO-диспетчер очереди транскрибации и единственный владелец queue domain.
 ///
-/// Гейт drain'а — `_asrReady`: пока модель не готова, заметки копятся в
-/// `_queue`, но не фейлятся с `noModelSelected`. См. `docs/transcription_queue_flow.md`.
+/// Source of truth по статусам — БД. Сервис подписан на
+/// `NoteRepository.watchQueued`, сам подхватывает новые заметки и
+/// выполняет их через ASR. Продюсеры (например, `RecordingCubit`) пишут
+/// заметку в БД со статусом `queued` — сервис увидит это через stream
+/// и не требует явного `enqueue`.
+///
+/// Gate drain'а — `_asrReady`: пока модель не готова, заметки копятся в
+/// `_queue`, но не фейлятся с `noModelSelected`. Bootstrap — через
+/// `@PostConstruct()` injectable: сервис self-bootstrap'ится при первом
+/// разрешении DI, AppInitializer не участвует.
+///
+/// `start()` **не бросает**: любой сбой переводит `bootstrapState` в
+/// `error(failure)`; UI может вызвать `retryBootstrap()`.
 @Singleton()
 class TranscriptionQueueService {
   TranscriptionQueueService({
@@ -28,36 +41,54 @@ class TranscriptionQueueService {
     required RecordingPreferences preferences,
   }) : _noteRepository = noteRepository,
        _asrService = asrService,
-       _preferences = preferences;
+       _preferences = preferences,
+       _transcribeTimeout = const Duration(minutes: 30);
 
-  /// Максимальное время на одну транскрибацию. Защищает от зависания
-  /// sherpa-onnx FFI внутри изолята — таймаут переводит заметку в failed
-  /// с `transcriptionFailed`, очередь продолжает работать.
-  static const Duration _transcribeTimeout = Duration(minutes: 30);
+  /// Тест-only конструктор. Даёт возможность подставить короткий таймаут
+  /// в unit-тестах без регистрации отдельной `Duration` в DI.
+  @visibleForTesting
+  TranscriptionQueueService.forTesting({
+    required NoteRepository noteRepository,
+    required AsrService asrService,
+    required RecordingPreferences preferences,
+    required Duration transcribeTimeout,
+  }) : _noteRepository = noteRepository,
+       _asrService = asrService,
+       _preferences = preferences,
+       _transcribeTimeout = transcribeTimeout;
 
   final NoteRepository _noteRepository;
   final AsrService _asrService;
   final RecordingPreferences _preferences;
-  final UniqueQueue<String> _queue = UniqueQueue<String>();
-  final Set<String> _cancelled = <String>{};
 
-  /// 3 подряд провала → пауза. Снимается только явным `retry()`.
+  /// Максимальное время на одну транскрибацию. Защищает от зависания
+  /// sherpa-onnx FFI внутри изолята — таймаут переводит заметку в failed
+  /// с `transcriptionTimedOut`, очередь продолжает работать.
+  final Duration _transcribeTimeout;
+
+  final UniqueQueue<String> _queue = UniqueQueue<String>();
+
+  /// User-initiated cancel для in-flight заметки. Показывается в snapshot,
+  /// по завершении ASR пишется `markCancelled`.
+  final Set<String> _cancelRequested = <String>{};
+
+  /// Удаление заметки во время её транскрибации. По завершении ASR
+  /// результат отбрасывается, в БД ничего не пишется (заметки уже нет).
+  final Set<String> _deletedInFlight = <String>{};
+
+  /// 3 подряд провала → pause. Автоматически снимается при появлении
+  /// ASR-ready или пользовательским retry().
   final _CircuitBreaker _breaker = _CircuitBreaker(3);
 
-  /// Сигнализирует, что [start] прошёл seed из БД и подписался на `onDeleted`.
-  /// Публичные методы (`enqueue`, `cancel`, `retry`) ждут этот completer, чтобы
-  /// первый `_drain()` увидел объединённое множество uid: in-memory + seed.
-  ///
-  /// ASR-готовность здесь не при чём: `start()` вызывается безусловно из
-  /// `TranscriptionQueueCubit.init()` (до готовности модели), drain гейтится
-  /// отдельным флагом `_asrReady`.
-  final Completer<void> _ready = Completer<void>();
   final StreamController<TranscriptionQueueSnapshot> _snapshotController =
       StreamController<TranscriptionQueueSnapshot>.broadcast();
 
+  QueueBootstrapState _bootstrapState = const QueueBootstrapNotStarted();
   bool _draining = false;
   bool _asrReady = false;
   String? _processing;
+
+  StreamSubscription<List<NoteEntity>>? _queuedSub;
   StreamSubscription<String>? _noteDeletedSub;
   StreamSubscription<bool>? _asrReadySub;
   TranscriptionQueueSnapshot? _lastSnapshot;
@@ -67,31 +98,36 @@ class TranscriptionQueueService {
 
   TranscriptionQueueSnapshot get current => _lastSnapshot ??= _buildSnapshot();
 
-  bool get _canStartDrain => !_draining && !_breaker.isPaused && _asrReady;
+  bool get _canStartDrain =>
+      !_draining && !_breaker.isPaused && _asrReady && _bootstrapState.isReady;
 
-  /// Вызывается только в тестах и при полной реинициализации. В проде
-  /// сервис живёт всю сессию как `@Singleton`.
-  Future<void> dispose() async {
-    await _noteDeletedSub?.cancel();
-    _noteDeletedSub = null;
-    await _asrReadySub?.cancel();
-    _asrReadySub = null;
-
-    if (!_snapshotController.isClosed) {
-      await _snapshotController.close();
-    }
-  }
-
-  /// Cold-start recovery + запуск дренажа. Вызывается ровно один раз.
-  /// На resume использовать [resume].
+  /// Cold-start recovery + подписка на repo. Не бросает — любая ошибка
+  /// становится `bootstrapState.error(failure)`. Автоматически вызывается
+  /// injectable'ом через `@PostConstruct()` сразу после DI-конструирования.
+  @PostConstruct(preResolve: true)
   Future<void> start() async {
+    if (_bootstrapState.isReady || _bootstrapState.isLoading) return;
+
     try {
+      _bootstrapState = const QueueBootstrapLoading();
+      _emitSnapshot();
+
       _asrReady = _asrService.isInitialized;
       _asrReadySub ??= _asrService.stateStream.listen(_onAsrReadyChanged);
-
-      await _recoverQueuedNotes();
-
       _noteDeletedSub ??= _noteRepository.onDeleted.listen(_onNoteDeleted);
+
+      await _noteRepository.resetTranscribingToQueued();
+
+      // `watchQueued()` (ObjectBox `triggerImmediately: true`) доставит
+      // текущий snapshot БД первым же событием как microtask — это и
+      // есть наш seed. Отдельный `getQueued()` не нужен: одна атомарная
+      // подписка == нет окна «reset прошёл, но подписки ещё нет».
+      _queuedSub ??= _noteRepository.watchQueued().listen(
+        _onQueuedChanged,
+        onError: _onStreamError,
+      );
+
+      _bootstrapState = const QueueBootstrapReady();
     } catch (error, stackTrace) {
       developer.log(
         'TranscriptionQueueService.start failed',
@@ -99,76 +135,206 @@ class TranscriptionQueueService {
         stackTrace: stackTrace,
         name: 'TranscriptionQueue',
       );
+      _bootstrapState = QueueBootstrapError(AppFailure.from(error, stackTrace));
     } finally {
-      if (!_ready.isCompleted) _ready.complete();
       _emitSnapshot();
     }
 
-    _scheduleDrain();
+    if (_bootstrapState.isReady) _scheduleDrain();
+  }
+
+  /// Вызывается только в тестах. В проде сервис живёт всю сессию как
+  /// `@Singleton`.
+  @disposeMethod
+  Future<void> dispose() async {
+    await _cancelSubscriptions();
+    if (!_snapshotController.isClosed) await _snapshotController.close();
+  }
+
+  /// User-triggered повтор bootstrap'а после того, как он упал в error.
+  /// Сбрасывает подписки, чтобы [start] заново поднял их в известном
+  /// состоянии (иначе при частичном сбое некоторые стримы могли остаться
+  /// в полу-инициализированном виде).
+  Future<void> retryBootstrap() async {
+    if (!_bootstrapState.isError) return;
+
+    await _cancelSubscriptions();
+    _queue.clear();
+    _cancelRequested.clear();
+    _deletedInFlight.clear();
+    _processing = null;
+
+    _bootstrapState = const QueueBootstrapNotStarted();
+    await start();
+  }
+
+  Future<void> _cancelSubscriptions() async {
+    await _queuedSub?.cancel();
+    _queuedSub = null;
+    await _noteDeletedSub?.cancel();
+    _noteDeletedSub = null;
+    await _asrReadySub?.cancel();
+    _asrReadySub = null;
   }
 
   /// Lifecycle resume: пнуть дренаж без тяжёлого recovery. Безопасен на
   /// каждый foreground-event — не трогает БД и не пересоздаёт подписки.
   void resume() {
-    if (!_ready.isCompleted || _breaker.isPaused) return;
-    _scheduleDrain();
-  }
-
-  Future<void> enqueue(String noteUid) async {
-    await _ready.future;
-    if (_processing == noteUid || !_queue.add(noteUid)) return;
-
-    _emitSnapshot();
+    if (!_bootstrapState.isReady || _breaker.isPaused) return;
     _scheduleDrain();
   }
 
   /// User-action: снимает pause и возвращает failed/cancelled заметку в очередь.
-  /// Silent no-op, если заметка не в failed/cancelled.
+  /// Silent no-op, если bootstrap не завершён или заметка не в failed/cancelled.
   Future<void> retry(String noteUid) async {
-    await _ready.future;
+    if (!_bootstrapState.isReady) return;
 
-    final note = await _noteRepository.getByUidOrNull(noteUid);
-    if (note == null || !(note.isFailed || note.isCancelled)) return;
+    try {
+      final note = await _noteRepository.getByUidOrNull(noteUid);
+      if (note == null || !(note.isFailed || note.isCancelled)) return;
 
-    _breaker.reset();
-    _cancelled.remove(noteUid);
+      _breaker.reset();
+      _cancelRequested.remove(noteUid);
+      _deletedInFlight.remove(noteUid);
 
-    await _noteRepository.markQueued(noteUid);
-
-    if (_processing != noteUid) _queue.add(noteUid);
-    _emitSnapshot();
-
-    _scheduleDrain();
+      await _noteRepository.markQueued(noteUid);
+      if (_processing != noteUid) _queue.add(noteUid);
+      _emitSnapshot();
+      _scheduleDrain();
+    } catch (error, stackTrace) {
+      developer.log(
+        'TranscriptionQueueService.retry failed for $noteUid',
+        error: error,
+        stackTrace: stackTrace,
+        name: 'TranscriptionQueue',
+      );
+    }
   }
 
   /// Отмена без удаления заметки. Для in-flight uid `_processOne` после
-  /// завершения ASR увидит флаг в `_cancelled` и вызовет `markCancelled` сам.
+  /// завершения ASR увидит флаг в `_cancelRequested` и вызовет
+  /// `markCancelled` сам.
   Future<void> cancel(String noteUid) async {
-    await _ready.future;
+    if (!_bootstrapState.isReady) return;
 
     if (_queue.remove(noteUid)) {
-      await _noteRepository.markCancelled(noteUid);
+      try {
+        await _noteRepository.markCancelled(noteUid);
+      } catch (error, stackTrace) {
+        developer.log(
+          'TranscriptionQueueService.cancel failed for $noteUid',
+          error: error,
+          stackTrace: stackTrace,
+          name: 'TranscriptionQueue',
+        );
+      }
       _emitSnapshot();
       return;
     }
 
-    if (_processing == noteUid) _cancelled.add(noteUid);
+    if (_processing == noteUid) _cancelRequested.add(noteUid);
     _emitSnapshot();
   }
 
-  Future<void> _recoverQueuedNotes() async {
-    await _noteRepository.resetTranscribingToQueued();
-    final queuedNotes = await _noteRepository.getQueued();
+  /// Массовый retry всех заметок в статусе `failed`. `cancelled` НЕ трогает —
+  /// отмена — явное решение пользователя, перекрывать его пакетно нельзя.
+  /// Для per-note отмены → queued используется [retry].
+  Future<void> retryAll() async {
+    if (!_bootstrapState.isReady) return;
 
-    // audio == null обработает _processOne → failTranscription. Заранее
-    // фейлить здесь — N лишних транзакций на seed.
-    for (final note in queuedNotes) _queue.add(note.uuid);
+    try {
+      final failed = await _noteRepository.getFailed();
+      if (failed.isEmpty) return;
+
+      _breaker.reset();
+      for (final note in failed) {
+        _cancelRequested.remove(note.uuid);
+        _deletedInFlight.remove(note.uuid);
+        await _noteRepository.markQueued(note.uuid);
+        if (_processing != note.uuid) _queue.add(note.uuid);
+      }
+      _emitSnapshot();
+      _scheduleDrain();
+    } catch (error, stackTrace) {
+      developer.log(
+        'TranscriptionQueueService.retryAll failed',
+        error: error,
+        stackTrace: stackTrace,
+        name: 'TranscriptionQueue',
+      );
+    }
+  }
+
+  /// Массовое «убрать с глаз» всех failed → cancelled. Мягкое действие:
+  /// данные и аудио сохраняются, пользователь всё ещё может retry'нуть
+  /// индивидуальную заметку.
+  Future<void> clearFailedAll() async {
+    if (!_bootstrapState.isReady) return;
+
+    try {
+      final failed = await _noteRepository.getFailed();
+      for (final note in failed) {
+        await _noteRepository.markCancelled(note.uuid);
+      }
+    } catch (error, stackTrace) {
+      developer.log(
+        'TranscriptionQueueService.clearFailedAll failed',
+        error: error,
+        stackTrace: stackTrace,
+        name: 'TranscriptionQueue',
+      );
+    }
+  }
+
+  /// Per-note аналог [clearFailedAll]: failed → cancelled для одной заметки.
+  Future<void> dismissFailed(String noteUid) async {
+    if (!_bootstrapState.isReady) return;
+
+    try {
+      final note = await _noteRepository.getByUidOrNull(noteUid);
+      if (note == null || !note.isFailed) return;
+
+      await _noteRepository.markCancelled(noteUid);
+    } catch (error, stackTrace) {
+      developer.log(
+        'TranscriptionQueueService.dismissFailed failed for $noteUid',
+        error: error,
+        stackTrace: stackTrace,
+        name: 'TranscriptionQueue',
+      );
+    }
+  }
+
+  // ==================== Internals ====================
+
+  void _onQueuedChanged(List<NoteEntity> queued) {
+    // In-flight
+    // uid исключаем явно: он не в `_queue`, но дубль в очередь не должен
+    // попасть.
+    final processing = _processing;
+    final added = _queue.addAll([
+      for (final note in queued)
+        if (note.uuid != processing) note.uuid,
+    ]);
+
+    if (added == 0) return;
+
+    _emitSnapshot();
+    _scheduleDrain();
+  }
+
+  void _onStreamError(Object error, StackTrace stackTrace) {
+    developer.log(
+      'watchQueued stream error',
+      error: error,
+      stackTrace: stackTrace,
+      name: 'TranscriptionQueue',
+    );
   }
 
   void _scheduleDrain() => unawaited(_drain());
 
   Future<void> _drain() async {
-    await _ready.future;
     if (!_canStartDrain) return;
 
     _draining = true;
@@ -203,7 +369,7 @@ class TranscriptionQueueService {
       final note = await _noteRepository.getByUidOrNull(noteUid);
       if (note == null) return;
 
-      if (await _consumeCancellation(noteUid)) return;
+      if (await _consumeAbort(noteUid)) return;
 
       final audio = note.audio;
       if (audio == null) {
@@ -223,7 +389,7 @@ class TranscriptionQueueService {
 
       // Пользователь мог удалить или отменить заметку за время await —
       // отбрасываем результат. Для cancelled — явно ставим статус.
-      if (await _consumeCancellation(noteUid)) return;
+      if (await _consumeAbort(noteUid)) return;
 
       await _noteRepository.completeTranscription(
         uid: noteUid,
@@ -239,10 +405,29 @@ class TranscriptionQueueService {
     }
   }
 
-  Future<bool> _consumeCancellation(String noteUid) async {
-    if (!_cancelled.remove(noteUid)) return false;
+  /// Возвращает true, если для `noteUid` был зафиксирован abort (user
+  /// cancel ИЛИ delete) — вызывающий должен прекратить обработку.
+  Future<bool> _consumeAbort(String noteUid) async {
+    final cancelled = _cancelRequested.remove(noteUid);
+    final deleted = _deletedInFlight.remove(noteUid);
 
-    await _noteRepository.markCancelled(noteUid);
+    if (!cancelled && !deleted) return false;
+
+    // Deleted: заметки уже нет в БД, `markCancelled` был бы no-op.
+    // Cancelled: персистим статус.
+    if (cancelled && !deleted) {
+      try {
+        await _noteRepository.markCancelled(noteUid);
+      } catch (error, stackTrace) {
+        developer.log(
+          'markCancelled failed for $noteUid',
+          error: error,
+          stackTrace: stackTrace,
+          name: 'TranscriptionQueue',
+        );
+      }
+    }
+
     return true;
   }
 
@@ -253,8 +438,7 @@ class TranscriptionQueueService {
         .transcribeFile(absolutePath)
         .timeout(
           _transcribeTimeout,
-          onTimeout: () =>
-              throw const AsrProcessingException('ASR transcription timed out'),
+          onTimeout: () => throw const _TranscribeTimeoutException(),
         );
   }
 
@@ -287,20 +471,32 @@ class TranscriptionQueueService {
     if (_asrReady == ready) return;
 
     _asrReady = ready;
-    if (ready) _scheduleDrain();
+
+    if (ready) {
+      // Безусловный reset: появление модели == fresh start для очереди.
+      // Если decode-failures пойдут снова и накопятся 3 подряд — breaker
+      // снова встанет, это OK.
+      _breaker.reset();
+      _scheduleDrain();
+    }
+    _emitSnapshot();
   }
 
   void _onNoteDeleted(String noteUid) {
-    // В _cancelled кладём только in-flight uid: из `_queue` он уже
-    // удалён и `_processOne` его не увидит, поэтому метки cancel не требует.
+    // Если заметку удалили, пока она висит в `_queue` — просто убираем.
+    // Если она in-flight — запоминаем, `_processOne` после ASR отбросит
+    // результат.
     if (!_queue.remove(noteUid) && _processing == noteUid) {
-      _cancelled.add(noteUid);
+      _deletedInFlight.add(noteUid);
+      _cancelRequested.remove(noteUid);
     }
 
     _emitSnapshot();
   }
 
   TranscriptionFailureReason _classifyFailure(Object error) => switch (error) {
+    _TranscribeTimeoutException() =>
+      TranscriptionFailureReason.transcriptionTimedOut,
     AsrNotInitializedException() => TranscriptionFailureReason.noModelSelected,
     AsrModelNotFoundException() => TranscriptionFailureReason.modelLoadFailed,
     AsrInvalidAudioException() => TranscriptionFailureReason.audioFileCorrupted,
@@ -314,8 +510,10 @@ class TranscriptionQueueService {
   }
 
   TranscriptionQueueSnapshot _buildSnapshot() => TranscriptionQueueSnapshot(
+    bootstrapState: _bootstrapState,
     queued: List.unmodifiable(_queue),
     processing: _processing,
+    cancelRequested: Set.unmodifiable(_cancelRequested),
     paused: _breaker.isPaused,
   );
 
@@ -330,9 +528,15 @@ class TranscriptionQueueService {
   }
 }
 
+/// Внутренняя метка таймаута: хранит отдельную семантику от обычных
+/// `AsrProcessingException`, чтобы `_classifyFailure` мог различить их.
+class _TranscribeTimeoutException extends AsrProcessingException {
+  const _TranscribeTimeoutException() : super('ASR transcription timed out');
+}
+
 /// Circuit breaker для очереди: считает подряд проваленные попытки,
 /// при достижении порога ставит [isPaused] в `true`. Снимается через
-/// [reset] (вызывается из `retry()`).
+/// [reset] (при `retry()` или ASR ready).
 final class _CircuitBreaker {
   _CircuitBreaker(this._threshold);
 
