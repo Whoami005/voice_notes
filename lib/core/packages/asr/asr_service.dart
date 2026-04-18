@@ -15,6 +15,12 @@ abstract interface class AsrService {
   /// Готов ли сервис к работе (инициализирован с моделью)
   bool get isInitialized;
 
+  /// Broadcast-стрим готовности сервиса. Эмитит `true` когда модель
+  /// проинициализирована и готова транскрибировать, `false` после dispose.
+  /// Дедуплицирован: эмит происходит только на реальных переходах.
+  /// Новые подписчики читают текущее состояние через [isInitialized].
+  Stream<bool> get stateStream;
+
   /// Текущая загруженная модель
   AsrModelEntity? get currentModel;
 

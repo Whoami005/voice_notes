@@ -1,16 +1,16 @@
 import 'dart:async';
 import 'dart:developer' as developer;
-import 'dart:io';
 
 import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:injectable/injectable.dart';
 import 'package:voice_notes/core/collections/unique_queue.dart';
 import 'package:voice_notes/core/error/app_failure.dart';
 import 'package:voice_notes/core/extensions/string_extensions.dart';
-import 'package:voice_notes/core/packages/asr/asr_exception.dart';
 import 'package:voice_notes/core/packages/asr/asr_result.dart';
 import 'package:voice_notes/core/packages/asr/asr_service.dart';
 import 'package:voice_notes/core/packages/path/audio_paths.dart';
+import 'package:voice_notes/core/packages/transcription/transcription_circuit_breaker.dart';
+import 'package:voice_notes/core/packages/transcription/transcription_failure_classifier.dart';
 import 'package:voice_notes/core/packages/transcription/transcription_queue_snapshot.dart';
 import 'package:voice_notes/feature/data/local/preferences/recording_preferences.dart';
 import 'package:voice_notes/feature/domain/entities/note_audio_entity.dart';
@@ -78,7 +78,9 @@ class TranscriptionQueueService {
 
   /// 3 подряд провала → pause. Автоматически снимается при появлении
   /// ASR-ready или пользовательским retry().
-  final _CircuitBreaker _breaker = _CircuitBreaker(3);
+  final TranscriptionCircuitBreaker _breaker = TranscriptionCircuitBreaker(
+    threshold: 3,
+  );
 
   final StreamController<TranscriptionQueueSnapshot> _snapshotController =
       StreamController<TranscriptionQueueSnapshot>.broadcast();
@@ -438,7 +440,7 @@ class TranscriptionQueueService {
         .transcribeFile(absolutePath)
         .timeout(
           _transcribeTimeout,
-          onTimeout: () => throw const _TranscribeTimeoutException(),
+          onTimeout: () => throw const TranscribeTimeoutException(),
         );
   }
 
@@ -462,7 +464,7 @@ class TranscriptionQueueService {
       name: 'TranscriptionQueue',
     );
 
-    final reason = _classifyFailure(error);
+    final reason = classifyTranscriptionFailure(error);
     await _noteRepository.failTranscription(uid: noteUid, reason: reason);
     _breaker.recordFailure();
   }
@@ -494,17 +496,6 @@ class TranscriptionQueueService {
     _emitSnapshot();
   }
 
-  TranscriptionFailureReason _classifyFailure(Object error) => switch (error) {
-    _TranscribeTimeoutException() =>
-      TranscriptionFailureReason.transcriptionTimedOut,
-    AsrNotInitializedException() => TranscriptionFailureReason.noModelSelected,
-    AsrModelNotFoundException() => TranscriptionFailureReason.modelLoadFailed,
-    AsrInvalidAudioException() => TranscriptionFailureReason.audioFileCorrupted,
-    AsrProcessingException() => TranscriptionFailureReason.transcriptionFailed,
-    FileSystemException() => TranscriptionFailureReason.audioFileMissing,
-    _ => TranscriptionFailureReason.unknown,
-  };
-
   Future<String> _resolveAudioAbsolutePath(NoteAudioEntity audio) {
     return AudioPaths.resolveRelativePath(audio.relativePath);
   }
@@ -525,38 +516,5 @@ class TranscriptionQueueService {
 
     _lastSnapshot = nextSnapshot;
     _snapshotController.add(nextSnapshot);
-  }
-}
-
-/// Внутренняя метка таймаута: хранит отдельную семантику от обычных
-/// `AsrProcessingException`, чтобы `_classifyFailure` мог различить их.
-class _TranscribeTimeoutException extends AsrProcessingException {
-  const _TranscribeTimeoutException() : super('ASR transcription timed out');
-}
-
-/// Circuit breaker для очереди: считает подряд проваленные попытки,
-/// при достижении порога ставит [isPaused] в `true`. Снимается через
-/// [reset] (при `retry()` или ASR ready).
-final class _CircuitBreaker {
-  _CircuitBreaker(this._threshold);
-
-  final int _threshold;
-  int _consecutive = 0;
-  bool _paused = false;
-
-  bool get isPaused => _paused;
-
-  void recordSuccess() {
-    _consecutive = 0;
-  }
-
-  void recordFailure() {
-    _consecutive++;
-    if (_consecutive >= _threshold) _paused = true;
-  }
-
-  void reset() {
-    _consecutive = 0;
-    _paused = false;
   }
 }
