@@ -139,8 +139,7 @@ class AsrIsolateRunner {
     _commands.send(
       TranscribeAudioCommand(
         requestId: requestId,
-        // Конвертируем в List<double> для передачи через isolate
-        samples: samples.toList(),
+        samples: samples,
         sampleRate: sampleRate,
       ),
     );
@@ -184,7 +183,13 @@ class AsrIsolateRunner {
     }
 
     if (message is InitializeResponse) {
-      _pendingInitialization?.complete(message.success);
+      message.success
+          ? _pendingInitialization?.complete(message.success)
+          : _pendingInitialization?.completeError(
+              AsrProcessingException(
+                message.error ?? 'Failed to initialize model',
+              ),
+            );
     } else if (message is TranscribeResponse) {
       final completer = _pendingRequests.remove(message.requestId);
       if (completer == null) return;

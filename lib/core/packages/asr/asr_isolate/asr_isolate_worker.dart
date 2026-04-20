@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:sherpa_onnx/sherpa_onnx.dart' as sherpa;
 import 'package:voice_notes/core/packages/asr/asr_config.dart';
+import 'package:voice_notes/core/packages/asr/asr_exception.dart';
 import 'package:voice_notes/core/packages/asr/asr_isolate/asr_commands.dart';
 import 'package:voice_notes/core/packages/asr/asr_result.dart';
 import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
@@ -94,8 +95,7 @@ class _AsrWorker {
     }
 
     try {
-      final samples = Float32List.fromList(cmd.samples);
-      final result = _transcribeAudio(samples, cmd.sampleRate);
+      final result = _transcribeAudio(cmd.samples, cmd.sampleRate);
       _responses.send(TranscribeResponse.ok(cmd.requestId, result));
     } catch (e) {
       _responses.send(
@@ -128,6 +128,13 @@ class _AsrWorker {
     final stopwatch = Stopwatch()..start();
 
     final waveData = sherpa.readWave(filePath);
+
+    // sherpa.readWave возвращает пустой WaveData при нечитаемом/битом WAV.
+    // Без этого чека decode() уйдёт в пустой ввод и даст бессмысленный
+    // результат или NPE вместо явной диагностики.
+    if (waveData.samples.isEmpty || waveData.sampleRate <= 0) {
+      throw AsrInvalidAudioException('Failed to read WAV file: $filePath');
+    }
 
     final stream = _recognizer!.createStream()
       ..acceptWaveform(
@@ -189,6 +196,7 @@ class _AsrWorker {
         decoderPath: '$modelPath/${fileNames['decoder']}',
         joinerPath: '$modelPath/${fileNames['joiner']}',
         tokensPath: '$modelPath/${fileNames['tokens']}',
+        modelType: 'nemo_transducer',
       ),
     };
   }
@@ -218,6 +226,7 @@ class _AsrWorker {
           ),
           tokens: config.tokensPath,
           numThreads: config.numThreads,
+          modelType: config.modelType,
         ),
       ),
     };

@@ -270,6 +270,7 @@ class SherpaAsrService implements AsrService {
         decoderPath: '$modelPath/${fileNames['decoder']}',
         joinerPath: '$modelPath/${fileNames['joiner']}',
         tokensPath: '$modelPath/${fileNames['tokens']}',
+        modelType: 'nemo_transducer',
       ),
     };
   }
@@ -284,6 +285,7 @@ class SherpaAsrService implements AsrService {
         ),
         tokens: config.tokensPath,
         numThreads: config.numThreads,
+        modelType: config.modelType,
       ),
     );
 

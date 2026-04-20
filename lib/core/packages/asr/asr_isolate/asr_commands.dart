@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:sherpa_onnx/sherpa_onnx.dart';
 import 'package:voice_notes/core/packages/asr/asr_result.dart';
 import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
@@ -55,8 +57,9 @@ final class TranscribeAudioCommand extends AsrCommand {
   /// ID запроса для сопоставления с ответом.
   final int requestId;
 
-  /// PCM аудио данные в формате Float32 (-1.0 to 1.0).
-  final List<double> samples;
+  /// PCM аудио данные в формате Float32 (-1.0 to 1.0). Передаётся через
+  /// isolate port как есть — `TypedData` не копируется в boxed `List<double>`.
+  final Float32List samples;
 
   /// Частота дискретизации (обычно 16000 Hz).
   final int sampleRate;

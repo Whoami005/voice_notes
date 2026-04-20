@@ -54,12 +54,18 @@ class TransducerAsrConfig extends AsrModelConfig {
   /// Путь к joiner модели
   final String joinerPath;
 
+  /// Тип модели для sherpa-onnx (`OfflineModelConfig.modelType` /
+  /// `OnlineModelConfig.modelType`). Для NeMo Parakeet-style transducer ->
+  /// `'nemo_transducer'`. Пустая строка = автодетект по загруженным файлам.
+  final String modelType;
+
   const TransducerAsrConfig({
     required this.encoderPath,
     required this.decoderPath,
     required this.joinerPath,
     required super.tokensPath,
     super.numThreads,
+    this.modelType = '',
   });
 
   @override
