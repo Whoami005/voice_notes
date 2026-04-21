@@ -24,11 +24,11 @@ class QueueProcessingSection extends StatelessWidget {
     final processIsEmpty = processing == null;
 
     return QueueGroup(
-      accentColor: processIsEmpty ? themeColors.info : themeColors.textTertiary,
-      pulse: processIsEmpty,
+      accentColor: processIsEmpty ? themeColors.textTertiary : themeColors.info,
+      pulse: !processIsEmpty,
       interactive: false,
       title: l10n.queueProcessingSection,
-      count: processIsEmpty ? 1 : 0,
+      count: processIsEmpty ? 0 : 1,
       children: [
         if (processing == null)
           QueueGroupEmpty(text: l10n.queueEmptyProcessing)
