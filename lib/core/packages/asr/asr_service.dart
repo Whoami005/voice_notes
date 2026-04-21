@@ -21,7 +21,9 @@ abstract interface class AsrService {
 
   AsrModelEntity? get currentModel;
 
-  bool get isStreaming;
+  // Live-mic streaming API — временно отключено, не реализовано в worker'е.
+  // Оставлено как reserved surface на случай возврата функциональности.
+  // bool get isStreaming;
 
   /// Выбрасывает:
   /// - [AsrModelNotFoundException] если файлы модели не найдены
@@ -32,9 +34,9 @@ abstract interface class AsrService {
 
   /// Освобождает текущую модель и связанные ресурсы, оставив сервис живым.
   ///
-  /// [stateStream] и [streamingResults] продолжают работать — их scope
-  /// привязан к жизни сервиса, а не модели. Если до вызова сервис был готов,
-  /// подписчики [stateStream] получат `false`.
+  /// [stateStream] продолжает работать — его scope привязан к жизни сервиса,
+  /// а не модели. Если до вызова сервис был готов, подписчики [stateStream]
+  /// получат `false`.
   ///
   /// Используется, когда пользователь снял выбор модели. При смене модели
   /// вызывается [switchModel], который сам делает unload внутри.
@@ -77,26 +79,29 @@ abstract interface class AsrService {
   /// - [AsrProcessingException] при ошибке распознавания
   Future<AsrResult> transcribeAudio(Float32List samples, int sampleRate);
 
-  /// Выбрасывает:
-  /// - [AsrNotInitializedException] если сервис не инициализирован
-  /// - [AsrStreamingNotSupportedException] если модель не поддерживает
-  ///   streaming
-  /// - [AsrStreamingAlreadyActiveException] если сессия уже активна
-  /// - [AsrStreamingBusyException] если активна file-streaming задача
-  Future<void> startStreaming();
-
-  /// [samples] — PCM аудио в формате Float32 (-1.0 to 1.0).
-  ///
-  /// Выбрасывает [AsrStreamingNotActiveException] если сессия не активна.
-  void feedAudioChunk(Float32List samples, {int sampleRate = 16000});
-
-  /// Возвращает пустую строку если нет активной сессии.
-  String get streamingPartialResult;
-
-  Stream<AsrStreamingResult> get streamingResults;
-
-  /// Выбрасывает [AsrStreamingNotActiveException] если сессия не активна.
-  Future<AsrResult> stopStreaming();
-
-  Future<void> cancelStreaming();
+  // Live-mic streaming API — временно отключено, не реализовано в worker'е.
+  // Оставлено как reserved surface на случай возврата функциональности.
+  //
+  // /// Выбрасывает:
+  // /// - [AsrNotInitializedException] если сервис не инициализирован
+  // /// - [AsrStreamingNotSupportedException] если модель не поддерживает
+  // ///   streaming
+  // /// - [AsrStreamingAlreadyActiveException] если сессия уже активна
+  // /// - [AsrStreamingBusyException] если активна file-streaming задача
+  // Future<void> startStreaming();
+  //
+  // /// [samples] — PCM аудио в формате Float32 (-1.0 to 1.0).
+  // ///
+  // /// Выбрасывает [AsrStreamingNotActiveException] если сессия не активна.
+  // void feedAudioChunk(Float32List samples, {int sampleRate = 16000});
+  //
+  // /// Возвращает пустую строку если нет активной сессии.
+  // String get streamingPartialResult;
+  //
+  // Stream<AsrStreamingResult> get streamingResults;
+  //
+  // /// Выбрасывает [AsrStreamingNotActiveException] если сессия не активна.
+  // Future<AsrResult> stopStreaming();
+  //
+  // Future<void> cancelStreaming();
 }
