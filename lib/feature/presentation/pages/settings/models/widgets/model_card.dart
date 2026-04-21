@@ -76,6 +76,8 @@ class ModelCard extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
+          if (model.supportsStreaming) _ModelCapabilitiesSection(model: model),
+          _ModelRecommendationSection(model: model),
           downloadProgress != null
               ? _DownloadProgressWidget(
                   progress: downloadProgress!,
@@ -164,6 +166,133 @@ class _ModelInfo extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
           ),
       ],
+    );
+  }
+}
+
+/// Секция «Возможности» для streaming-моделей: три капабилити-чипа.
+///
+/// Не показывается для non-streaming моделей — для них есть только секция
+/// «Рекомендации» с подсказкой про ≤5 минут.
+class _ModelCapabilitiesSection extends StatelessWidget {
+  final AsrModelEntity model;
+
+  const _ModelCapabilitiesSection({required this.model});
+
+  @override
+  Widget build(BuildContext context) {
+    final themeColors = context.themeColors;
+    final l10n = context.l10n;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: AppSizes.p8,
+      children: [
+        Text(
+          l10n.modelCapabilitiesTitle,
+          style: AppTypography.micro.copyWith(
+            color: themeColors.textTertiary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        Wrap(
+          spacing: AppSizes.p8,
+          runSpacing: AppSizes.p6,
+          children: [
+            _CapabilityChip(
+              key: const Key('model-card-capability-realtime'),
+              icon: Icons.speed,
+              label: l10n.modelCapabilityRealTimeProgress,
+            ),
+            _CapabilityChip(
+              key: const Key('model-card-capability-cancelable'),
+              icon: Icons.cancel_outlined,
+              label: l10n.modelCapabilityCancelable,
+            ),
+            _CapabilityChip(
+              key: const Key('model-card-capability-partial-text'),
+              icon: Icons.text_snippet_outlined,
+              label: l10n.modelCapabilityLivePartialText,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+/// Секция «Рекомендации» — подсказка по выбору длины записи.
+class _ModelRecommendationSection extends StatelessWidget {
+  final AsrModelEntity model;
+
+  const _ModelRecommendationSection({required this.model});
+
+  @override
+  Widget build(BuildContext context) {
+    final themeColors = context.themeColors;
+    final l10n = context.l10n;
+    final text = model.supportsStreaming
+        ? l10n.modelTipStreamingForLongRecords
+        : l10n.modelTipOfflineShortRecords;
+
+    return Row(
+      key: const Key('model-card-recommendation'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(
+          Icons.info_outline,
+          size: AppSizes.p16,
+          color: themeColors.textTertiary,
+        ),
+        AppSpacer.p8,
+        Expanded(
+          child: Text(
+            text,
+            style: AppTypography.caption.copyWith(
+              color: themeColors.textSecondary,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Компактный чип с иконкой и лейблом для capabilities-секции.
+/// Приватный: единственный потребитель — [_ModelCapabilitiesSection].
+class _CapabilityChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+
+  const _CapabilityChip({required this.icon, required this.label, super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final themeColors = context.themeColors;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSizes.p10,
+        vertical: AppSizes.p6,
+      ),
+      decoration: BoxDecoration(
+        color: themeColors.accentPrimary.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(AppSizes.chipRadius),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        spacing: AppSizes.p6,
+        children: [
+          Icon(icon, size: AppSizes.p14, color: themeColors.accentPrimary),
+          Text(
+            label,
+            style: AppTypography.micro.copyWith(
+              color: themeColors.accentPrimary,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

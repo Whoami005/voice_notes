@@ -150,8 +150,20 @@
   "modelDescWhisperTiny": "Fastest model. English only.",
   "modelDescWhisperSmall": "Fast model with good quality. Recommended for most tasks.",
   "modelDescWhisperMedium": "More accurate model for complex audio with noise or accents.",
+  "modelDescParakeetV3": "Streaming model with real-time progress. Best for long recordings.",
+  "modelDescZipformerEn": "Streaming model for English. Real-time progress, instant cancel.",
+  "modelDescZipformerEn20M": "Compact streaming model for English (~44 MB). Same UX as Zipformer EN, lighter footprint.",
   "modelLangEnglish": "English",
   "modelLang99Languages": "99 languages",
+  "modelLang25Languages": "25 European languages",
+
+  "modelCapabilitiesTitle": "Capabilities",
+  "modelCapabilityRealTimeProgress": "Real-time progress",
+  "modelCapabilityCancelable": "Cancelable",
+  "modelCapabilityLivePartialText": "Live partial text",
+  "modelRecommendationsTitle": "Recommendations",
+  "modelTipStreamingForLongRecords": "Works for recordings of any length, including interviews and lectures.",
+  "modelTipOfflineShortRecords": "Best for recordings up to 5 minutes. For longer — use a streaming model.",
 
   "asrInitializing": "Initializing model...",
   "asrInitError": "Model initialization error",
@@ -206,6 +218,11 @@
   "@noteStatusTranscribingEta": {
     "description": "Note bubble transcribing status with estimated duration",
     "placeholders": { "seconds": { "type": "int" } }
+  },
+  "noteStatusTranscribingProgress": "Transcribing: {percent}%",
+  "@noteStatusTranscribingProgress": {
+    "description": "Note bubble transcribing status with real-time percent (streaming models only)",
+    "placeholders": { "percent": { "type": "int" } }
   },
   "noteStatusCancelled": "Cancelled",
   "@noteStatusCancelled": { "description": "Note bubble status: transcription cancelled by user" },

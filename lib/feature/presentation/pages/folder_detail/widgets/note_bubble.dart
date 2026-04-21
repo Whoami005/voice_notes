@@ -5,10 +5,13 @@ import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/l10n/transcription_failure_reason_l10n.dart';
 import 'package:voice_notes/core/packages/asr/asr_cubit.dart';
+import 'package:voice_notes/core/packages/asr/asr_transcribe_progress.dart';
 import 'package:voice_notes/core/packages/player/audio_playback_controller.dart';
 import 'package:voice_notes/core/packages/transcription/asr_rtf_estimates.dart';
+import 'package:voice_notes/core/packages/transcription/transcription_queue_snapshot.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
 import 'package:voice_notes/feature/domain/enums/transcription_failure_reason.dart';
+import 'package:voice_notes/feature/presentation/pages/queue/logic/transcription_queue_cubit.dart';
 import 'package:voice_notes/feature/presentation/widgets/audio/audio_inline_player.dart';
 import 'package:voice_notes/feature/presentation/widgets/chips/tag_chip.dart';
 
@@ -154,12 +157,32 @@ class _StatusContent extends StatelessWidget {
     }
 
     if (note.isTranscribing) {
-      return _StatusLine(
-        showSpinner: true,
-        label: _transcribingLabel(context),
-        color: themeColors.textSecondary,
-        italic: true,
-        action: cancelAction,
+      return BlocSelector<
+        TranscriptionQueueCubit,
+        TranscriptionQueueState,
+        _TranscribingViewData
+      >(
+        selector: (state) =>
+            _TranscribingViewData.fromSnapshot(state.snapshot, note.uuid),
+        builder: (context, data) {
+          if (data.supportsStreaming) {
+            return _StreamingTranscribingRow(
+              progress: data.progress,
+              cancelAction: cancelAction,
+            );
+          }
+
+          return _StatusLine(
+            showSpinner: true,
+            label: _transcribingLabel(context),
+            color: themeColors.textSecondary,
+            italic: true,
+            // Для не-streaming моделей cancel-кнопка скрывается в
+            // процессе transcribing — offline decode прервать нельзя.
+            // Пользователь по-прежнему может нажать Cancel, пока заметка
+            // ещё в очереди (`isQueued`).
+          );
+        },
       );
     }
 
@@ -271,6 +294,99 @@ class _StatusLine extends StatelessWidget {
             ),
           ),
         ],
+      ],
+    );
+  }
+}
+
+/// Снимок snapshot'а очереди для конкретной транскрибируемой заметки.
+///
+/// Изолирует UI-слой от формы `TranscriptionQueueSnapshot`. Если заметка
+/// сейчас не `processing` в очереди — возвращаем fallback (нет progress'а,
+/// non-streaming), чтобы UI вёл себя как в легаси-сценарии.
+class _TranscribingViewData {
+  final bool supportsStreaming;
+  final AsrTranscribeProgress? progress;
+
+  const _TranscribingViewData({
+    required this.supportsStreaming,
+    required this.progress,
+  });
+
+  factory _TranscribingViewData.fromSnapshot(
+    TranscriptionQueueSnapshot snapshot,
+    String noteUid,
+  ) {
+    if (snapshot.processing != noteUid) {
+      return const _TranscribingViewData(
+        supportsStreaming: false,
+        progress: null,
+      );
+    }
+
+    return _TranscribingViewData(
+      supportsStreaming: snapshot.processingSupportsStreaming,
+      progress: snapshot.processingProgress,
+    );
+  }
+}
+
+/// Streaming-модель: determinate-прогресс + `Расшифровка: N%` + cancel.
+class _StreamingTranscribingRow extends StatelessWidget {
+  final AsrTranscribeProgress? progress;
+  final _StatusAction? cancelAction;
+
+  const _StreamingTranscribingRow({
+    required this.progress,
+    required this.cancelAction,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final themeColors = context.themeColors;
+    final textTheme = context.textTheme;
+    final l10n = context.l10n;
+    final progressValue = progress?.progress;
+    final percentLabel = progress != null
+        ? l10n.noteStatusTranscribingProgress(progress!.percent)
+        : l10n.noteStatusTranscribing;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: AppSizes.p8,
+      children: [
+        Text(
+          percentLabel,
+          style: textTheme.bodyMedium?.copyWith(
+            color: themeColors.textSecondary,
+            fontStyle: FontStyle.italic,
+            height: 1.5,
+          ),
+        ),
+        LinearProgressIndicator(
+          key: const Key('note-bubble-progress-bar'),
+          value: progressValue,
+          minHeight: AppSizes.strokeMedium,
+          color: themeColors.accentPrimary,
+          backgroundColor: themeColors.bgPrimary,
+        ),
+        if (cancelAction != null)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              key: const Key('note-bubble-cancel-button'),
+              onPressed: cancelAction!.onPressed,
+              icon: Icon(cancelAction!.icon, size: AppSizes.p16),
+              label: Text(cancelAction!.label),
+              style: TextButton.styleFrom(
+                foregroundColor: cancelAction!.color,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: AppSizes.p12,
+                  vertical: AppSizes.p6,
+                ),
+              ),
+            ),
+          ),
       ],
     );
   }
