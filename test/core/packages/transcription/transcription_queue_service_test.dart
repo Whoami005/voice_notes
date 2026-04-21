@@ -5,9 +5,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voice_notes/core/error/app_failure.dart';
+import 'package:voice_notes/core/packages/asr/asr_cancel_token.dart';
 import 'package:voice_notes/core/packages/asr/asr_exception.dart';
 import 'package:voice_notes/core/packages/asr/asr_result.dart';
 import 'package:voice_notes/core/packages/asr/asr_service.dart';
+import 'package:voice_notes/core/packages/asr/asr_transcribe_progress.dart';
 import 'package:voice_notes/core/packages/transcription/transcription_queue_service.dart';
 import 'package:voice_notes/core/packages/transcription/transcription_queue_snapshot.dart';
 import 'package:voice_notes/feature/data/local/preferences/recording_preferences.dart';
@@ -248,6 +250,260 @@ void main() {
     });
   });
 
+  group('cancel/delete in-flight with cancelToken', () {
+    test(
+      'streaming-model cancel → AsrCancelledException → markCancelled',
+      () async {
+        asr
+          ..isInitializedValue = true
+          ..currentModelValue = _streamingModel();
+
+        final note = _makeNote(
+          'n1',
+          status: TranscriptionStatus.queued,
+          audio: _makeAudio(),
+        );
+        repo.addNote(note);
+
+        // FakeAsrService ждёт, пока cancelToken сработает, и бросает.
+        asr.transcribeFileImpl = (path) async {
+          await asr.lastCancelToken!.whenCancelled;
+          throw const AsrCancelledException();
+        };
+
+        final service = buildService();
+        await service.start();
+        repo.emitQueued([note]);
+        await _pump();
+
+        // Даём drain'у стартовать и войти в transcribeFile.
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+
+        await service.cancel('n1');
+
+        await Future<void>.delayed(const Duration(milliseconds: 50));
+
+        expect(repo.markCancelledCalls, contains('n1'));
+        expect(asr.lastCancelToken!.isCancelled, isTrue);
+        // breaker не тронут ни success ни failure при cancel
+        expect(service.current.paused, isFalse);
+
+        await service.dispose();
+      },
+    );
+
+    test(
+      'whisper-model cancel → token.cancel() but no-op, post-decode consume',
+      () async {
+        asr
+          ..isInitializedValue = true
+          ..currentModelValue = _whisperModel();
+
+        final note = _makeNote(
+          'n1',
+          status: TranscriptionStatus.queued,
+          audio: _makeAudio(),
+        );
+        repo.addNote(note);
+
+        final completer = Completer<AsrResult>();
+        asr.transcribeFileImpl = (path) => completer.future;
+
+        final service = buildService();
+        await service.start();
+        repo.emitQueued([note]);
+        await _pump();
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+
+        // Cancel пока ASR "работает" — token.cancel() вызван, но fake не
+        // реагирует на него (симулируя offline-поведение).
+        await service.cancel('n1');
+        expect(asr.lastCancelToken!.isCancelled, isTrue);
+
+        // Теперь завершаем ASR штатно — consume-abort
+        // должен перевести в cancelled.
+        completer.complete(const AsrResult(text: 'done'));
+        await Future<void>.delayed(const Duration(milliseconds: 30));
+
+        expect(repo.markCancelledCalls, contains('n1'));
+        // complete не вызван — cancel перекрыл
+        expect(repo.completeCalls, isNot(contains('n1')));
+        await service.dispose();
+      },
+    );
+
+    test('onNoteDeleted in-flight → token.cancel() fired', () async {
+      asr
+        ..isInitializedValue = true
+        ..currentModelValue = _streamingModel();
+
+      final note = _makeNote(
+        'n1',
+        status: TranscriptionStatus.queued,
+        audio: _makeAudio(),
+      );
+      repo.addNote(note);
+
+      asr.transcribeFileImpl = (path) async {
+        await asr.lastCancelToken!.whenCancelled;
+        throw const AsrCancelledException();
+      };
+
+      final service = buildService();
+      await service.start();
+      repo.emitQueued([note]);
+      await _pump();
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+
+      // Эмулируем delete через стрим — _onNoteDeleted.
+      repo._deletedController.add('n1');
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      expect(asr.lastCancelToken!.isCancelled, isTrue);
+      await service.dispose();
+    });
+  });
+
+  group('progress gating', () {
+    test(
+      'progress for active note updates snapshot.processingProgress',
+      () async {
+        asr
+          ..isInitializedValue = true
+          ..currentModelValue = _streamingModel();
+
+        final note = _makeNote(
+          'n1',
+          status: TranscriptionStatus.queued,
+          audio: _makeAudio(),
+        );
+        repo.addNote(note);
+
+        final completer = Completer<AsrResult>();
+        asr.transcribeFileImpl = (path) => completer.future;
+
+        final service = buildService();
+        await service.start();
+        repo.emitQueued([note]);
+        await _pump();
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+
+        // Эмулируем progress от воркера через сохранённый callback.
+        asr.lastOnProgress!.call(
+          const AsrTranscribeProgress(
+            progress: 0.42,
+            partialText: 'partial',
+            processedAudio: Duration(seconds: 4),
+            totalAudio: Duration(seconds: 10),
+          ),
+        );
+
+        await _pump();
+
+        expect(service.current.processingProgress, isNotNull);
+        expect(service.current.processingProgress!.percent, 42);
+        expect(service.current.processingSupportsStreaming, isTrue);
+
+        completer.complete(const AsrResult(text: 'done'));
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+
+        // После завершения задачи snapshot progress сброшен.
+        expect(service.current.processingProgress, isNull);
+        expect(service.current.processingSupportsStreaming, isFalse);
+
+        await service.dispose();
+      },
+    );
+
+    test('progress for cancelRequested note is dropped', () async {
+      asr
+        ..isInitializedValue = true
+        ..currentModelValue = _streamingModel();
+
+      final note = _makeNote(
+        'n1',
+        status: TranscriptionStatus.queued,
+        audio: _makeAudio(),
+      );
+      repo.addNote(note);
+
+      final completer = Completer<AsrResult>();
+      asr.transcribeFileImpl = (path) async {
+        await asr.lastCancelToken!.whenCancelled;
+        throw const AsrCancelledException();
+      };
+
+      final service = buildService();
+      await service.start();
+      repo.emitQueued([note]);
+      await _pump();
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+
+      // Запрос на cancel — _cancelRequested содержит 'n1' до того как
+      // FakeAsrService отреагирует на whenCancelled.
+      await service.cancel('n1');
+
+      // Гоним stale progress — должен быть дропнут.
+      asr.lastOnProgress!.call(
+        const AsrTranscribeProgress(
+          progress: 0.7,
+          partialText: 'stale',
+          processedAudio: Duration(seconds: 7),
+          totalAudio: Duration(seconds: 10),
+        ),
+      );
+
+      await _pump();
+
+      expect(service.current.processingProgress, isNull);
+
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+      completer.complete(const AsrResult(text: 'done'));
+      await service.dispose();
+    });
+  });
+
+  group('capability freeze', () {
+    test(
+      'processingSupportsStreaming stays true even if model changes',
+      () async {
+        asr
+          ..isInitializedValue = true
+          ..currentModelValue = _streamingModel();
+
+        final note = _makeNote(
+          'n1',
+          status: TranscriptionStatus.queued,
+          audio: _makeAudio(),
+        );
+        repo.addNote(note);
+
+        final completer = Completer<AsrResult>();
+        asr.transcribeFileImpl = (path) => completer.future;
+
+        final service = buildService();
+        await service.start();
+        repo.emitQueued([note]);
+        await _pump();
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+
+        expect(service.current.processingSupportsStreaming, isTrue);
+
+        // Меняем модель на Whisper посреди задачи —
+        // snapshot не должен реагировать.
+        asr.currentModelValue = _whisperModel();
+        await _pump();
+
+        expect(service.current.processingSupportsStreaming, isTrue);
+
+        completer.complete(const AsrResult(text: 'done'));
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+
+        await service.dispose();
+      },
+    );
+  });
+
   group('timeout classification', () {
     test('timeout → transcriptionTimedOut failure reason', () async {
       asr.isInitializedValue = true;
@@ -305,6 +561,17 @@ NoteEntity _makeNote(
     status: status,
     audio: audio,
   );
+}
+
+AsrModelEntity _streamingModel() {
+  return AsrModelEntity.availableModels.firstWhere(
+    (m) => m.supportsStreaming,
+    orElse: () => AsrModelEntity.availableModels.first,
+  );
+}
+
+AsrModelEntity _whisperModel() {
+  return AsrModelEntity.availableModels.firstWhere((m) => !m.supportsStreaming);
 }
 
 NoteAudioEntity _makeAudio() {
@@ -467,6 +734,13 @@ class _FakeAsrService implements AsrService {
   Future<AsrResult> Function(String path) transcribeFileImpl = (path) async =>
       const AsrResult(text: 'ok');
 
+  /// Последний переданный `cancelToken` — для verify в тестах.
+  AsrCancelToken? lastCancelToken;
+
+  /// Последний переданный `onProgress` callback — для ручного дёргания
+  /// в тестах (симуляция progress-событий от streaming-воркера).
+  void Function(AsrTranscribeProgress progress)? lastOnProgress;
+
   final StreamController<bool> _stateController =
       StreamController<bool>.broadcast();
 
@@ -485,8 +759,15 @@ class _FakeAsrService implements AsrService {
   AsrModelEntity? get currentModel => currentModelValue;
 
   @override
-  Future<AsrResult> transcribeFile(String filePath) =>
-      transcribeFileImpl(filePath);
+  Future<AsrResult> transcribeFile(
+    String filePath, {
+    void Function(AsrTranscribeProgress progress)? onProgress,
+    AsrCancelToken? cancelToken,
+  }) {
+    lastCancelToken = cancelToken;
+    lastOnProgress = onProgress;
+    return transcribeFileImpl(filePath);
+  }
 
   @override
   Future<AsrResult> transcribeAudio(Float32List samples, int sampleRate) =>

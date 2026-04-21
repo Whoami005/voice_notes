@@ -54,3 +54,33 @@ class AsrStreamingNotActiveException extends AsrException {
     super.message = 'No active streaming session',
   ]);
 }
+
+/// Транскрибация отменена пользователем через [AsrCancelToken].
+///
+/// Для streaming-моделей — в любой момент между чанками. Для non-streaming
+/// моделей этот тип исключения не бросается — отмена применяется на уровне
+/// очереди после завершения FFI-decode.
+class AsrCancelledException extends AsrException {
+  const AsrCancelledException([super.message = 'Transcription cancelled']);
+}
+
+/// Воркер занят другой in-flight задачей.
+///
+/// Защита от параллельного запуска `TranscribeCommand`'ов на одном
+/// `OnlineRecognizer`/`OfflineRecognizer`. В текущей очереди задачи обычно
+/// идут последовательно; это защита на уровне протокола.
+class AsrWorkerBusyException extends AsrProcessingException {
+  const AsrWorkerBusyException([
+    super.message = 'ASR worker is busy with another request',
+  ]);
+}
+
+/// Попытка стартовать live-mic streaming при активной file-streaming задаче.
+///
+/// Feature-gate: live-mic и file-streaming используют один native recognizer;
+/// параллельный запуск ломает его состояние.
+class AsrStreamingBusyException extends AsrException {
+  const AsrStreamingBusyException([
+    super.message = 'Cannot start streaming: file-streaming is in progress',
+  ]);
+}

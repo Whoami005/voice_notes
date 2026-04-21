@@ -6,8 +6,11 @@ import 'package:injectable/injectable.dart';
 import 'package:voice_notes/core/collections/unique_queue.dart';
 import 'package:voice_notes/core/error/app_failure.dart';
 import 'package:voice_notes/core/extensions/string_extensions.dart';
+import 'package:voice_notes/core/packages/asr/asr_cancel_token.dart';
+import 'package:voice_notes/core/packages/asr/asr_exception.dart';
 import 'package:voice_notes/core/packages/asr/asr_result.dart';
 import 'package:voice_notes/core/packages/asr/asr_service.dart';
+import 'package:voice_notes/core/packages/asr/asr_transcribe_progress.dart';
 import 'package:voice_notes/core/packages/path/audio_paths.dart';
 import 'package:voice_notes/core/packages/transcription/transcription_circuit_breaker.dart';
 import 'package:voice_notes/core/packages/transcription/transcription_failure_classifier.dart';
@@ -90,6 +93,22 @@ class TranscriptionQueueService {
   bool _draining = false;
   bool _asrReady = false;
   String? _processing;
+
+  /// Cancel-токен активной in-flight задачи. `null` пока нет активной.
+  /// `cancel(noteUid)` и `onNoteDeleted(noteUid)` вызывают `.cancel()` —
+  /// для streaming-моделей это прерывает задачу между чанками.
+  AsrCancelToken? _currentCancelToken;
+
+  /// Последнее progress-событие активной задачи. `null` для non-streaming
+  /// моделей или до первого события.
+  AsrTranscribeProgress? _lastProgress;
+
+  /// Для какой заметки относится `_lastProgress` (stale-guard).
+  String? _lastProgressNoteUid;
+
+  /// Зафиксировано на старте `_processOne` — не меняется при
+  /// unload/switch модели в середине задачи. UI читает отсюда.
+  bool _processingSupportsStreaming = false;
 
   StreamSubscription<List<NoteEntity>>? _queuedSub;
   StreamSubscription<String>? _noteDeletedSub;
@@ -235,7 +254,13 @@ class TranscriptionQueueService {
       return;
     }
 
-    if (_processing == noteUid) _cancelRequested.add(noteUid);
+    if (_processing == noteUid) {
+      _cancelRequested.add(noteUid);
+      // Streaming-модели — instant cancel через токен. Для Whisper токен
+      // no-op'нет в воркере; fallback —
+      // post-decode consume-abort в _processOne.
+      _currentCancelToken?.cancel();
+    }
     _emitSnapshot();
   }
 
@@ -413,11 +438,17 @@ class TranscriptionQueueService {
       }
 
       final modelName = _asrService.currentModel?.name ?? '';
+      _processingSupportsStreaming =
+          _asrService.currentModel?.supportsStreaming ?? false;
+      _currentCancelToken = AsrCancelToken();
       await _noteRepository.markTranscribing(noteUid);
+      _emitSnapshot();
 
-      // TODO(perf): прервать in-flight ASR при cancel/delete, не дожидаясь
-      //   завершения транскрибации.
-      final result = await _transcribeWithTimeout(audio);
+      final result = await _transcribeWithTimeout(
+        audio,
+        noteUid: noteUid,
+        cancelToken: _currentCancelToken!,
+      );
 
       // Пользователь мог удалить или отменить заметку за время await —
       // отбрасываем результат. Для cancelled — явно ставим статус.
@@ -432,8 +463,31 @@ class TranscriptionQueueService {
         deleteAudio: !_preferences.keepOriginals,
       );
       _breaker.recordSuccess();
+    } on AsrCancelledException {
+      // Instant-cancel от streaming-воркера. Seed'нуть markCancelled
+      // (если заметка ещё существует) и не трогать breaker — cancel
+      // нейтрален, не success и не failure.
+      _cancelRequested.remove(noteUid);
+      try {
+        await _noteRepository.markCancelled(noteUid);
+      } catch (error, stackTrace) {
+        developer.log(
+          'markCancelled failed for $noteUid after AsrCancelledException',
+          error: error,
+          stackTrace: stackTrace,
+          name: 'TranscriptionQueue',
+        );
+      }
     } catch (error, stackTrace) {
       await _handleProcessingFailure(noteUid, error, stackTrace);
+    } finally {
+      _currentCancelToken = null;
+      _processingSupportsStreaming = false;
+
+      if (_lastProgressNoteUid == noteUid) {
+        _lastProgress = null;
+        _lastProgressNoteUid = null;
+      }
     }
   }
 
@@ -463,15 +517,39 @@ class TranscriptionQueueService {
     return true;
   }
 
-  Future<AsrResult> _transcribeWithTimeout(NoteAudioEntity audio) async {
+  Future<AsrResult> _transcribeWithTimeout(
+    NoteAudioEntity audio, {
+    required String noteUid,
+    required AsrCancelToken cancelToken,
+  }) async {
     final absolutePath = await _resolveAudioAbsolutePath(audio);
 
     return _asrService
-        .transcribeFile(absolutePath)
+        .transcribeFile(
+          absolutePath,
+          onProgress: (p) => _onProgress(p, noteUid),
+          cancelToken: cancelToken,
+        )
         .timeout(
           _transcribeTimeout,
           onTimeout: () => throw const TranscribeTimeoutException(),
         );
+  }
+
+  /// Gate'д приём progress-событий от воркера. Дропаем, если:
+  /// - событие для не той заметки, что сейчас `_processing` (stale);
+  /// - пользователь уже отменил задачу (`_cancelRequested`);
+  /// - заметка удалена в процессе (`_deletedInFlight`).
+  void _onProgress(AsrTranscribeProgress progress, String forNoteUid) {
+    if (forNoteUid != _processing ||
+        _cancelRequested.contains(forNoteUid) ||
+        _deletedInFlight.contains(forNoteUid)) {
+      return;
+    }
+
+    _lastProgress = progress;
+    _lastProgressNoteUid = forNoteUid;
+    _emitSnapshot();
   }
 
   Future<void> _failWithReason(
@@ -526,10 +604,12 @@ class TranscriptionQueueService {
   void _onNoteDeleted(String noteUid) {
     // Если заметку удалили, пока она висит в `_queue` — просто убираем.
     // Если она in-flight — запоминаем, `_processOne` после ASR отбросит
-    // результат.
+    // результат. Streaming-decode прерываем мгновенно через cancelToken,
+    // чтобы не жечь CPU после delete.
     if (!_queue.remove(noteUid) && _processing == noteUid) {
       _deletedInFlight.add(noteUid);
       _cancelRequested.remove(noteUid);
+      _currentCancelToken?.cancel();
     }
 
     _emitSnapshot();
@@ -545,6 +625,10 @@ class TranscriptionQueueService {
     processing: _processing,
     cancelRequested: Set.unmodifiable(_cancelRequested),
     runtimeReason: _computeRuntimeReason(),
+    processingProgress: _lastProgressNoteUid == _processing
+        ? _lastProgress
+        : null,
+    processingSupportsStreaming: _processingSupportsStreaming,
   );
 
   /// Причина простоя дренажа. Breaker приоритетнее, т.к. он — следствие

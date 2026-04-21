@@ -1,7 +1,9 @@
 import 'dart:typed_data';
 
+import 'package:voice_notes/core/packages/asr/asr_cancel_token.dart';
 import 'package:voice_notes/core/packages/asr/asr_exception.dart';
 import 'package:voice_notes/core/packages/asr/asr_result.dart';
+import 'package:voice_notes/core/packages/asr/asr_transcribe_progress.dart';
 import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
 
 /// Абстрактный интерфейс сервиса распознавания речи.
@@ -45,11 +47,27 @@ abstract interface class AsrService {
 
   /// [filePath] — путь к WAV файлу (16kHz, mono).
   ///
+  /// [onProgress] вызывается по мере обработки аудио. Для моделей с
+  /// [AsrModelEntity.supportsStreaming] == `false` (Whisper) — никогда
+  /// не вызывается. Для streaming-моделей эмитится ~раз в 0.2 с аудио.
+  ///
+  /// [cancelToken] — кооперативная отмена. Для streaming-моделей
+  /// `cancel()` прерывает задачу между чанками, `Future` завершается
+  /// [AsrCancelledException]. Для non-streaming моделей отмена не
+  /// прерывает in-flight FFI-decode — применяется на уровне очереди
+  /// после завершения задачи.
+  ///
   /// Выбрасывает:
   /// - [AsrNotInitializedException] если сервис не инициализирован
   /// - [AsrInvalidAudioException] при неверном формате аудио
   /// - [AsrProcessingException] при ошибке распознавания
-  Future<AsrResult> transcribeFile(String filePath);
+  /// - [AsrWorkerBusyException] если воркер занят другой задачей
+  /// - [AsrCancelledException] при отмене через [cancelToken] (streaming only)
+  Future<AsrResult> transcribeFile(
+    String filePath, {
+    void Function(AsrTranscribeProgress progress)? onProgress,
+    AsrCancelToken? cancelToken,
+  });
 
   /// [samples] — PCM аудио в формате Float32 (-1.0 to 1.0).
   ///
@@ -64,6 +82,7 @@ abstract interface class AsrService {
   /// - [AsrStreamingNotSupportedException] если модель не поддерживает
   ///   streaming
   /// - [AsrStreamingAlreadyActiveException] если сессия уже активна
+  /// - [AsrStreamingBusyException] если активна file-streaming задача
   Future<void> startStreaming();
 
   /// [samples] — PCM аудио в формате Float32 (-1.0 to 1.0).

@@ -3,12 +3,16 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:injectable/injectable.dart';
+import 'package:meta/meta.dart';
 import 'package:sherpa_onnx/sherpa_onnx.dart' as sherpa;
+import 'package:voice_notes/core/packages/asr/asr_cancel_token.dart';
 import 'package:voice_notes/core/packages/asr/asr_config.dart';
 import 'package:voice_notes/core/packages/asr/asr_exception.dart';
 import 'package:voice_notes/core/packages/asr/asr_isolate/asr_isolate_runner.dart';
+import 'package:voice_notes/core/packages/asr/asr_model_files.dart';
 import 'package:voice_notes/core/packages/asr/asr_result.dart';
 import 'package:voice_notes/core/packages/asr/asr_service.dart';
+import 'package:voice_notes/core/packages/asr/asr_transcribe_progress.dart';
 import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
 
 /// Реализация ASR на базе sherpa-onnx. Поддерживает Whisper (offline) и
@@ -31,6 +35,11 @@ class SherpaAsrService implements AsrService {
   sherpa.OnlineStream? _onlineStream;
   bool _isStreaming = false;
   String _streamingPartialText = '';
+
+  // File-streaming flag: true пока идёт file-based streaming транскрибация
+  // через воркер. Live-mic streaming (`startStreaming()`) блокируется в этот
+  // момент, чтобы не поднимать второй OnlineRecognizer на ту же модель.
+  bool _fileStreamingActive = false;
 
   final _streamingResultsController =
       StreamController<AsrStreamingResult>.broadcast();
@@ -119,7 +128,11 @@ class SherpaAsrService implements AsrService {
   }
 
   @override
-  Future<AsrResult> transcribeFile(String filePath) async {
+  Future<AsrResult> transcribeFile(
+    String filePath, {
+    void Function(AsrTranscribeProgress progress)? onProgress,
+    AsrCancelToken? cancelToken,
+  }) async {
     _ensureInitialized();
 
     final file = File(filePath);
@@ -127,7 +140,16 @@ class SherpaAsrService implements AsrService {
       throw AsrInvalidAudioException('File not found: $filePath');
     }
 
-    return _isolateRunner!.transcribeFile(filePath);
+    _fileStreamingActive = _currentModel?.supportsStreaming ?? false;
+    try {
+      return await _isolateRunner!.transcribeFile(
+        filePath,
+        onProgress: onProgress,
+        cancelToken: cancelToken,
+      );
+    } finally {
+      _fileStreamingActive = false;
+    }
   }
 
   @override
@@ -144,6 +166,7 @@ class SherpaAsrService implements AsrService {
   @override
   Future<void> startStreaming() async {
     _ensureInitialized();
+    assertStreamingNotBusy(fileStreamingActive: _fileStreamingActive);
 
     if (_onlineRecognizer == null) {
       _initOnlineRecognizerIfNeeded();
@@ -156,6 +179,19 @@ class SherpaAsrService implements AsrService {
     _onlineStream = _onlineRecognizer!.createStream();
     _isStreaming = true;
     _streamingPartialText = '';
+  }
+
+  /// Проверка контракта feature-gate: нельзя поднять live-mic streaming,
+  /// если активна file-streaming задача (иначе две instance'ы
+  /// `OnlineRecognizer` на одной модели ломают native state).
+  ///
+  /// Extracted как top-level-ish static чтобы был юнит-тестируемой
+  /// без spawn isolate / FFI.
+  @visibleForTesting
+  static void assertStreamingNotBusy({required bool fileStreamingActive}) {
+    if (fileStreamingActive) {
+      throw const AsrStreamingBusyException();
+    }
   }
 
   @override
@@ -257,21 +293,28 @@ class SherpaAsrService implements AsrService {
   }
 
   AsrModelConfig _createConfig(AsrModelEntity model, String modelPath) {
-    final fileNames = model.getModelFileNames();
-
-    return switch (model.modelType) {
-      AsrModelType.whisper => WhisperAsrConfig(
-        encoderPath: '$modelPath/${fileNames['encoder']}',
-        decoderPath: '$modelPath/${fileNames['decoder']}',
-        tokensPath: '$modelPath/${fileNames['tokens']}',
-      ),
-      AsrModelType.parakeetTdt => TransducerAsrConfig(
-        encoderPath: '$modelPath/${fileNames['encoder']}',
-        decoderPath: '$modelPath/${fileNames['decoder']}',
-        joinerPath: '$modelPath/${fileNames['joiner']}',
-        tokensPath: '$modelPath/${fileNames['tokens']}',
-        modelType: 'nemo_transducer',
-      ),
+    return switch (model.getModelFiles()) {
+      WhisperModelFiles(:final encoder, :final decoder, :final tokens) =>
+        WhisperAsrConfig(
+          encoderPath: '$modelPath/$encoder',
+          decoderPath: '$modelPath/$decoder',
+          tokensPath: '$modelPath/$tokens',
+        ),
+      TransducerModelFiles(
+        :final encoder,
+        :final decoder,
+        :final joiner,
+        :final tokens,
+      ) =>
+        TransducerAsrConfig(
+          encoderPath: '$modelPath/$encoder',
+          decoderPath: '$modelPath/$decoder',
+          joinerPath: '$modelPath/$joiner',
+          tokensPath: '$modelPath/$tokens',
+          // Пустая строка → sherpa автодетектит (Zipformer);
+          // 'nemo_transducer' — для NeMo bundle'ов.
+          modelType: model.sherpaModelType ?? '',
+        ),
     };
   }
 

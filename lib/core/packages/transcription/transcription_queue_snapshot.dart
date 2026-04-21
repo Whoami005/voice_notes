@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:voice_notes/core/error/app_failure.dart';
+import 'package:voice_notes/core/packages/asr/asr_transcribe_progress.dart';
 import 'package:voice_notes/feature/domain/enums/queue_runtime_reason.dart';
 
 /// Фаза жизненного цикла сервиса очереди. `_recoverQueuedNotes` →
@@ -63,12 +64,25 @@ class TranscriptionQueueSnapshot extends Equatable {
   ///   пользовательским retry().
   final QueueRuntimeReason runtimeReason;
 
+  /// Прогресс текущей in-flight транскрибации. `null` для non-streaming
+  /// моделей или до первого progress-события.
+  final AsrTranscribeProgress? processingProgress;
+
+  /// Зафиксированный на старте `_processOne` флаг: поддерживает ли
+  /// текущая ASR-модель streaming. UI читает его для отображения
+  /// determinate progress-бара и доступности cancel-кнопки. Не
+  /// зависит от актуального состояния AsrCubit — unload/switch в
+  /// середине задачи не ломает UI.
+  final bool processingSupportsStreaming;
+
   const TranscriptionQueueSnapshot({
     this.bootstrapState = const QueueBootstrapNotStarted(),
     this.queued = const [],
     this.processing,
     this.cancelRequested = const {},
     this.runtimeReason = QueueRuntimeReason.none,
+    this.processingProgress,
+    this.processingSupportsStreaming = false,
   });
 
   int get total => queued.length + (processing != null ? 1 : 0);
@@ -84,5 +98,7 @@ class TranscriptionQueueSnapshot extends Equatable {
     processing,
     cancelRequested,
     runtimeReason,
+    processingProgress,
+    processingSupportsStreaming,
   ];
 }

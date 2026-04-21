@@ -2,41 +2,51 @@ import 'dart:async';
 import 'dart:isolate';
 import 'dart:typed_data';
 
+import 'package:meta/meta.dart';
+import 'package:voice_notes/core/packages/asr/asr_cancel_token.dart';
 import 'package:voice_notes/core/packages/asr/asr_exception.dart';
 import 'package:voice_notes/core/packages/asr/asr_isolate/asr_commands.dart';
 import 'package:voice_notes/core/packages/asr/asr_isolate/asr_isolate_worker.dart';
 import 'package:voice_notes/core/packages/asr/asr_result.dart';
+import 'package:voice_notes/core/packages/asr/asr_transcribe_progress.dart';
 import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
 
-/// Управляет фоновым изолятом для офлайн ASR транскрибации.
+/// Внутреннее представление in-flight [TranscribeCommand] на main-стороне.
+///
+/// Присутствие записи в [AsrIsolateRunner._pendingRequests] = запрос
+/// ещё in-flight. Удаление = терминальный исход (ok/cancelled/failed/busy)
+/// или `close()`. Поздний `cancelToken.cancel()` проверяет членство в карте
+/// и не шлёт stale [CancelTranscribeCommand].
+class _PendingRequest {
+  _PendingRequest(this.completer, this.onProgress);
+
+  final Completer<AsrResult> completer;
+  final void Function(AsrTranscribeProgress progress)? onProgress;
+}
+
+/// Управляет фоновым изолятом для офлайн/стриминг ASR транскрибации.
 ///
 /// Изолят создаётся при вызове [spawn] и живёт до [close].
 /// Это позволяет избежать повторной загрузки модели (~500ms-2s)
 /// при каждой транскрибации.
 ///
-/// Использует паттерн RawReceivePort для разделения логики инициализации
-/// и обработки сообщений. Поддерживает множественные одновременные запросы
-/// через `Map<int, Completer>`.
-///
-/// Пример использования:
-/// ```dart
-/// final runner = await AsrIsolateRunner.spawn();
-/// await runner.initialize(model, modelPath);
-/// final result = await runner.transcribeFile(filePath);
-/// await runner.close();
-/// ```
+/// Протокол isolate — one-to-many: один [TranscribeCommand] →
+/// N × [TranscribeProgressResponse] + один из терминальных
+/// [TranscribeOkResponse] / [TranscribeCancelledResponse] /
+/// [TranscribeBusyResponse] / [TranscribeFailedResponse].
 class AsrIsolateRunner {
   final ReceivePort _responses;
   final SendPort _commands;
 
-  /// Ожидающие ответа запросы: requestId -> Completer.
-  final Map<int, Completer<AsrResult>> _pendingRequests = {};
+  /// Ожидающие ответа запросы: requestId → запись с completer + onProgress.
+  final Map<int, _PendingRequest> _pendingRequests = {};
 
   /// Счётчик для генерации уникальных ID запросов.
   int _requestId = 0;
 
-  /// Completer для ожидания инициализации модели.
-  Completer<bool>? _pendingInitialization;
+  /// Completer для ожидания инициализации модели. `complete()` на успех,
+  /// `completeError(...)` на [InitializeFailedResponse].
+  Completer<void>? _pendingInitialization;
 
   /// Флаг закрытия runner'а.
   bool _isClosed = false;
@@ -52,9 +62,6 @@ class AsrIsolateRunner {
   ///
   /// После вызова изолят готов принимать команды через [initialize]
   /// и [transcribeFile].
-  ///
-  /// Использует RawReceivePort для разделения startup-логики
-  /// и обработки последующих сообщений.
   static Future<AsrIsolateRunner> spawn() async {
     final initPort = RawReceivePort();
     final connection = Completer<(ReceivePort, SendPort)>.sync();
@@ -82,127 +89,181 @@ class AsrIsolateRunner {
     return AsrIsolateRunner._(responses, commands);
   }
 
-  /// Инициализирует модель в изоляте.
+  /// Тест-only конструктор для юнит-тестов с fake-worker'ом.
   ///
-  /// Worker создаёт собственный recognizer с указанной моделью.
-  /// Должен быть вызван после [spawn] и до [transcribeFile].
+  /// Позволяет подставить in-memory [SendPort]/[ReceivePort] pair вместо
+  /// реального `Isolate.spawn`, чтобы тестировать protocol-логику runner'а
+  /// без FFI и native recognizer'а.
+  @visibleForTesting
+  factory AsrIsolateRunner.forTesting({
+    required ReceivePort responses,
+    required SendPort commands,
+  }) => AsrIsolateRunner._(responses, commands);
+
+  /// Инициализирует модель в изоляте.
   Future<void> initialize(AsrModelEntity model, String modelPath) async {
     _ensureRunning();
 
-    _pendingInitialization = Completer<bool>.sync();
+    final completer = Completer<void>.sync();
+    _pendingInitialization = completer;
 
     _commands.send(
       InitializeCommand(
         modelType: model.modelType,
         modelPath: modelPath,
-        fileNames: model.getModelFileNames(),
+        files: model.getModelFiles(),
+        sherpaModelType: model.sherpaModelType,
       ),
     );
 
-    final success = await _pendingInitialization!.future;
-    _pendingInitialization = null;
-
-    if (!success) {
-      throw const AsrProcessingException('Failed to initialize model');
+    try {
+      await completer.future;
+    } finally {
+      _pendingInitialization = null;
     }
   }
 
   /// Транскрибирует WAV файл в фоновом изоляте.
   ///
-  /// Возвращает результат с текстом, токенами и временем обработки.
-  /// Должен быть вызван после [initialize].
-  Future<AsrResult> transcribeFile(String filePath) async {
-    _ensureRunning();
-
-    final requestId = _requestId++;
-    final completer = Completer<AsrResult>.sync();
-    _pendingRequests[requestId] = completer;
-
-    _commands.send(TranscribeCommand(requestId: requestId, filePath: filePath));
-
-    return completer.future;
-  }
+  /// [onProgress] вызывается для каждого [TranscribeProgressResponse].
+  /// Для non-streaming моделей не вызывается.
+  ///
+  /// [cancelToken] при `cancel()` отправляет [CancelTranscribeCommand].
+  /// Для streaming-моделей это прерывает задачу между чанками.
+  Future<AsrResult> transcribeFile(
+    String filePath, {
+    void Function(AsrTranscribeProgress progress)? onProgress,
+    AsrCancelToken? cancelToken,
+  }) => _submitTranscribe(
+    (id) => TranscribeCommand(requestId: id, filePath: filePath),
+    onProgress: onProgress,
+    cancelToken: cancelToken,
+  );
 
   /// Транскрибирует аудио буфер в фоновом изоляте.
-  ///
-  /// [samples] - PCM аудио данные в формате Float32 (-1.0 to 1.0).
-  /// [sampleRate] - частота дискретизации (обычно 16000 Hz).
-  ///
-  /// Должен быть вызван после [initialize].
-  Future<AsrResult> transcribeAudio(Float32List samples, int sampleRate) async {
+  Future<AsrResult> transcribeAudio(Float32List samples, int sampleRate) =>
+      _submitTranscribe(
+        (id) => TranscribeAudioCommand(
+          requestId: id,
+          samples: samples,
+          sampleRate: sampleRate,
+        ),
+      );
+
+  /// Общий скелет отправки `Transcribe*Command`: alloc requestId →
+  /// регистрация [_PendingRequest] → wiring cancel'а → send → вернуть future.
+  Future<AsrResult> _submitTranscribe(
+    AsrCommand Function(int requestId) makeCommand, {
+    void Function(AsrTranscribeProgress progress)? onProgress,
+    AsrCancelToken? cancelToken,
+  }) {
     _ensureRunning();
 
     final requestId = _requestId++;
-    final completer = Completer<AsrResult>.sync();
-    _pendingRequests[requestId] = completer;
+    final entry = _PendingRequest(Completer<AsrResult>.sync(), onProgress);
+    _pendingRequests[requestId] = entry;
 
-    _commands.send(
-      TranscribeAudioCommand(
-        requestId: requestId,
-        samples: samples,
-        sampleRate: sampleRate,
-      ),
-    );
+    if (cancelToken != null) {
+      unawaited(
+        cancelToken.whenCancelled.then((_) {
+          if (_isClosed || !_pendingRequests.containsKey(requestId)) return;
+          _commands.send(CancelTranscribeCommand(requestId));
+        }),
+      );
+    }
 
-    return completer.future;
+    _commands.send(makeCommand(requestId));
+    return entry.completer.future;
   }
 
   /// Завершает работу изолята и освобождает ресурсы.
-  ///
-  /// После вызова runner нельзя переиспользовать.
-  /// Создайте новый через [spawn].
   Future<void> close() async {
     if (_isClosed) return;
     _isClosed = true;
 
     _commands.send(const DisposeCommand());
 
-    // Отменяем все ожидающие запросы
-    for (final completer in _pendingRequests.values) {
-      if (!completer.isCompleted) {
-        completer.completeError(
+    for (final entry in _pendingRequests.values) {
+      if (!entry.completer.isCompleted) {
+        entry.completer.completeError(
           const AsrProcessingException('Runner was closed'),
         );
       }
     }
     _pendingRequests.clear();
-
-    // Порт закроется после получения #exit от worker
   }
 
   // ===========================================================================
   // Приватные методы
   // ===========================================================================
 
-  /// Обрабатывает сообщения от worker isolate.
+  /// Обрабатывает сообщения от worker isolate. Exhaustive по
+  /// [AsrResponse] sealed — компилятор ловит пропущенные ветки.
   void _handleResponse(dynamic message) {
-    // Worker уведомляет о завершении работы
     if (message == #exit) {
       _responses.close();
       return;
     }
 
-    if (message is InitializeResponse) {
-      message.success
-          ? _pendingInitialization?.complete(message.success)
-          : _pendingInitialization?.completeError(
-              AsrProcessingException(
-                message.error ?? 'Failed to initialize model',
-              ),
-            );
-    } else if (message is TranscribeResponse) {
-      final completer = _pendingRequests.remove(message.requestId);
-      if (completer == null) return;
+    if (message is! AsrResponse) return;
 
-      if (message.error != null) {
-        completer.completeError(AsrProcessingException(message.error!));
-      } else {
-        completer.complete(message.result!);
-      }
+    switch (message) {
+      case InitializeOkResponse():
+        _pendingInitialization?.complete();
+      case InitializeFailedResponse(:final error):
+        _pendingInitialization?.completeError(AsrProcessingException(error));
+      case TranscribeProgressResponse():
+        _dispatchProgress(message);
+      case TranscribeOkResponse(:final requestId, :final result):
+        _completeRequest(requestId, (c) => c.complete(result));
+      case TranscribeCancelledResponse(:final requestId):
+        _completeRequest(
+          requestId,
+          (c) => c.completeError(const AsrCancelledException()),
+        );
+      case TranscribeBusyResponse(:final requestId):
+        _completeRequest(
+          requestId,
+          (c) => c.completeError(const AsrWorkerBusyException()),
+        );
+      case TranscribeFailedResponse(:final requestId, :final error):
+        _completeRequest(
+          requestId,
+          (c) => c.completeError(AsrProcessingException(error)),
+        );
     }
+  }
+
+  void _dispatchProgress(TranscribeProgressResponse message) {
+    final entry = _pendingRequests[message.requestId];
+    if (entry == null) return;
+
+    entry.onProgress?.call(
+      AsrTranscribeProgress(
+        progress: message.progress,
+        partialText: message.partialText,
+        processedAudio: _secondsToDuration(message.processedSeconds),
+        totalAudio: _secondsToDuration(message.totalSeconds),
+      ),
+    );
+  }
+
+  void _completeRequest(
+    int requestId,
+    void Function(Completer<AsrResult> completer) finish,
+  ) {
+    final entry = _pendingRequests.remove(requestId);
+    if (entry == null) return;
+
+    finish(entry.completer);
   }
 
   void _ensureRunning() {
     if (_isClosed) throw const AsrNotInitializedException();
+  }
+
+  static Duration _secondsToDuration(double seconds) {
+    if (seconds <= 0) return Duration.zero;
+    return Duration(microseconds: (seconds * 1000000).round());
   }
 }
