@@ -5,6 +5,7 @@ import 'package:voice_notes/core/packages/db/object_box/dao/dao.dart';
 import 'package:voice_notes/core/packages/db/object_box/objectbox_database.dart';
 import 'package:voice_notes/core/packages/path/asr_model_paths.dart';
 import 'package:voice_notes/feature/data/local/models/downloaded_model_object.dart';
+import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
 
 /// Локальный источник данных для работы со скачанными моделями
 abstract interface class ModelLocalDataSource {
@@ -93,9 +94,26 @@ class ModelLocalDataSourceImpl implements ModelLocalDataSource {
     final directory = Directory(fullPath);
     if (!directory.existsSync()) return false;
 
-    // Проверяем что директория не пустая
-    final files = directory.listSync();
-    return files.isNotEmpty;
+    final entity = _findEntityByModelId(modelId);
+    if (entity == null) return directory.listSync().isNotEmpty;
+
+    // Защищает от частично/битых скачиваний (актуально для
+    // Parakeet-bundle'ов по ~640 МБ).
+    return entity.getModelFiles().allFileNames.every(
+      (name) => _isValidFile('$fullPath/$name'),
+    );
+  }
+
+  bool _isValidFile(String path) {
+    final file = File(path);
+    return file.existsSync() && file.lengthSync() > 0;
+  }
+
+  AsrModelEntity? _findEntityByModelId(String modelId) {
+    for (final entity in AsrModelEntity.availableModels) {
+      if (entity.uuid.value == modelId) return entity;
+    }
+    return null;
   }
 
   @override
