@@ -1,31 +1,46 @@
 import 'package:equatable/equatable.dart';
+import 'package:voice_notes/core/packages/asr/asr_model_files.dart';
 
 /// Идентификатор модели ASR
 enum AsrModelIdEnum {
   whisperTinyEn('whisper-tiny-en'),
   whisperSmall('whisper-small'),
-  whisperMedium('whisper-medium');
-  // parakeetTdtV3('parakeet-tdt-v3'),
+  whisperMedium('whisper-medium'),
+  parakeetTdtV3('parakeet-tdt-v3'),
+  streamingZipformerEn('streaming-zipformer-en-2023-06-26'),
+  streamingZipformerEn20M('streaming-zipformer-en-20M-2023-02-17');
 
   const AsrModelIdEnum(this.value);
 
   final String value;
 
   static AsrModelIdEnum? fromValue(String value) {
-    for (final id in values) {
-      if (id.value == value) return id;
-    }
+    for (final id in values) if (id.value == value) return id;
+
     return null;
   }
 }
 
-/// Тип модели ASR для конфигурации sherpa-onnx
+/// Тип модели ASR для конфигурации sherpa-onnx.
+///
+/// Влияет на выбор recognizer'а в воркере и набор обязательных файлов
+/// модели. `streamingTransducer` запускается как `OnlineRecognizer`,
+/// `offlineTransducer` — как `OfflineRecognizer` с тем же набором файлов
+/// (encoder/decoder/joiner/tokens), но без streaming-интерфейса. Конкретный
+/// sherpa-`modelType` задаётся в [AsrModelEntity.sherpaModelType] per-модель.
 enum AsrModelType {
-  /// Whisper модели (encoder + decoder + tokens)
+  /// Whisper модели (encoder + decoder + tokens). Offline-only.
   whisper,
 
-  /// Parakeet TDT модели (encoder + decoder + joiner + tokens)
-  parakeetTdt,
+  /// Transducer **streaming** модели (encoder + decoder + joiner + tokens).
+  /// Загружается через `OnlineRecognizer`. Пример: streaming Zipformer.
+  streamingTransducer,
+
+  /// Transducer **offline** модели (тот же набор файлов, но bundle
+  /// не поддерживает online-интерфейс). Загружается через
+  /// `OfflineRecognizer` + `OfflineTransducerModelConfig`. Пример:
+  /// NeMo Parakeet TDT v3.
+  offlineTransducer,
 }
 
 class AsrModelEntity extends Equatable {
@@ -39,6 +54,17 @@ class AsrModelEntity extends Equatable {
   final bool isDownloaded;
   final bool isSelected;
 
+  /// Override имён файлов внутри bundle. Если задано — заменяет defaults
+  /// из [getModelFiles]. Нужно для моделей с нестандартными именами
+  /// (Zipformer-bundle'ы содержат encoder/decoder/joiner с epoch/avg/chunk
+  /// suffix'ами, а не просто `encoder.int8.onnx`).
+  final AsrModelFiles? customFiles;
+
+  /// sherpa-onnx `modelType` для transducer-моделей. Пустая строка/null →
+  /// sherpa автодетектит (стандартный Zipformer). `'nemo_transducer'` для
+  /// NeMo-моделей. Используется в `OnlineModelConfig`/`OfflineModelConfig`.
+  final String? sherpaModelType;
+
   const AsrModelEntity({
     required this.uuid,
     required this.name,
@@ -49,6 +75,8 @@ class AsrModelEntity extends Equatable {
     required this.modelType,
     this.isDownloaded = false,
     this.isSelected = false,
+    this.customFiles,
+    this.sherpaModelType,
   });
 
   /// URL для скачивания модели с GitHub
@@ -56,49 +84,43 @@ class AsrModelEntity extends Equatable {
       'https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/$modelDirName.tar.bz2';
 
   /// Поддерживает ли модель streaming распознавание
-  bool get supportsStreaming => modelType == AsrModelType.parakeetTdt;
+  bool get supportsStreaming => modelType == AsrModelType.streamingTransducer;
 
-  /// Получить имена файлов модели для конфигурации sherpa-onnx
+  /// Типизированный набор файлов модели для конфигурации sherpa-onnx.
   ///
-  /// Возвращает Map с ключами:
-  /// - 'encoder' - путь к encoder модели
-  /// - 'decoder' - путь к decoder модели
-  /// - 'joiner' - путь к joiner модели (только для Transducer)
-  /// - 'tokens' - путь к файлу токенов
-  Map<String, String> getModelFileNames() {
+  /// Возвращает конкретный подтип [AsrModelFiles] в зависимости от
+  /// [modelType]. [customFiles], если задан, переопределяет дефолты —
+  /// подтип обязан соответствовать [modelType] (Whisper ↔ WhisperModelFiles,
+  /// Transducer ↔ TransducerModelFiles), иначе будет runtime-несогласие
+  /// в потребителях.
+  AsrModelFiles getModelFiles() {
+    if (customFiles != null) return customFiles!;
+
     return switch (modelType) {
-      AsrModelType.whisper => {
-        'encoder': _whisperEncoderFileName,
-        'decoder': _whisperDecoderFileName,
-        'tokens': _whisperTokensFileName,
-      },
-      AsrModelType.parakeetTdt => {
-        'encoder': 'encoder.int8.onnx',
-        'decoder': 'decoder.int8.onnx',
-        'joiner': 'joiner.int8.onnx',
-        'tokens': 'tokens.txt',
-      },
+      AsrModelType.whisper => _whisperDefaultFiles(),
+      AsrModelType.streamingTransducer ||
+      AsrModelType.offlineTransducer => const TransducerModelFiles(
+        encoder: 'encoder.int8.onnx',
+        decoder: 'decoder.int8.onnx',
+        joiner: 'joiner.int8.onnx',
+        tokens: 'tokens.txt',
+      ),
     };
   }
 
-  /// Имя файла encoder для Whisper модели
-  String get _whisperEncoderFileName {
-    // sherpa-onnx-whisper-tiny.en -> tiny.en
-    // sherpa-onnx-whisper-small -> small
-    final modelName = modelDirName.replaceFirst('sherpa-onnx-whisper-', '');
-    return '$modelName-encoder.int8.onnx';
-  }
+  /// Whisper bundle'ы держат файлы под именами
+  /// `<flavor>-{encoder,decoder,tokens}.*`, где `<flavor>` — всё, что после
+  /// `sherpa-onnx-whisper-` в [modelDirName] (`tiny.en`, `small`,
+  /// `medium` и т.д.). Деривируем префикс один раз — в трёх местах это был
+  /// бы тройной `replaceFirst`.
+  WhisperModelFiles _whisperDefaultFiles() {
+    final flavor = modelDirName.replaceFirst('sherpa-onnx-whisper-', '');
 
-  /// Имя файла decoder для Whisper модели
-  String get _whisperDecoderFileName {
-    final modelName = modelDirName.replaceFirst('sherpa-onnx-whisper-', '');
-    return '$modelName-decoder.int8.onnx';
-  }
-
-  /// Имя файла tokens для Whisper модели
-  String get _whisperTokensFileName {
-    final modelName = modelDirName.replaceFirst('sherpa-onnx-whisper-', '');
-    return '$modelName-tokens.txt';
+    return WhisperModelFiles(
+      encoder: '$flavor-encoder.int8.onnx',
+      decoder: '$flavor-decoder.int8.onnx',
+      tokens: '$flavor-tokens.txt',
+    );
   }
 
   @override
@@ -112,6 +134,8 @@ class AsrModelEntity extends Equatable {
     modelType,
     isDownloaded,
     isSelected,
+    customFiles,
+    sherpaModelType,
   ];
 
   /// Создать копию с изменёнными полями
@@ -125,6 +149,8 @@ class AsrModelEntity extends Equatable {
     AsrModelType? modelType,
     bool? isDownloaded,
     bool? isSelected,
+    AsrModelFiles? customFiles,
+    String? sherpaModelType,
   }) {
     return AsrModelEntity(
       uuid: uuid ?? this.uuid,
@@ -136,6 +162,8 @@ class AsrModelEntity extends Equatable {
       modelType: modelType ?? this.modelType,
       isDownloaded: isDownloaded ?? this.isDownloaded,
       isSelected: isSelected ?? this.isSelected,
+      customFiles: customFiles ?? this.customFiles,
+      sherpaModelType: sherpaModelType ?? this.sherpaModelType,
     );
   }
 
@@ -174,46 +202,89 @@ class AsrModelEntity extends Equatable {
       modelType: AsrModelType.whisper,
     ),
 
-    // Parakeet TDT v3 (~640MB int8)
-    // AsrModelEntity(
-    //   uuid: AsrModelIdEnum.parakeetTdtV3,
-    //   name: 'Parakeet V3',
-    //   engine: 'NVIDIA NeMo',
-    //   size: '640 MB',
-    //   supportedLanguages: _parakeetLanguages,
-    //   modelDirName: 'sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8',
-    //   modelType: AsrModelType.parakeetTdt,
-    // ),
+    // Parakeet TDT v3 — offline-only вариант (bundle не поддерживает
+    // OnlineRecognizer, verified эмпирически 2026-04-21). Streaming-UX
+    // недоступен, но 25 европейских языков (включая русский) — единственная
+    // не-Whisper offline опция в каталоге.
+    AsrModelEntity(
+      uuid: AsrModelIdEnum.parakeetTdtV3,
+      name: 'Parakeet V3',
+      engine: 'NVIDIA NeMo',
+      size: '640 MB',
+      supportedLanguages: _parakeetLanguages,
+      modelDirName: 'sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8',
+      modelType: AsrModelType.offlineTransducer,
+      sherpaModelType: 'nemo_transducer',
+    ),
+
+    // Streaming Zipformer English (~85 MB int8) — подтверждённая online
+    // модель из k2-fsa каталога. Bundle содержит файлы с chunk/avg-suffix
+    // в имени, поэтому используем customFiles.
+    AsrModelEntity(
+      uuid: AsrModelIdEnum.streamingZipformerEn,
+      name: 'Streaming Zipformer EN',
+      engine: 'k2-fsa Zipformer',
+      size: '85 MB',
+      supportedLanguages: ['English'],
+      modelDirName: 'sherpa-onnx-streaming-zipformer-en-2023-06-26',
+      modelType: AsrModelType.streamingTransducer,
+      customFiles: TransducerModelFiles(
+        encoder: 'encoder-epoch-99-avg-1-chunk-16-left-128.int8.onnx',
+        decoder: 'decoder-epoch-99-avg-1-chunk-16-left-128.int8.onnx',
+        joiner: 'joiner-epoch-99-avg-1-chunk-16-left-128.int8.onnx',
+        tokens: 'tokens.txt',
+      ),
+    ),
+
+    // Compact streaming Zipformer (~44 MB int8). Bundle от Feb 2023 с
+    // упрощёнными именами файлов (без chunk/left-suffix'ов, как у более
+    // свежих релизов). 20M параметров — лёгкий on-device вариант для
+    // слабых устройств.
+    AsrModelEntity(
+      uuid: AsrModelIdEnum.streamingZipformerEn20M,
+      name: 'Streaming Zipformer EN 20M',
+      engine: 'k2-fsa Zipformer',
+      size: '44 MB',
+      supportedLanguages: ['English'],
+      modelDirName: 'sherpa-onnx-streaming-zipformer-en-20M-2023-02-17',
+      modelType: AsrModelType.streamingTransducer,
+      customFiles: TransducerModelFiles(
+        encoder: 'encoder-epoch-99-avg-1.int8.onnx',
+        decoder: 'decoder-epoch-99-avg-1.int8.onnx',
+        joiner: 'joiner-epoch-99-avg-1.int8.onnx',
+        tokens: 'tokens.txt',
+      ),
+    ),
   ];
 
-  /// 25 европейских языков поддерживаемых Parakeet V3
-  // static const List<String> _parakeetLanguages = [
-  //   'Bulgarian',
-  //   'Croatian',
-  //   'Czech',
-  //   'Danish',
-  //   'Dutch',
-  //   'English',
-  //   'Finnish',
-  //   'French',
-  //   'German',
-  //   'Greek',
-  //   'Hungarian',
-  //   'Italian',
-  //   'Latvian',
-  //   'Lithuanian',
-  //   'Norwegian',
-  //   'Polish',
-  //   'Portuguese',
-  //   'Romanian',
-  //   'Russian',
-  //   'Slovak',
-  //   'Slovenian',
-  //   'Spanish',
-  //   'Swedish',
-  //   'Turkish',
-  //   'Ukrainian',
-  // ];
+  /// 25 европейских языков поддерживаемых Parakeet V3.
+  static const List<String> _parakeetLanguages = [
+    'Bulgarian',
+    'Croatian',
+    'Czech',
+    'Danish',
+    'Dutch',
+    'English',
+    'Finnish',
+    'French',
+    'German',
+    'Greek',
+    'Hungarian',
+    'Italian',
+    'Latvian',
+    'Lithuanian',
+    'Norwegian',
+    'Polish',
+    'Portuguese',
+    'Romanian',
+    'Russian',
+    'Slovak',
+    'Slovenian',
+    'Spanish',
+    'Swedish',
+    'Turkish',
+    'Ukrainian',
+  ];
 
   /// 99 языков поддерживаемых Whisper
   static const List<String> _whisperLanguages = [

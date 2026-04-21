@@ -11,7 +11,8 @@ abstract final class AsrRtfEstimates {
   static double forModel(AsrModelType? modelType) {
     return switch (modelType) {
       AsrModelType.whisper => _whisperDefault,
-      AsrModelType.parakeetTdt => _transducerDefault,
+      AsrModelType.streamingTransducer ||
+      AsrModelType.offlineTransducer => _transducerDefault,
       null => _unknown,
     };
   }

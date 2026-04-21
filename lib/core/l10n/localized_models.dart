@@ -16,11 +16,17 @@ class LocalizedModels {
     AsrModelIdEnum.whisperTinyEn: l10n.modelDescWhisperTiny,
     AsrModelIdEnum.whisperSmall: l10n.modelDescWhisperSmall,
     AsrModelIdEnum.whisperMedium: l10n.modelDescWhisperMedium,
+    AsrModelIdEnum.parakeetTdtV3: l10n.modelDescParakeetV3,
+    AsrModelIdEnum.streamingZipformerEn: l10n.modelDescZipformerEn,
+    AsrModelIdEnum.streamingZipformerEn20M: l10n.modelDescZipformerEn20M,
   };
 
   static Map<AsrModelIdEnum, String> _languageLabels(AppLocalizations l10n) => {
     AsrModelIdEnum.whisperTinyEn: l10n.modelLangEnglish,
     AsrModelIdEnum.whisperSmall: l10n.modelLang99Languages,
     AsrModelIdEnum.whisperMedium: l10n.modelLang99Languages,
+    AsrModelIdEnum.parakeetTdtV3: l10n.modelLang25Languages,
+    AsrModelIdEnum.streamingZipformerEn: l10n.modelLangEnglish,
+    AsrModelIdEnum.streamingZipformerEn20M: l10n.modelLangEnglish,
   };
 }
