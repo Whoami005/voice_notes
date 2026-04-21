@@ -68,10 +68,14 @@ dependencies:
   rxdart: ^0.28.0
   flutter_easy_dialogs: ^4.0.6
   toastification: ^3.0.3
+  assorted_layout_widgets: ^12.3.1
+  feedback: ^3.2.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+  mocktail: 1.0.5
+  bloc_test: ^10.0.0
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
