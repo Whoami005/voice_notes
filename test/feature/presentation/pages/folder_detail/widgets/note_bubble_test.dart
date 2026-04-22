@@ -9,7 +9,7 @@ import 'package:voice_notes/core/packages/transcription/transcription_queue_snap
 import 'package:voice_notes/core/theme/app_theme.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
 import 'package:voice_notes/feature/domain/enums/transcription_status.dart';
-import 'package:voice_notes/feature/presentation/pages/folder_detail/widgets/note_bubble.dart';
+import 'package:voice_notes/feature/presentation/pages/folder_detail/widgets/note_bubble/note_bubble.dart';
 import 'package:voice_notes/feature/presentation/pages/queue/logic/transcription_queue_cubit.dart';
 import 'package:voice_notes/l10n/app_localizations.dart';
 

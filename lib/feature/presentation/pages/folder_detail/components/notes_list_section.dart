@@ -11,7 +11,7 @@ import 'package:voice_notes/feature/domain/entities/note_entity.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/logic/folder_detail_cubit.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/logic/folder_playback_cubit.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/widgets/date_separator.dart';
-import 'package:voice_notes/feature/presentation/pages/folder_detail/widgets/note_bubble.dart';
+import 'package:voice_notes/feature/presentation/pages/folder_detail/widgets/note_bubble/note_bubble.dart';
 import 'package:voice_notes/feature/presentation/pages/note_detail/screens/note_detail_screen.dart';
 import 'package:voice_notes/feature/presentation/pages/queue/logic/transcription_queue_cubit.dart';
 import 'package:voice_notes/feature/presentation/widgets/conditional/conditional_wrapper.dart';
