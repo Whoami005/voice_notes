@@ -69,7 +69,6 @@ void main() {
         status: PlaybackStatus.playing,
         position: Duration(seconds: 2),
         duration: Duration(seconds: 10),
-        speed: 1,
       ),
     );
     await tester.pump();
@@ -93,7 +92,6 @@ void main() {
         status: PlaybackStatus.playing,
         position: Duration(seconds: 2),
         duration: Duration(seconds: 10),
-        speed: 1,
       ),
     );
     await tester.pump();

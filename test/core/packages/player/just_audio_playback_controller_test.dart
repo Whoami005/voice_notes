@@ -114,22 +114,23 @@ void main() {
     test(
       'switching tracks caches previous position, duration and paused status',
       () async {
-        controller.register(
-          'first',
-          CachedTrackState(
-            absolutePath: '/audio/first.wav',
-            title: 'First track',
-            folderId: 'folder',
-          ),
-        );
-        controller.register(
-          'second',
-          CachedTrackState(
-            absolutePath: '/audio/second.wav',
-            title: 'Second track',
-            folderId: 'folder',
-          ),
-        );
+        controller
+          ..register(
+            'first',
+            CachedTrackState(
+              absolutePath: '/audio/first.wav',
+              title: 'First track',
+              folderId: 'folder',
+            ),
+          )
+          ..register(
+            'second',
+            CachedTrackState(
+              absolutePath: '/audio/second.wav',
+              title: 'Second track',
+              folderId: 'folder',
+            ),
+          );
 
         await controller.play('first');
         player
@@ -186,62 +187,51 @@ void main() {
     test(
       'register does not overwrite a known duration with zero duration',
       () async {
-        controller.register(
-          'track',
-          CachedTrackState(
-            absolutePath: '/audio/original.wav',
-            duration: const Duration(seconds: 10),
-            title: 'Original track',
-            folderId: 'folder',
-          ),
-        );
-
-        controller.register(
-          'track',
-          CachedTrackState(
-            absolutePath: '/audio/original.wav',
-            duration: Duration.zero,
-            title: 'Original track',
-            folderId: 'folder',
-          ),
-        );
+        controller
+          ..register(
+            'track',
+            CachedTrackState(
+              absolutePath: '/audio/original.wav',
+              duration: const Duration(seconds: 10),
+              title: 'Original track',
+              folderId: 'folder',
+            ),
+          )
+          ..register(
+            'track',
+            CachedTrackState(
+              absolutePath: '/audio/original.wav',
+              title: 'Original track',
+              folderId: 'folder',
+            ),
+          );
 
         expect(
           await controller.trackStateStream('track').first,
-          const TrackState(
-            status: PlaybackStatus.init,
-            position: Duration.zero,
-            duration: Duration(seconds: 10),
-          ),
+          const TrackState(duration: Duration(seconds: 10)),
         );
       },
     );
 
-    test(
-      'seeking inactive track updates cached state without touching player seek',
-      () async {
-        controller.register(
-          'track',
-          CachedTrackState(
-            absolutePath: '/audio/track.wav',
-            title: 'Track title',
-            folderId: 'folder',
-          ),
-        );
+    test('seeking inactive track updates cached state without '
+        'touching player seek', () async {
+      controller.register(
+        'track',
+        CachedTrackState(
+          absolutePath: '/audio/track.wav',
+          title: 'Track title',
+          folderId: 'folder',
+        ),
+      );
 
-        await controller.seek('track', const Duration(seconds: 2));
+      await controller.seek('track', const Duration(seconds: 2));
 
-        expect(player.seekCalls, isEmpty);
-        expect(
-          await controller.trackStateStream('track').first,
-          const TrackState(
-            status: PlaybackStatus.init,
-            position: Duration(seconds: 2),
-            duration: Duration.zero,
-          ),
-        );
-      },
-    );
+      expect(player.seekCalls, isEmpty);
+      expect(
+        await controller.trackStateStream('track').first,
+        const TrackState(position: Duration(seconds: 2)),
+      );
+    });
 
     test(
       'play publishes a visible playback session with track metadata',
@@ -274,7 +264,6 @@ void main() {
             status: PlaybackStatus.playing,
             position: Duration(seconds: 1),
             duration: Duration(seconds: 10),
-            speed: 1,
           ),
         );
         expect(controller.session.isVisible, isTrue);
@@ -442,24 +431,23 @@ void main() {
 
     test('register with a new path invalidates cached waveform data', () async {
       final requestedPaths = <String>[];
-      controller = JustAudioPlaybackController.withPlayer(
-        player,
-        waveformLoader: (_, path) async {
-          requestedPaths.add(path);
-          return path.contains('original')
-              ? const [0.2, 0.4, 1.0]
-              : const [0.1, 0.6, 1.0];
-        },
-      );
-
-      controller.register(
-        'track',
-        CachedTrackState(
-          absolutePath: '/audio/original.wav',
-          title: 'Track title',
-          folderId: 'folder',
-        ),
-      );
+      controller =
+          JustAudioPlaybackController.withPlayer(
+            player,
+            waveformLoader: (_, path) async {
+              requestedPaths.add(path);
+              return path.contains('original')
+                  ? const [0.2, 0.4, 1.0]
+                  : const [0.1, 0.6, 1.0];
+            },
+          )..register(
+            'track',
+            CachedTrackState(
+              absolutePath: '/audio/original.wav',
+              title: 'Track title',
+              folderId: 'folder',
+            ),
+          );
 
       expect(await controller.getWaveform('track'), const [0.2, 0.4, 1.0]);
 
@@ -481,23 +469,22 @@ void main() {
       () async {
         final requestedPaths = <String>[];
         final staleWaveform = Completer<List<double>?>();
-        controller = JustAudioPlaybackController.withPlayer(
-          player,
-          waveformLoader: (_, path) {
-            requestedPaths.add(path);
-            if (path.contains('original')) return staleWaveform.future;
-            return Future.value(const [0.3, 0.9, 1.0]);
-          },
-        );
-
-        controller.register(
-          'track',
-          CachedTrackState(
-            absolutePath: '/audio/original.wav',
-            title: 'Track title',
-            folderId: 'folder',
-          ),
-        );
+        controller =
+            JustAudioPlaybackController.withPlayer(
+              player,
+              waveformLoader: (_, path) {
+                requestedPaths.add(path);
+                if (path.contains('original')) return staleWaveform.future;
+                return Future.value(const [0.3, 0.9, 1.0]);
+              },
+            )..register(
+              'track',
+              CachedTrackState(
+                absolutePath: '/audio/original.wav',
+                title: 'Track title',
+                folderId: 'folder',
+              ),
+            );
 
         final staleFuture = controller.getWaveform('track');
 
@@ -533,9 +520,13 @@ class _FakeAudioPlayerService implements AudioPlayerService {
   final List<Duration> loadInitialPositions = <Duration>[];
   final List<Duration> seekCalls = <Duration>[];
 
+  @override
   PlaybackStatus status = PlaybackStatus.init;
+  @override
   Duration position = Duration.zero;
+  @override
   Duration? duration;
+  @override
   double speed = 1;
   int playCalls = 0;
   int pauseCalls = 0;

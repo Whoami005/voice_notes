@@ -39,20 +39,18 @@ void main() {
       await noteRepository.dispose();
     });
 
-    test(
-      'close cancels screen subscriptions without clearing shared playback session',
-      () async {
-        final cubit = FolderPlaybackCubit(
-          controller: controller,
-          noteRepository: noteRepository,
-          folderId: 'folder',
-        );
+    test('close cancels screen subscriptions without clearing '
+        'shared playback session', () async {
+      final cubit = FolderPlaybackCubit(
+        controller: controller,
+        noteRepository: noteRepository,
+        folderId: 'folder',
+      );
 
-        await cubit.close();
+      await cubit.close();
 
-        expect(controller.clearSessionCalls, 0);
-      },
-    );
+      expect(controller.clearSessionCalls, 0);
+    });
 
     test('isPlaying reflects actual track playback status', () async {
       final note = _buildNote('track');
@@ -69,7 +67,6 @@ void main() {
         'track',
         const TrackState(
           status: PlaybackStatus.paused,
-          position: Duration.zero,
           duration: Duration(seconds: 5),
         ),
       );
@@ -101,7 +98,7 @@ class _FakeAudioPlaybackController implements AudioPlaybackController {
       <String, StreamController<TrackState>>{};
 
   int clearSessionCalls = 0;
-  PlaybackSessionState _session = const PlaybackSessionState.hidden();
+  final PlaybackSessionState _session = const PlaybackSessionState.hidden();
 
   void pushTrackState(String trackId, TrackState state) {
     _controllerFor(trackId).add(state);
@@ -110,7 +107,7 @@ class _FakeAudioPlaybackController implements AudioPlaybackController {
   StreamController<TrackState> _controllerFor(String trackId) {
     return _trackControllers.putIfAbsent(
       trackId,
-      () => StreamController<TrackState>.broadcast(),
+      StreamController<TrackState>.broadcast,
     );
   }
 

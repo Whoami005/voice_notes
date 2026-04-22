@@ -61,7 +61,8 @@ class VoiceRecordButton extends StatelessWidget {
 
   void _handleStateChange(BuildContext context, RecordingState state) {
     switch (state) {
-      ///TODO: для быстрой транскрибации давать приоритет и класть в начало очереди.
+      //TODO(K): для быстрой транскрибации давать
+      // приоритет и класть в начало очереди.
       case RecordingTranscribingState():
         // Quick Record синхронен и идёт через ту же FIFO-очередь команд
         // изолята, что и заметки пользователя в других папках. Если там
