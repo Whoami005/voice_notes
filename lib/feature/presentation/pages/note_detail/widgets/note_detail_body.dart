@@ -51,18 +51,19 @@ class NoteDetailBody extends StatelessWidget {
     return BlocBuilder<NoteDetailCubit, AsyncState<NoteDetailData>>(
       builder: (context, state) {
         final data = state.requireData;
-        final audio = data.currentNote.audio;
+        final note = data.currentNote;
+        final audio = note.audio;
 
         return ListView(
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           padding: const EdgeInsets.all(AppSizes.screenPadding),
           children: [
-            if (audio != null) ...[AudioPlayerBar(audio: audio), AppSpacer.p24],
+            if (audio != null) ...[AudioPlayerBar(note: note), AppSpacer.p24],
             SectionHeader(title: context.l10n.noteDetailSectionText),
             AppSpacer.p12,
             NoteTextSection(
               key: ValueKey(data.originalNote.uuid),
-              text: data.currentNote.text,
+              text: note.text,
               isEditing: data.isEditing,
               onChanged: (text) =>
                   context.read<NoteDetailCubit>().updateText(text),
@@ -71,7 +72,7 @@ class NoteDetailBody extends StatelessWidget {
             SectionHeader(title: context.l10n.noteDetailSectionTags),
             AppSpacer.p12,
             NoteTagsSection(
-              tags: data.currentNote.tags,
+              tags: note.tags,
               isEditing: data.isEditing,
               onAddTag: (tag) => context.read<NoteDetailCubit>().addTag(tag),
               onRemoveTag: (tag) =>
@@ -80,7 +81,7 @@ class NoteDetailBody extends StatelessWidget {
             AppSpacer.p24,
             SectionHeader(title: context.l10n.noteDetailSectionInfo),
             AppSpacer.p12,
-            NoteInfoSection(note: data.currentNote),
+            NoteInfoSection(note: note),
             AppSpacer.p24,
             SectionHeader(title: context.l10n.noteDetailSectionActions),
             AppSpacer.p12,

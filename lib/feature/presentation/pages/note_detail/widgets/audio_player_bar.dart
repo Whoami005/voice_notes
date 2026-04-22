@@ -4,7 +4,7 @@ import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/packages/player/audio_playback_controller.dart';
 import 'package:voice_notes/core/state/status/status_state.dart';
-import 'package:voice_notes/feature/domain/entities/note_audio_entity.dart';
+import 'package:voice_notes/feature/domain/entities/note_entity.dart';
 import 'package:voice_notes/feature/presentation/pages/note_detail/logic/note_playback_cubit.dart';
 import 'package:voice_notes/feature/presentation/widgets/audio/audio_inline_player.dart';
 
@@ -12,9 +12,9 @@ import 'package:voice_notes/feature/presentation/widgets/audio/audio_inline_play
 ///
 /// Использует shared [AudioInlinePlayer] + speed picker.
 class AudioPlayerBar extends StatefulWidget {
-  final NoteAudioEntity audio;
+  final NoteEntity note;
 
-  const AudioPlayerBar({required this.audio, super.key});
+  const AudioPlayerBar({required this.note, super.key});
 
   @override
   State<AudioPlayerBar> createState() => _AudioPlayerBarState();
@@ -26,7 +26,7 @@ class _AudioPlayerBarState extends State<AudioPlayerBar> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      context.read<NotePlaybackCubit>().loadAudio(widget.audio);
+      context.read<NotePlaybackCubit>().loadNote(widget.note);
     });
   }
 
@@ -121,8 +121,7 @@ class _SpeedPicker extends StatelessWidget {
       tooltip: l10n.playerSpeed,
       enabled: enabled,
       initialValue: speed,
-      onSelected: (speed) =>
-          context.read<NotePlaybackCubit>().setSpeed(speed),
+      onSelected: (speed) => context.read<NotePlaybackCubit>().setSpeed(speed),
       itemBuilder: (_) => [
         for (final speed in NotePlaybackCubit.availableSpeeds)
           PopupMenuItem(value: speed, child: Text(_formatSpeed(speed))),

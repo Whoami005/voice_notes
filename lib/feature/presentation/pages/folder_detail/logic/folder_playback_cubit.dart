@@ -12,8 +12,8 @@ part 'folder_playback_state.dart';
 /// Управление воспроизведением аудио на экране списка заметок.
 class FolderPlaybackCubit extends Cubit<FolderPlaybackState> {
   final AudioPlaybackController _controller;
+  final String _folderId;
 
-  StreamSubscription<String?>? _activeTrackSub;
   StreamSubscription<List<NoteEntity>>? _notesSub;
   final Map<String, StreamSubscription<TrackState>> _trackSubs = {};
   final Set<String> _loadingWaveformIds = {};
@@ -23,11 +23,8 @@ class FolderPlaybackCubit extends Cubit<FolderPlaybackState> {
     required NoteRepository noteRepository,
     required String folderId,
   }) : _controller = controller,
+       _folderId = folderId,
        super(const FolderPlaybackState()) {
-    _activeTrackSub = _controller.activeTrackIdStream.listen(
-      _onActiveTrackChanged,
-    );
-
     //TODO(K): Подумать как убрать или стоит ли вообще убирать,
     // так как FolderDetailCubit делает тоже самое
     _notesSub = noteRepository
@@ -69,10 +66,6 @@ class FolderPlaybackCubit extends Cubit<FolderPlaybackState> {
   Future<void> seek(String trackId, Duration position) =>
       _controller.seek(trackId, position);
 
-  void _onActiveTrackChanged(String? trackId) {
-    emit(state.copyWith(activeTrackId: trackId));
-  }
-
   void _subscribeToTrack(String trackId) {
     if (_trackSubs.containsKey(trackId)) return;
 
@@ -91,7 +84,7 @@ class FolderPlaybackCubit extends Cubit<FolderPlaybackState> {
 
   Future<void> _ensureTrackRegistered(NoteEntity note) async {
     final audio = note.audio;
-    if (audio == null || _trackSubs.containsKey(note.uuid)) return;
+    if (audio == null) return;
 
     try {
       final absolutePath = await AudioPaths.resolveRelativePath(
@@ -100,9 +93,14 @@ class FolderPlaybackCubit extends Cubit<FolderPlaybackState> {
 
       _controller.register(
         note.uuid,
-        CachedTrackState(absolutePath: absolutePath, duration: audio.duration),
+        CachedTrackState(
+          absolutePath: absolutePath,
+          title: note.text.trim(),
+          folderId: note.folderId ?? _folderId,
+          duration: audio.duration,
+        ),
       );
-      _subscribeToTrack(note.uuid);
+      if (!_trackSubs.containsKey(note.uuid)) _subscribeToTrack(note.uuid);
     } catch (_) {
       return;
     }
@@ -110,13 +108,10 @@ class FolderPlaybackCubit extends Cubit<FolderPlaybackState> {
 
   @override
   Future<void> close() async {
-    await _activeTrackSub?.cancel();
     await _notesSub?.cancel();
     for (final sub in _trackSubs.values) await sub.cancel();
 
     _trackSubs.clear();
-    await _controller.releaseAll();
-
     return super.close();
   }
 }

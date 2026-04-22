@@ -50,6 +50,7 @@ class NoteDetailScreen extends StatelessWidget implements AppRouteWrapper {
         BlocProvider(
           create: (_) => NotePlaybackCubit(
             controller: getIt<AudioPlaybackController>(),
+            folderId: folderId,
             noteId: noteId,
           ),
         ),

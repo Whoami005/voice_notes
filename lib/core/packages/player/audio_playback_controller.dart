@@ -23,15 +23,61 @@ class TrackState extends Equatable {
   List<Object?> get props => [status, position, duration];
 }
 
+/// Глобальная playback-сессия для root-level UI.
+class PlaybackSessionState extends Equatable {
+  final String? trackId;
+  final String? title;
+  final String? folderId;
+  final PlaybackStatus status;
+  final Duration position;
+  final Duration duration;
+  final double speed;
+
+  const PlaybackSessionState({
+    this.trackId,
+    this.title,
+    this.folderId,
+    this.status = PlaybackStatus.init,
+    this.position = Duration.zero,
+    this.duration = Duration.zero,
+    this.speed = 1.0,
+  });
+
+  const PlaybackSessionState.hidden({this.speed = 1.0})
+    : trackId = null,
+      title = null,
+      folderId = null,
+      status = PlaybackStatus.init,
+      position = Duration.zero,
+      duration = Duration.zero;
+
+  bool get isVisible => trackId != null && status.isPlaying;
+
+  @override
+  List<Object?> get props => [
+    trackId,
+    title,
+    folderId,
+    status,
+    position,
+    duration,
+    speed,
+  ];
+}
+
 /// Кешированное состояние неактивного трека.
 class CachedTrackState {
-  final String absolutePath;
+  String absolutePath;
+  String title;
+  String? folderId;
   Duration position;
   Duration duration;
   PlaybackStatus status;
 
   CachedTrackState({
     required this.absolutePath,
+    this.title = '',
+    this.folderId,
     this.position = Duration.zero,
     this.duration = Duration.zero,
     this.status = PlaybackStatus.init,
@@ -48,7 +94,7 @@ class CachedTrackState {
 /// позицию текущего в кеш и загружает новый. Синглтон на весь lifecycle.
 abstract interface class AudioPlaybackController {
   /// Регистрирует трек с начальным кешированным состоянием.
-  /// Если уже зарегистрирован — no-op.
+  /// Если уже зарегистрирован — обновляет path/metadata и сохраняет progress.
   /// Позволяет UI сразу показать duration/position без загрузки в плеер.
   void register(String trackId, CachedTrackState state);
 
@@ -70,20 +116,17 @@ abstract interface class AudioPlaybackController {
   /// Скорость воспроизведения. Глобальная.
   Future<void> setSpeed(double speed);
 
-  /// Stop + очистка кеша + закрытие subjects. Плеер НЕ dispose.
-  Future<void> releaseAll();
-
   /// Стрим состояния конкретного трека.
   Stream<TrackState> trackStateStream(String trackId);
 
-  /// Стрим ID активного трека.
-  Stream<String?> get activeTrackIdStream;
+  /// Текущая глобальная playback-сессия.
+  PlaybackSessionState get session;
 
-  /// Синхронный ID активного трека.
-  String? get activeTrackId;
+  /// Поток изменений playback-сессии.
+  Stream<PlaybackSessionState> get sessionStream;
 
-  /// Текущая скорость.
-  double get speed;
+  /// Явно завершает текущую playback-сессию и выгружает активный трек.
+  Future<void> clearSession();
 
   /// Парсит аудио файл и возвращает нормализованные амплитуды (0.0–1.0).
   /// Кеширует результат. Возвращает null если парсинг не удался.

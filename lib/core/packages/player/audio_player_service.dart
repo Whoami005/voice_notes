@@ -38,22 +38,13 @@ enum PlaybackStatus {
 
 /// Сервис воспроизведения локальных аудиофайлов.
 ///
-/// Тонкая обёртка над конкретной реализацией (just_audio). Абстракция
-/// существует чтобы:
-/// - мокировать в тестах без зависимости от платформы;
-/// - инкапсулировать маппинг состояний конкретного пакета в общий enum.
+/// Тонкая обёртка над конкретной реализацией (`just_audio`).
 ///
 /// ## Lifecycle (важно)
 ///
-/// Сервис зарегистрирован в DI как **factory** (`@Injectable`), а НЕ
-/// singleton — каждый `getIt<AudioPlayerService>()` создаёт новый instance,
-/// чтобы разные экраны не делили один плеер.
-///
-/// **Контракт:** потребитель ОБЯЗАН вызвать [dispose] при завершении —
-/// обычно из `close()` своего cubit'а или `dispose()` своего `State`.
-/// Без этого нативный плеер утечёт и может заморозить аудио на устройстве.
-///
-/// Эталонный пример: `NotePlaybackCubit.close()`.
+/// Одним экземпляром сервиса владеет [AudioPlaybackController].
+/// Экранные cubit'ы работают только с controller и не должны вручную
+/// управлять lifecycle нативного плеера.
 abstract interface class AudioPlayerService {
   /// Поток статуса.
   Stream<PlaybackStatus> get statusStream;
@@ -77,8 +68,13 @@ abstract interface class AudioPlayerService {
   double get speed;
 
   /// Загрузить локальный файл по абсолютному пути.
+  ///
   /// Не начинает воспроизведение — вызывай [play] отдельно.
-  Future<void> load(String absolutePath);
+  /// Возвращает длительность, если она известна после загрузки.
+  Future<Duration?> load(
+    String absolutePath, {
+    Duration initialPosition = Duration.zero,
+  });
 
   /// Воспроизведение с текущей позиции.
   Future<void> play();
@@ -92,7 +88,7 @@ abstract interface class AudioPlayerService {
   /// Изменить скорость (0.5 — 2.0).
   Future<void> setSpeed(double speed);
 
-  /// Остановить и очистить источник.
+  /// Остановить воспроизведение и освободить нативные playback-ресурсы.
   Future<void> stop();
 
   /// Освобождение ресурсов.

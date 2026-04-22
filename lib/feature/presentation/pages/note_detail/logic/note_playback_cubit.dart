@@ -6,16 +6,16 @@ import 'package:voice_notes/core/packages/player/audio_playback_controller.dart'
 import 'package:voice_notes/core/packages/player/audio_player_service.dart';
 import 'package:voice_notes/core/state/status/status_cubit.dart';
 import 'package:voice_notes/core/state/status/status_state.dart';
-import 'package:voice_notes/feature/domain/entities/note_audio_entity.dart';
+import 'package:voice_notes/feature/domain/entities/note_entity.dart';
 
 part 'note_playback_state.dart';
 
 /// Cubit управления воспроизведением на экране детальной заметки.
 ///
-/// Делегирует к [AudioPlaybackController] (синглтон).
-/// При close() НЕ вызывает releaseAll() — это делает FolderPlaybackCubit.
+/// Делегирует к shared [AudioPlaybackController].
 class NotePlaybackCubit extends StatusCubit<NotePlaybackState> {
   final AudioPlaybackController _controller;
+  final String _folderId;
   final String _noteId;
 
   StreamSubscription<TrackState>? _trackSub;
@@ -23,8 +23,10 @@ class NotePlaybackCubit extends StatusCubit<NotePlaybackState> {
 
   NotePlaybackCubit({
     required AudioPlaybackController controller,
+    required String folderId,
     required String noteId,
   }) : _controller = controller,
+       _folderId = folderId,
        _noteId = noteId,
        super(const NotePlaybackState());
 
@@ -34,7 +36,8 @@ class NotePlaybackCubit extends StatusCubit<NotePlaybackState> {
   /// Доступные скорости воспроизведения.
   static const List<double> availableSpeeds = [0.75, 1.0, 1.25, 1.5, 2.0];
 
-  Future<void> loadAudio(NoteAudioEntity? audio) async {
+  Future<void> loadNote(NoteEntity note) async {
+    final audio = note.audio;
     if (audio == null) return;
 
     emitLoading();
@@ -45,9 +48,15 @@ class NotePlaybackCubit extends StatusCubit<NotePlaybackState> {
 
       _controller.register(
         _noteId,
-        CachedTrackState(absolutePath: absolutePath, duration: audio.duration),
+        CachedTrackState(
+          absolutePath: absolutePath,
+          title: note.text.trim(),
+          folderId: note.folderId ?? _folderId,
+          duration: audio.duration,
+        ),
       );
 
+      await _trackSub?.cancel();
       _trackSub = _controller
           .trackStateStream(_noteId)
           .listen(_onTrackStateChanged);
@@ -55,8 +64,7 @@ class NotePlaybackCubit extends StatusCubit<NotePlaybackState> {
       emitSuccess(
         state.copyWith(
           duration: audio.duration,
-          playbackStatus: PlaybackStatus.ready,
-          speed: _controller.speed,
+          speed: _controller.session.speed,
         ),
       );
 
