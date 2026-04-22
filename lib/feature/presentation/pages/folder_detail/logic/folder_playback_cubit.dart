@@ -16,6 +16,7 @@ class FolderPlaybackCubit extends Cubit<FolderPlaybackState> {
   StreamSubscription<String?>? _activeTrackSub;
   StreamSubscription<List<NoteEntity>>? _notesSub;
   final Map<String, StreamSubscription<TrackState>> _trackSubs = {};
+  final Set<String> _loadingWaveformIds = {};
 
   FolderPlaybackCubit({
     required AudioPlaybackController controller,
@@ -35,44 +36,30 @@ class FolderPlaybackCubit extends Cubit<FolderPlaybackState> {
   }
 
   Future<void> _onNotesReceived(List<NoteEntity> notes) async {
-    for (final note in notes) {
-      final audio = note.audio;
-      if (audio == null || _trackSubs.containsKey(note.uuid)) continue;
-
-      try {
-        final absolutePath = await AudioPaths.resolveRelativePath(
-          audio.relativePath,
-        );
-
-        _controller.register(
-          note.uuid,
-          CachedTrackState(
-            absolutePath: absolutePath,
-            duration: audio.duration,
-          ),
-        );
-        _subscribeToTrack(note.uuid);
-      } catch (_) {
-        continue;
-      }
-    }
-
-    unawaited(_loadWaveforms(notes).catchError((_) {}));
+    for (final note in notes) await _ensureTrackRegistered(note);
   }
 
-  Future<void> _loadWaveforms(List<NoteEntity> notes) async {
-    final additions = <String, List<double>>{};
+  Future<void> ensureWaveformLoaded(NoteEntity note) async {
+    if (note.audio == null) return;
+    if (state.waveforms.containsKey(note.uuid)) return;
+    if (_loadingWaveformIds.contains(note.uuid)) return;
 
-    for (final note in notes) {
-      if (note.audio == null) continue;
-      if (state.waveforms.containsKey(note.uuid)) continue;
+    _loadingWaveformIds.add(note.uuid);
 
+    try {
+      await _ensureTrackRegistered(note);
       final waveform = await _controller.getWaveform(note.uuid);
-      if (waveform != null) additions[note.uuid] = waveform;
-    }
 
-    if (additions.isNotEmpty && !isClosed) {
-      emit(state.copyWith(waveforms: {...state.waveforms, ...additions}));
+      if (waveform == null || isClosed) return;
+      if (state.waveforms.containsKey(note.uuid)) return;
+
+      emit(
+        state.copyWith(waveforms: {...state.waveforms, note.uuid: waveform}),
+      );
+    } catch (_) {
+      return;
+    } finally {
+      _loadingWaveformIds.remove(note.uuid);
     }
   }
 
@@ -100,6 +87,25 @@ class FolderPlaybackCubit extends Cubit<FolderPlaybackState> {
         ),
       );
     });
+  }
+
+  Future<void> _ensureTrackRegistered(NoteEntity note) async {
+    final audio = note.audio;
+    if (audio == null || _trackSubs.containsKey(note.uuid)) return;
+
+    try {
+      final absolutePath = await AudioPaths.resolveRelativePath(
+        audio.relativePath,
+      );
+
+      _controller.register(
+        note.uuid,
+        CachedTrackState(absolutePath: absolutePath, duration: audio.duration),
+      );
+      _subscribeToTrack(note.uuid);
+    } catch (_) {
+      return;
+    }
   }
 
   @override
