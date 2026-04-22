@@ -162,8 +162,8 @@
   "modelCapabilityCancelable": "Cancelable",
   "modelCapabilityLivePartialText": "Live partial text",
   "modelRecommendationsTitle": "Recommendations",
-  "modelTipStreamingForLongRecords": "Works for recordings of any length, including interviews and lectures.",
-  "modelTipOfflineShortRecords": "Best for recordings up to 5 minutes. For longer — use a streaming model.",
+  "modelTipStreamingForLongRecords": "Works for recordings of any length. Shows progress, allows canceling, and displays text as transcription runs.",
+  "modelTipOfflineShortRecords": "Processes recordings locally on the device. For longer audio it automatically uses chunking and, when needed, VAD.",
 
   "asrInitializing": "Initializing model...",
   "asrInitError": "Model initialization error",

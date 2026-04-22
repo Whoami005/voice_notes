@@ -318,10 +318,10 @@
   "@modelCapabilityLivePartialText": { "description": "Capability chip: live partial text accumulates during transcription" },
   "modelRecommendationsTitle": "Рекомендации",
   "@modelRecommendationsTitle": { "description": "Section title: model usage recommendations" },
-  "modelTipStreamingForLongRecords": "Подходит для записей любой длины, включая интервью и лекции.",
+  "modelTipStreamingForLongRecords": "Подходит для записей любой длины. Показывает прогресс, позволяет отменить и отображает текст по мере расшифровки.",
   "@modelTipStreamingForLongRecords": { "description": "Recommendation text for streaming models" },
-  "modelTipOfflineShortRecords": "Оптимально для записей до 5 минут. Для более длинных — используйте потоковую модель.",
-  "@modelTipOfflineShortRecords": { "description": "Recommendation text for non-streaming (offline) models" },
+  "modelTipOfflineShortRecords": "Обрабатывает запись локально на устройстве. Для длинных аудио автоматически использует чанкинг, а при необходимости — VAD.",
+  "@modelTipOfflineShortRecords": { "description": "Recommendation text for non-streaming (offline) models with adaptive local processing" },
 
   "asrInitializing": "Инициализация модели...",
   "@asrInitializing": { "description": "ASR status banner: model initializing" },
