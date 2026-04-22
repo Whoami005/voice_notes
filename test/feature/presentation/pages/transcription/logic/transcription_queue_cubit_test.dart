@@ -1,28 +1,28 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:voice_notes/core/packages/transcription/transcription_queue_service.dart';
+import 'package:voice_notes/core/packages/transcription/transcription_queue_controller.dart';
 import 'package:voice_notes/core/packages/transcription/transcription_queue_snapshot.dart';
 import 'package:voice_notes/feature/presentation/pages/queue/logic/transcription_queue_cubit.dart';
 
 void main() {
   group('TranscriptionQueueCubit (thin adapter)', () {
-    late _FakeService service;
+    late _FakeController controller;
 
     setUp(() {
-      service = _FakeService();
+      controller = _FakeController();
     });
 
     tearDown(() async {
-      await service.dispose();
+      await controller.dispose();
     });
 
     test('emits snapshots from service stream', () async {
-      final cubit = TranscriptionQueueCubit(service: service);
+      final cubit = TranscriptionQueueCubit(controller: controller);
 
       expect(cubit.state.snapshot.queued, isEmpty);
 
-      service.push(
+      controller.push(
         const TranscriptionQueueSnapshot(
           bootstrapState: QueueBootstrapReady(),
           queued: ['a'],
@@ -38,7 +38,7 @@ void main() {
     });
 
     test('retry/cancel/retryAll/clearFailedAll delegate to service', () async {
-      final cubit = TranscriptionQueueCubit(service: service);
+      final cubit = TranscriptionQueueCubit(controller: controller);
 
       await cubit.retry('u1');
       await cubit.cancel('u2');
@@ -49,23 +49,23 @@ void main() {
       await cubit.resumeAfterInterruptedRun();
       cubit.onResume();
 
-      expect(service.retryCalls, ['u1']);
-      expect(service.cancelCalls, ['u2']);
-      expect(service.retryAllCount, 1);
-      expect(service.clearFailedAllCount, 1);
-      expect(service.dismissFailedCalls, ['u3']);
-      expect(service.retryBootstrapCount, 1);
-      expect(service.resumeAfterInterruptedRunCount, 1);
-      expect(service.resumeCount, 1);
+      expect(controller.retryCalls, ['u1']);
+      expect(controller.cancelCalls, ['u2']);
+      expect(controller.retryAllCount, 1);
+      expect(controller.clearFailedAllCount, 1);
+      expect(controller.dismissFailedCalls, ['u3']);
+      expect(controller.retryBootstrapCount, 1);
+      expect(controller.resumeAfterInterruptedRunCount, 1);
+      expect(controller.resumeCount, 1);
 
       await cubit.close();
     });
   });
 }
 
-/// In-memory stand-in for `TranscriptionQueueService` (thin shell exposing
+/// In-memory stand-in for the queue controller contract (thin shell exposing
 /// exactly what the cubit calls).
-class _FakeService implements TranscriptionQueueService {
+class _FakeController implements TranscriptionQueueController {
   final StreamController<TranscriptionQueueSnapshot> _controller =
       StreamController<TranscriptionQueueSnapshot>.broadcast();
 
@@ -139,5 +139,5 @@ class _FakeService implements TranscriptionQueueService {
 
   @override
   dynamic noSuchMethod(Invocation i) =>
-      throw UnimplementedError('FakeService: ${i.memberName} not stubbed');
+      throw UnimplementedError('FakeController: ${i.memberName} not stubbed');
 }

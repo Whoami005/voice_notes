@@ -7,7 +7,7 @@ import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/packages/app_router/app_route_wrapper.dart';
 import 'package:voice_notes/core/packages/app_router/routes/app_routes.dart';
 import 'package:voice_notes/core/packages/di/injection.dart';
-import 'package:voice_notes/core/packages/transcription/transcription_queue_service.dart';
+import 'package:voice_notes/core/packages/transcription/transcription_queue_controller.dart';
 import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
 import 'package:voice_notes/feature/presentation/pages/queue/components/queue_cancelled_section.dart';
 import 'package:voice_notes/feature/presentation/pages/queue/components/queue_failed_section.dart';
@@ -29,7 +29,7 @@ class QueueManagementScreen extends StatelessWidget implements AppRouteWrapper {
     return BlocProvider(
       create: (_) => QueueManagementCubit(
         noteRepository: getIt<NoteRepository>(),
-        queueService: getIt<TranscriptionQueueService>(),
+        queueController: getIt<TranscriptionQueueController>(),
       ),
       child: this,
     );

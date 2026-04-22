@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:equatable/equatable.dart';
-import 'package:voice_notes/core/packages/transcription/transcription_queue_service.dart';
+import 'package:voice_notes/core/packages/transcription/transcription_queue_controller.dart';
 import 'package:voice_notes/core/packages/transcription/transcription_queue_snapshot.dart';
 import 'package:voice_notes/core/state/core/base_cubit.dart';
 import 'package:voice_notes/feature/domain/enums/queue_runtime_reason.dart';
@@ -10,40 +10,40 @@ part 'transcription_queue_state.dart';
 
 /// UI-адаптер очереди транскрибации.
 ///
-/// Только: (а) проекция `service.snapshots` в state для виджетов,
+/// Только: (а) проекция `controller.snapshots` в state для виджетов,
 /// (б) проксирование user-intents в сервис. Никакого владения lifecycle'ом
 /// очереди, подписок на БД или координации init — это всё живёт в
 /// `TranscriptionQueueService`.
 class TranscriptionQueueCubit extends BaseCubit<TranscriptionQueueState> {
-  final TranscriptionQueueService _service;
+  final TranscriptionQueueController _controller;
   late final StreamSubscription<TranscriptionQueueSnapshot> _snapshotSub;
 
-  TranscriptionQueueCubit({required TranscriptionQueueService service})
-    : _service = service,
-      super(TranscriptionQueueState(snapshot: service.current)) {
-    _snapshotSub = _service.snapshots.listen(
+  TranscriptionQueueCubit({required TranscriptionQueueController controller})
+    : _controller = controller,
+      super(TranscriptionQueueState(snapshot: controller.current)) {
+    _snapshotSub = _controller.snapshots.listen(
       (snapshot) => safeEmit(TranscriptionQueueState(snapshot: snapshot)),
     );
   }
 
-  Future<void> retry(String uid) => _service.retry(uid);
+  Future<void> retry(String uid) => _controller.retry(uid);
 
-  Future<void> cancel(String uid) => _service.cancel(uid);
+  Future<void> cancel(String uid) => _controller.cancel(uid);
 
-  Future<void> retryAll() => _service.retryAll();
+  Future<void> retryAll() => _controller.retryAll();
 
-  Future<void> cancelAll() => _service.cancelAll();
+  Future<void> cancelAll() => _controller.cancelAll();
 
-  Future<void> clearFailedAll() => _service.clearFailedAll();
+  Future<void> clearFailedAll() => _controller.clearFailedAll();
 
-  Future<void> dismissFailed(String uid) => _service.dismissFailed(uid);
+  Future<void> dismissFailed(String uid) => _controller.dismissFailed(uid);
 
-  Future<void> retryBootstrap() => _service.retryBootstrap();
+  Future<void> retryBootstrap() => _controller.retryBootstrap();
 
   Future<void> resumeAfterInterruptedRun() =>
-      _service.resumeAfterInterruptedRun();
+      _controller.resumeAfterInterruptedRun();
 
-  void onResume() => _service.resume();
+  void onResume() => _controller.resume();
 
   @override
   Future<void> close() async {

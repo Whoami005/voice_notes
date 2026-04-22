@@ -9,7 +9,7 @@ import 'package:voice_notes/feature/domain/enums/queue_runtime_reason.dart';
 sealed class QueueBootstrapState extends Equatable {
   const QueueBootstrapState();
 
-  bool get isNoteStarted => this is QueueBootstrapNotStarted;
+  bool get isNotStarted => this is QueueBootstrapNotStarted;
 
   bool get isLoading => this is QueueBootstrapLoading;
 

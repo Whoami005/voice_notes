@@ -9,7 +9,7 @@ import 'package:voice_notes/core/packages/app_router/app_router.dart';
 import 'package:voice_notes/core/packages/asr/asr_cubit.dart';
 import 'package:voice_notes/core/packages/asr/asr_service.dart';
 import 'package:voice_notes/core/packages/di/di.dart';
-import 'package:voice_notes/core/packages/transcription/transcription_queue_service.dart';
+import 'package:voice_notes/core/packages/transcription/transcription_queue_controller.dart';
 import 'package:voice_notes/core/theme/app_theme.dart';
 import 'package:voice_notes/core/theme/theme_cubit.dart';
 import 'package:voice_notes/feature/domain/repositories/model_repository.dart';
@@ -104,7 +104,7 @@ class _VoiceNotesAppState extends State<VoiceNotesApp>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _queueCubit = TranscriptionQueueCubit(
-      service: getIt<TranscriptionQueueService>(),
+      controller: getIt<TranscriptionQueueController>(),
     );
   }
 

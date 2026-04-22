@@ -202,6 +202,30 @@ void main() {
     });
   });
 
+  group('cancelAll', () {
+    test('cancels every queued note without concurrent modification', () async {
+      asr.isInitializedValue = false;
+
+      final first = _makeNote('q1', status: TranscriptionStatus.queued);
+      final second = _makeNote('q2', status: TranscriptionStatus.queued);
+      repo
+        ..addNote(first)
+        ..addNote(second);
+
+      final service = buildService();
+      await service.start();
+      repo.emitQueued([first, second]);
+      await _pump();
+
+      await service.cancelAll();
+
+      expect(repo.markCancelledCalls, containsAll(<String>['q1', 'q2']));
+      expect(service.current.queued, isEmpty);
+
+      await service.dispose();
+    });
+  });
+
   group('clearFailedAll / dismissFailed', () {
     test('clearFailedAll: all failed notes become cancelled', () async {
       asr.isInitializedValue = false;

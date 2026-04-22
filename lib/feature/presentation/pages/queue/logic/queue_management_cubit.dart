@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:equatable/equatable.dart';
-import 'package:voice_notes/core/packages/transcription/transcription_queue_service.dart';
+import 'package:voice_notes/core/packages/transcription/transcription_queue_controller.dart';
 import 'package:voice_notes/core/packages/transcription/transcription_queue_snapshot.dart';
 import 'package:voice_notes/core/state/core/base_cubit.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
@@ -13,7 +13,7 @@ part 'queue_management_state.dart';
 /// Screen-scoped cubit для `QueueManagementScreen`. Композирует пять
 /// реактивных источников:
 ///
-/// 1. `service.snapshots` — `bootstrapState` / `runtimeReason` / `cancelRequested`.
+/// 1. `queueController.snapshots` — `bootstrapState` / `runtimeReason` / `cancelRequested`.
 /// 2. `repo.watchTranscribing()` — текущая обрабатываемая заметка (0 или 1).
 /// 3. `repo.watchQueued()` — очередь (createdAt ASC).
 /// 4. `repo.watchFailed()` — провалившиеся.
@@ -23,7 +23,7 @@ part 'queue_management_state.dart';
 /// с per-uid изоляцией ошибок — провал одного элемента не прерывает остальные.
 class QueueManagementCubit extends BaseCubit<QueueManagementState> {
   final NoteRepository _noteRepository;
-  final TranscriptionQueueService _queueService;
+  final TranscriptionQueueController _queueController;
 
   StreamSubscription<TranscriptionQueueSnapshot>? _snapshotSub;
   StreamSubscription<List<NoteEntity>>? _transcribingSub;
@@ -33,17 +33,17 @@ class QueueManagementCubit extends BaseCubit<QueueManagementState> {
 
   QueueManagementCubit({
     required NoteRepository noteRepository,
-    required TranscriptionQueueService queueService,
+    required TranscriptionQueueController queueController,
   }) : _noteRepository = noteRepository,
-       _queueService = queueService,
+       _queueController = queueController,
        super(
          QueueManagementState(
-           bootstrapState: queueService.current.bootstrapState,
-           runtimeReason: queueService.current.runtimeReason,
-           cancelRequested: Set.of(queueService.current.cancelRequested),
+           bootstrapState: queueController.current.bootstrapState,
+           runtimeReason: queueController.current.runtimeReason,
+           cancelRequested: {...queueController.current.cancelRequested},
          ),
        ) {
-    _snapshotSub = _queueService.snapshots.listen(
+    _snapshotSub = _queueController.snapshots.listen(
       _onSnapshot,
       onError: addError,
     );
@@ -113,7 +113,7 @@ class QueueManagementCubit extends BaseCubit<QueueManagementState> {
 
     for (final note in snapshot) {
       try {
-        await _queueService.retry(note.uuid);
+        await _queueController.retry(note.uuid);
       } catch (error, stackTrace) {
         logError(error, stackTrace);
       }

@@ -17,9 +17,11 @@ import 'package:voice_notes/core/packages/asr/asr_vad_asset_installer.dart';
 import 'package:voice_notes/core/packages/path/audio_paths.dart';
 import 'package:voice_notes/core/packages/transcription/transcription_circuit_breaker.dart';
 import 'package:voice_notes/core/packages/transcription/transcription_failure_classifier.dart';
+import 'package:voice_notes/core/packages/transcription/transcription_queue_controller.dart';
 import 'package:voice_notes/core/packages/transcription/transcription_queue_snapshot.dart';
 import 'package:voice_notes/feature/data/local/preferences/recording_preferences.dart';
 import 'package:voice_notes/feature/data/local/preferences/transcription_queue_preferences.dart';
+import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
 import 'package:voice_notes/feature/domain/entities/note_audio_entity.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
 import 'package:voice_notes/feature/domain/enums/queue_runtime_reason.dart';
@@ -41,8 +43,8 @@ import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
 ///
 /// `start()` **не бросает**: любой сбой переводит `bootstrapState` в
 /// `error(failure)`; UI может вызвать `retryBootstrap()`.
-@Singleton()
-class TranscriptionQueueService {
+@Singleton(as: TranscriptionQueueController)
+class TranscriptionQueueService implements TranscriptionQueueController {
   TranscriptionQueueService({
     required NoteRepository noteRepository,
     required AsrService asrService,
@@ -130,9 +132,11 @@ class TranscriptionQueueService {
   StreamSubscription<bool>? _asrReadySub;
   TranscriptionQueueSnapshot? _lastSnapshot;
 
+  @override
   Stream<TranscriptionQueueSnapshot> get snapshots =>
       _snapshotController.stream;
 
+  @override
   TranscriptionQueueSnapshot get current => _lastSnapshot ??= _buildSnapshot();
 
   bool get _canStartDrain =>
@@ -150,25 +154,7 @@ class TranscriptionQueueService {
     if (_bootstrapState.isReady || _bootstrapState.isLoading) return;
 
     try {
-      _bootstrapState = const QueueBootstrapLoading();
-      _emitSnapshot();
-
-      _asrReady = _asrService.isInitialized;
-      _asrReadySub ??= _asrService.stateStream.listen(_onAsrReadyChanged);
-      _noteDeletedSub ??= _noteRepository.onDeleted.listen(_onNoteDeleted);
-
-      await _noteRepository.resetTranscribingToQueued();
-      _pausedAfterInterruptedRun = await _restoreInterruptedRunGuard();
-
-      // `watchQueued()` (ObjectBox `triggerImmediately: true`) доставит
-      // текущий snapshot БД первым же событием как microtask — это и
-      // есть наш seed. Отдельный `getQueued()` не нужен: одна атомарная
-      // подписка == нет окна «reset прошёл, но подписки ещё нет».
-      _queuedSub ??= _noteRepository.watchQueued().listen(
-        _onQueuedChanged,
-        onError: _onStreamError,
-      );
-
+      await _runBootstrap();
       _bootstrapState = const QueueBootstrapReady();
     } catch (error, stackTrace) {
       developer.log(
@@ -185,9 +171,41 @@ class TranscriptionQueueService {
     if (_bootstrapState.isReady) _scheduleDrain();
   }
 
+  Future<void> _runBootstrap() async {
+    _bootstrapState = const QueueBootstrapLoading();
+    _emitSnapshot();
+
+    _bindRuntimeStreams();
+    await _recoverColdStartState();
+    _bindQueuedStream();
+  }
+
+  void _bindRuntimeStreams() {
+    _asrReady = _asrService.isInitialized;
+    _asrReadySub ??= _asrService.stateStream.listen(_onAsrReadyChanged);
+    _noteDeletedSub ??= _noteRepository.onDeleted.listen(_onNoteDeleted);
+  }
+
+  Future<void> _recoverColdStartState() async {
+    await _noteRepository.resetTranscribingToQueued();
+    _pausedAfterInterruptedRun = await _restoreInterruptedRunGuard();
+  }
+
+  void _bindQueuedStream() {
+    // `watchQueued()` (ObjectBox `triggerImmediately: true`) доставит
+    // текущий snapshot БД первым же событием как microtask — это и
+    // есть наш seed. Отдельный `getQueued()` не нужен: одна атомарная
+    // подписка == нет окна «reset прошёл, но подписки ещё нет».
+    _queuedSub ??= _noteRepository.watchQueued().listen(
+      _onQueuedChanged,
+      onError: _onStreamError,
+    );
+  }
+
   /// Вызывается только в тестах. В проде сервис живёт всю сессию как
   /// `@Singleton`.
   @disposeMethod
+  @override
   Future<void> dispose() async {
     await _cancelSubscriptions();
     if (!_snapshotController.isClosed) await _snapshotController.close();
@@ -197,18 +215,24 @@ class TranscriptionQueueService {
   /// Сбрасывает подписки, чтобы [start] заново поднял их в известном
   /// состоянии (иначе при частичном сбое некоторые стримы могли остаться
   /// в полу-инициализированном виде).
+  @override
   Future<void> retryBootstrap() async {
     if (!_bootstrapState.isError) return;
 
     await _cancelSubscriptions();
+    _resetTransientState();
+    _bootstrapState = const QueueBootstrapNotStarted();
+    await start();
+  }
+
+  void _resetTransientState() {
     _queue.clear();
     _cancelRequested.clear();
     _deletedInFlight.clear();
     _processing = null;
+    _draining = false;
     _pausedAfterInterruptedRun = false;
-
-    _bootstrapState = const QueueBootstrapNotStarted();
-    await start();
+    _clearProcessingRuntime();
   }
 
   Future<void> _cancelSubscriptions() async {
@@ -222,11 +246,13 @@ class TranscriptionQueueService {
 
   /// Lifecycle resume: пнуть дренаж без тяжёлого recovery. Безопасен на
   /// каждый foreground-event — не трогает БД и не пересоздаёт подписки.
+  @override
   void resume() {
     if (!_bootstrapState.isReady || _breaker.isPaused) return;
     _scheduleDrain();
   }
 
+  @override
   Future<void> resumeAfterInterruptedRun() async {
     if (!_bootstrapState.isReady || !_pausedAfterInterruptedRun) return;
 
@@ -238,6 +264,7 @@ class TranscriptionQueueService {
 
   /// User-action: снимает pause и возвращает failed/cancelled заметку в очередь.
   /// Silent no-op, если bootstrap не завершён или заметка не в failed/cancelled.
+  @override
   Future<void> retry(String noteUid) async {
     if (!_bootstrapState.isReady) return;
 
@@ -266,6 +293,7 @@ class TranscriptionQueueService {
   /// Отмена без удаления заметки. Для in-flight uid `_processOne` после
   /// завершения ASR увидит флаг в `_cancelRequested` и вызовет
   /// `markCancelled` сам.
+  @override
   Future<void> cancel(String noteUid) async {
     if (!_bootstrapState.isReady) return;
 
@@ -297,6 +325,7 @@ class TranscriptionQueueService {
   /// Массовый retry всех заметок в статусе `failed`. `cancelled` НЕ трогает —
   /// отмена — явное решение пользователя, перекрывать его пакетно нельзя.
   /// Для per-note отмены → queued используется [retry].
+  @override
   Future<void> retryAll() async {
     if (!_bootstrapState.isReady) return;
 
@@ -326,13 +355,16 @@ class TranscriptionQueueService {
   /// Массовая отмена всей очереди (queued). `processing` НЕ трогает —
   /// отмена in-flight — отдельное намеренное решение (per-note cancel).
   /// Стиль консистентен с [retryAll]: один `_emitSnapshot` в конце.
+  @override
   Future<void> cancelAll() async {
     if (!_bootstrapState.isReady || _queue.isEmpty) return;
 
-    for (final uid in _queue) {
+    final queuedSnapshot = [..._queue];
+
+    for (final uid in queuedSnapshot) {
       try {
-        _queue.remove(uid);
         await _noteRepository.markCancelled(uid);
+        _queue.remove(uid);
       } catch (error, stackTrace) {
         developer.log(
           'TranscriptionQueueService.cancelAll failed for $uid',
@@ -349,6 +381,7 @@ class TranscriptionQueueService {
   /// Массовое «убрать с глаз» всех failed → cancelled. Мягкое действие:
   /// данные и аудио сохраняются, пользователь всё ещё может retry'нуть
   /// индивидуальную заметку.
+  @override
   Future<void> clearFailedAll() async {
     if (!_bootstrapState.isReady) return;
 
@@ -368,6 +401,7 @@ class TranscriptionQueueService {
   }
 
   /// Per-note аналог [clearFailedAll]: failed → cancelled для одной заметки.
+  @override
   Future<void> dismissFailed(String noteUid) async {
     if (!_bootstrapState.isReady) return;
 
@@ -446,100 +480,145 @@ class TranscriptionQueueService {
     bool guardStateArmed = false;
 
     try {
-      final note = await _noteRepository.getByUidOrNull(noteUid);
-      if (note == null) return;
+      final task = await _prepareTask(noteUid);
+      if (task == null) return;
 
-      if (await _consumeAbort(noteUid)) return;
-
-      final audio = note.audio;
-      if (audio == null) {
-        await _failWithReason(
-          noteUid,
-          TranscriptionFailureReason.audioFileMissing,
-        );
-        return;
-      }
-
-      // Pre-empt перед стартом ASR: между top-of-loop `_asrReady` и этой
-      // точкой были await'ы (getByUidOrNull, _consumeAbort, audio-check),
-      // модель могла пропасть.
-      if (!_asrService.isInitialized) {
-        _asrReady = false;
-        _queue.addFirst(noteUid);
-        return;
-      }
-
-      final model = _asrService.currentModel;
-      if (model == null) {
-        _asrReady = false;
-        _queue.addFirst(noteUid);
-        return;
-      }
-
-      final vadModelPath = await AsrVadAssetInstaller().resolveModelPath();
-      final transcriptionPlan = AsrTranscriptionPlanner.resolve(
-        model: model,
-        audioDuration: audio.duration,
-        vadModelPath: vadModelPath,
-      );
-
-      _processingSupportsInteractiveProgress =
-          transcriptionPlan.supportsInteractiveProgress;
-      _processingSupportsCancellation = transcriptionPlan.supportsCancellation;
-      _currentCancelToken = AsrCancelToken();
-      await _noteRepository.markTranscribing(noteUid);
-      await _queuePreferences.markRunningTranscription();
+      await _markProcessingStarted(task);
       guardStateArmed = true;
-      _emitSnapshot();
-
-      final result = await _transcribeWithTimeout(
-        audio,
-        noteUid: noteUid,
-        cancelToken: _currentCancelToken!,
-        transcriptionPlan: transcriptionPlan,
-      );
+      final result = await _transcribeWithTimeout(task);
 
       // Пользователь мог удалить или отменить заметку за время await —
       // отбрасываем результат. Для cancelled — явно ставим статус.
       if (await _consumeAbort(noteUid)) return;
 
-      await _noteRepository.completeTranscription(
-        uid: noteUid,
-        text: result.text,
-        language: result.detectedLanguage ?? '',
-        modelName: model.name,
-        wordCount: result.text.wordCount,
-        deleteAudio: !_preferences.keepOriginals,
-      );
-      _breaker.recordSuccess();
+      await _completeTask(task, result);
     } on AsrCancelledException {
-      // Instant-cancel от interactive worker-пайплайна. Seed'нуть markCancelled
-      // (если заметка ещё существует) и не трогать breaker — cancel
-      // нейтрален, не success и не failure.
-      _cancelRequested.remove(noteUid);
-      try {
-        await _noteRepository.markCancelled(noteUid);
-      } catch (error, stackTrace) {
-        developer.log(
-          'markCancelled failed for $noteUid after AsrCancelledException',
-          error: error,
-          stackTrace: stackTrace,
-          name: 'TranscriptionQueue',
-        );
-      }
+      await _handleCancelledTask(noteUid);
     } catch (error, stackTrace) {
       await _handleProcessingFailure(noteUid, error, stackTrace);
     } finally {
       if (guardStateArmed) await _queuePreferences.clearGuardState();
-      _currentCancelToken = null;
-      _processingSupportsInteractiveProgress = false;
-      _processingSupportsCancellation = false;
-
-      if (_lastProgressNoteUid == noteUid) {
-        _lastProgress = null;
-        _lastProgressNoteUid = null;
-      }
+      _clearProcessingRuntime(noteUid);
     }
+  }
+
+  Future<_QueuedTranscriptionTask?> _prepareTask(String noteUid) async {
+    final note = await _noteRepository.getByUidOrNull(noteUid);
+    if (note == null) return null;
+
+    if (await _consumeAbort(noteUid)) return null;
+
+    final audio = note.audio;
+    if (audio == null) {
+      await _failWithReason(
+        noteUid,
+        TranscriptionFailureReason.audioFileMissing,
+      );
+      return null;
+    }
+
+    final model = _resolveReadyModel(noteUid);
+    if (model == null) return null;
+
+    final transcriptionPlan = await _buildTranscriptionPlan(
+      model: model,
+      audio: audio,
+    );
+
+    return _QueuedTranscriptionTask(
+      noteUid: noteUid,
+      audio: audio,
+      model: model,
+      transcriptionPlan: transcriptionPlan,
+      cancelToken: AsrCancelToken(),
+    );
+  }
+
+  AsrModelEntity? _resolveReadyModel(String noteUid) {
+    // Pre-empt перед стартом ASR: между top-of-loop `_asrReady` и этой
+    // точкой были await'ы (getByUidOrNull, _consumeAbort, audio-check),
+    // модель могла пропасть.
+    if (!_asrService.isInitialized) {
+      _asrReady = false;
+      _queue.addFirst(noteUid);
+      return null;
+    }
+
+    final model = _asrService.currentModel;
+    if (model == null) {
+      _asrReady = false;
+      _queue.addFirst(noteUid);
+      return null;
+    }
+
+    return model;
+  }
+
+  Future<AsrTranscriptionPlan> _buildTranscriptionPlan({
+    required AsrModelEntity model,
+    required NoteAudioEntity audio,
+  }) async {
+    final vadModelPath = await AsrVadAssetInstaller().resolveModelPath();
+    return AsrTranscriptionPlanner.resolve(
+      model: model,
+      audioDuration: audio.duration,
+      vadModelPath: vadModelPath,
+    );
+  }
+
+  Future<void> _markProcessingStarted(_QueuedTranscriptionTask task) async {
+    _processingSupportsInteractiveProgress =
+        task.transcriptionPlan.supportsInteractiveProgress;
+    _processingSupportsCancellation =
+        task.transcriptionPlan.supportsCancellation;
+    _currentCancelToken = task.cancelToken;
+
+    await _noteRepository.markTranscribing(task.noteUid);
+    await _queuePreferences.markRunningTranscription();
+    _emitSnapshot();
+  }
+
+  Future<void> _completeTask(
+    _QueuedTranscriptionTask task,
+    AsrResult result,
+  ) async {
+    await _noteRepository.completeTranscription(
+      uid: task.noteUid,
+      text: result.text,
+      language: result.detectedLanguage ?? '',
+      modelName: task.model.name,
+      wordCount: result.text.wordCount,
+      deleteAudio: !_preferences.keepOriginals,
+    );
+    _breaker.recordSuccess();
+  }
+
+  Future<void> _handleCancelledTask(String noteUid) async {
+    // Instant-cancel от interactive worker-пайплайна. Seed'нуть markCancelled
+    // (если заметка ещё существует) и не трогать breaker — cancel
+    // нейтрален, не success и не failure.
+    try {
+      _cancelRequested.remove(noteUid);
+      await _noteRepository.markCancelled(noteUid);
+    } catch (error, stackTrace) {
+      developer.log(
+        'markCancelled failed for $noteUid after AsrCancelledException',
+        error: error,
+        stackTrace: stackTrace,
+        name: 'TranscriptionQueue',
+      );
+    }
+  }
+
+  void _clearProcessingRuntime([String? noteUid]) {
+    _currentCancelToken = null;
+    _processingSupportsInteractiveProgress = false;
+    _processingSupportsCancellation = false;
+
+    if (noteUid != null && _lastProgressNoteUid != noteUid) return;
+
+    _lastProgress = null;
+    _lastProgressNoteUid = null;
   }
 
   /// Возвращает true, если для `noteUid` был зафиксирован abort (user
@@ -569,20 +648,17 @@ class TranscriptionQueueService {
   }
 
   Future<AsrResult> _transcribeWithTimeout(
-    NoteAudioEntity audio, {
-    required String noteUid,
-    required AsrCancelToken cancelToken,
-    required AsrTranscriptionPlan transcriptionPlan,
-  }) async {
-    final absolutePath = await _resolveAudioAbsolutePath(audio);
+    _QueuedTranscriptionTask task,
+  ) async {
+    final absolutePath = await _resolveAudioAbsolutePath(task.audio);
 
     return _asrService
         .transcribeFile(
           absolutePath,
-          onProgress: (p) => _onProgress(p, noteUid),
-          cancelToken: cancelToken,
-          strategyOverride: transcriptionPlan.strategy,
-          audioDurationHint: audio.duration,
+          onProgress: (progress) => _onProgress(progress, task.noteUid),
+          cancelToken: task.cancelToken,
+          strategyOverride: task.transcriptionPlan.strategy,
+          audioDurationHint: task.audio.duration,
         )
         .timeout(
           _transcribeTimeout,
@@ -724,4 +800,20 @@ class TranscriptionQueueService {
         return false;
     }
   }
+}
+
+final class _QueuedTranscriptionTask {
+  final String noteUid;
+  final NoteAudioEntity audio;
+  final AsrModelEntity model;
+  final AsrTranscriptionPlan transcriptionPlan;
+  final AsrCancelToken cancelToken;
+
+  const _QueuedTranscriptionTask({
+    required this.noteUid,
+    required this.audio,
+    required this.model,
+    required this.transcriptionPlan,
+    required this.cancelToken,
+  });
 }
