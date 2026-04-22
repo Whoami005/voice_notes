@@ -3,31 +3,57 @@ import 'package:go_router/go_router.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/packages/app_router/routes/app_routes.dart';
+import 'package:voice_notes/core/packages/di/injection.dart';
 import 'package:voice_notes/core/packages/player/audio_playback_controller.dart';
 
-class GlobalPlaybackMiniPlayer extends StatelessWidget {
-  final AudioPlaybackController controller;
+class GlobalPlaybackMiniPlayer extends StatefulWidget {
+  final AudioPlaybackController? controller;
 
-  const GlobalPlaybackMiniPlayer({required this.controller, super.key});
+  const GlobalPlaybackMiniPlayer({this.controller, super.key});
+
+  @override
+  State<GlobalPlaybackMiniPlayer> createState() =>
+      _GlobalPlaybackMiniPlayerState();
+}
+
+class _GlobalPlaybackMiniPlayerState extends State<GlobalPlaybackMiniPlayer> {
+  late final AudioPlaybackController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = widget.controller ?? getIt<AudioPlaybackController>();
+  }
+
+  String _getDisplayTitle(PlaybackSessionState session) {
+    final title = (session.title ?? '').trim();
+    final displayTitle = title.isEmpty ? '---' : title;
+
+    return displayTitle;
+  }
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<PlaybackSessionState>(
-      stream: controller.sessionStream,
-      initialData: controller.session,
+      stream: _controller.sessionStream,
+      initialData: _controller.session,
       builder: (context, snapshot) {
-        final session = snapshot.data ?? controller.session;
+        final session = snapshot.data ?? _controller.session;
         if (!session.isVisible) return const SizedBox.shrink();
 
         final themeColors = context.themeColors;
         final textTheme = context.textTheme;
-        final title = (session.title ?? '').trim();
-        final displayTitle = title.isEmpty ? '---' : title;
+        final displayTitle = _getDisplayTitle(session);
 
         return Material(
           color: themeColors.bgPrimary,
           child: Container(
             key: const Key('global-playback-mini-player'),
+            margin: const EdgeInsets.only(
+              bottom: AppSizes.p8,
+              left: AppSizes.p10,
+              right: AppSizes.p10,
+            ),
             decoration: BoxDecoration(
               color: themeColors.bgSecondary,
               borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
@@ -48,16 +74,16 @@ class GlobalPlaybackMiniPlayer extends StatelessWidget {
                           ),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: AppSizes.p16,
                         vertical: AppSizes.p12,
+                        horizontal: AppSizes.p16,
                       ),
                       child: Row(
+                        spacing: AppSizes.p12,
                         children: [
                           Icon(
                             Icons.graphic_eq_rounded,
                             color: themeColors.accentPrimary,
                           ),
-                          const SizedBox(width: AppSizes.p12),
                           Expanded(
                             child: Text(
                               displayTitle,
@@ -75,7 +101,7 @@ class GlobalPlaybackMiniPlayer extends StatelessWidget {
                 ),
                 IconButton(
                   tooltip: context.l10n.playerPause,
-                  onPressed: controller.pause,
+                  onPressed: _controller.pause,
                   icon: const Icon(Icons.pause_rounded),
                 ),
               ],
