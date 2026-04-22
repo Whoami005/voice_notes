@@ -53,7 +53,7 @@ void main() {
 
     test('percent getter returns 0 for initial progress', () {
       const p = AsrTranscribeProgress(
-        progress: 0.0,
+        progress: 0,
         partialText: '',
         processedAudio: Duration.zero,
         totalAudio: Duration(seconds: 30),
@@ -64,7 +64,7 @@ void main() {
 
     test('percent getter returns 100 only at full progress', () {
       const p = AsrTranscribeProgress(
-        progress: 1.0,
+        progress: 1,
         partialText: 'done',
         processedAudio: Duration(seconds: 30),
         totalAudio: Duration(seconds: 30),

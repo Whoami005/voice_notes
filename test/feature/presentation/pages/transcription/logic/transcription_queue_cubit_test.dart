@@ -46,6 +46,7 @@ void main() {
       await cubit.clearFailedAll();
       await cubit.dismissFailed('u3');
       await cubit.retryBootstrap();
+      await cubit.resumeAfterInterruptedRun();
       cubit.onResume();
 
       expect(service.retryCalls, ['u1']);
@@ -54,6 +55,7 @@ void main() {
       expect(service.clearFailedAllCount, 1);
       expect(service.dismissFailedCalls, ['u3']);
       expect(service.retryBootstrapCount, 1);
+      expect(service.resumeAfterInterruptedRunCount, 1);
       expect(service.resumeCount, 1);
 
       await cubit.close();
@@ -76,6 +78,7 @@ class _FakeService implements TranscriptionQueueService {
   int retryAllCount = 0;
   int clearFailedAllCount = 0;
   int retryBootstrapCount = 0;
+  int resumeAfterInterruptedRunCount = 0;
   int resumeCount = 0;
 
   void push(TranscriptionQueueSnapshot snapshot) {
@@ -117,6 +120,11 @@ class _FakeService implements TranscriptionQueueService {
   @override
   Future<void> retryBootstrap() async {
     retryBootstrapCount++;
+  }
+
+  @override
+  Future<void> resumeAfterInterruptedRun() async {
+    resumeAfterInterruptedRunCount++;
   }
 
   @override

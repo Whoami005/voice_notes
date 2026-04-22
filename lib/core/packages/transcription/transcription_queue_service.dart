@@ -11,11 +11,15 @@ import 'package:voice_notes/core/packages/asr/asr_exception.dart';
 import 'package:voice_notes/core/packages/asr/asr_result.dart';
 import 'package:voice_notes/core/packages/asr/asr_service.dart';
 import 'package:voice_notes/core/packages/asr/asr_transcribe_progress.dart';
+import 'package:voice_notes/core/packages/asr/asr_transcription_plan.dart';
+import 'package:voice_notes/core/packages/asr/asr_transcription_planner.dart';
+import 'package:voice_notes/core/packages/asr/asr_vad_asset_installer.dart';
 import 'package:voice_notes/core/packages/path/audio_paths.dart';
 import 'package:voice_notes/core/packages/transcription/transcription_circuit_breaker.dart';
 import 'package:voice_notes/core/packages/transcription/transcription_failure_classifier.dart';
 import 'package:voice_notes/core/packages/transcription/transcription_queue_snapshot.dart';
 import 'package:voice_notes/feature/data/local/preferences/recording_preferences.dart';
+import 'package:voice_notes/feature/data/local/preferences/transcription_queue_preferences.dart';
 import 'package:voice_notes/feature/domain/entities/note_audio_entity.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
 import 'package:voice_notes/feature/domain/enums/queue_runtime_reason.dart';
@@ -43,9 +47,11 @@ class TranscriptionQueueService {
     required NoteRepository noteRepository,
     required AsrService asrService,
     required RecordingPreferences preferences,
+    required TranscriptionQueuePreferences queuePreferences,
   }) : _noteRepository = noteRepository,
        _asrService = asrService,
        _preferences = preferences,
+       _queuePreferences = queuePreferences,
        _transcribeTimeout = const Duration(minutes: 30);
 
   /// Тест-only конструктор. Даёт возможность подставить короткий таймаут
@@ -55,15 +61,18 @@ class TranscriptionQueueService {
     required NoteRepository noteRepository,
     required AsrService asrService,
     required RecordingPreferences preferences,
+    required TranscriptionQueuePreferences queuePreferences,
     required Duration transcribeTimeout,
   }) : _noteRepository = noteRepository,
        _asrService = asrService,
        _preferences = preferences,
+       _queuePreferences = queuePreferences,
        _transcribeTimeout = transcribeTimeout;
 
   final NoteRepository _noteRepository;
   final AsrService _asrService;
   final RecordingPreferences _preferences;
+  final TranscriptionQueuePreferences _queuePreferences;
 
   /// Максимальное время на одну транскрибацию. Защищает от зависания
   /// sherpa-onnx FFI внутри изолята — таймаут переводит заметку в failed
@@ -92,15 +101,20 @@ class TranscriptionQueueService {
   QueueBootstrapState _bootstrapState = const QueueBootstrapNotStarted();
   bool _draining = false;
   bool _asrReady = false;
+
+  /// Cold-start guard: прошлый процесс оборвался во время
+  /// транскрибации. Пока пользователь явно не нажмёт resume,
+  /// auto-drain блокируется, чтобы не войти в crash-loop.
+  bool _pausedAfterInterruptedRun = false;
   String? _processing;
 
   /// Cancel-токен активной in-flight задачи. `null` пока нет активной.
   /// `cancel(noteUid)` и `onNoteDeleted(noteUid)` вызывают `.cancel()` —
-  /// для streaming-моделей это прерывает задачу между чанками.
+  /// для interactive-стратегий это прерывает задачу между чанками.
   AsrCancelToken? _currentCancelToken;
 
-  /// Последнее progress-событие активной задачи. `null` для non-streaming
-  /// моделей или до первого события.
+  /// Последнее progress-событие активной задачи. `null` для blocking
+  /// стратегий или до первого события.
   AsrTranscribeProgress? _lastProgress;
 
   /// Для какой заметки относится `_lastProgress` (stale-guard).
@@ -108,7 +122,8 @@ class TranscriptionQueueService {
 
   /// Зафиксировано на старте `_processOne` — не меняется при
   /// unload/switch модели в середине задачи. UI читает отсюда.
-  bool _processingSupportsStreaming = false;
+  bool _processingSupportsInteractiveProgress = false;
+  bool _processingSupportsCancellation = false;
 
   StreamSubscription<List<NoteEntity>>? _queuedSub;
   StreamSubscription<String>? _noteDeletedSub;
@@ -121,7 +136,11 @@ class TranscriptionQueueService {
   TranscriptionQueueSnapshot get current => _lastSnapshot ??= _buildSnapshot();
 
   bool get _canStartDrain =>
-      !_draining && !_breaker.isPaused && _asrReady && _bootstrapState.isReady;
+      !_draining &&
+      !_breaker.isPaused &&
+      !_pausedAfterInterruptedRun &&
+      _asrReady &&
+      _bootstrapState.isReady;
 
   /// Cold-start recovery + подписка на repo. Не бросает — любая ошибка
   /// становится `bootstrapState.error(failure)`. Автоматически вызывается
@@ -139,6 +158,7 @@ class TranscriptionQueueService {
       _noteDeletedSub ??= _noteRepository.onDeleted.listen(_onNoteDeleted);
 
       await _noteRepository.resetTranscribingToQueued();
+      _pausedAfterInterruptedRun = await _restoreInterruptedRunGuard();
 
       // `watchQueued()` (ObjectBox `triggerImmediately: true`) доставит
       // текущий snapshot БД первым же событием как microtask — это и
@@ -185,6 +205,7 @@ class TranscriptionQueueService {
     _cancelRequested.clear();
     _deletedInFlight.clear();
     _processing = null;
+    _pausedAfterInterruptedRun = false;
 
     _bootstrapState = const QueueBootstrapNotStarted();
     await start();
@@ -203,6 +224,15 @@ class TranscriptionQueueService {
   /// каждый foreground-event — не трогает БД и не пересоздаёт подписки.
   void resume() {
     if (!_bootstrapState.isReady || _breaker.isPaused) return;
+    _scheduleDrain();
+  }
+
+  Future<void> resumeAfterInterruptedRun() async {
+    if (!_bootstrapState.isReady || !_pausedAfterInterruptedRun) return;
+
+    await _queuePreferences.clearGuardState();
+    _pausedAfterInterruptedRun = false;
+    _emitSnapshot();
     _scheduleDrain();
   }
 
@@ -256,8 +286,8 @@ class TranscriptionQueueService {
 
     if (_processing == noteUid) {
       _cancelRequested.add(noteUid);
-      // Streaming-модели — instant cancel через токен. Для Whisper токен
-      // no-op'нет в воркере; fallback —
+      // Interactive-стратегии прерываются между чанками через токен.
+      // Для blocking singlePass fallback остаётся прежним:
       // post-decode consume-abort в _processOne.
       _currentCancelToken?.cancel();
     }
@@ -413,6 +443,8 @@ class TranscriptionQueueService {
   }
 
   Future<void> _processOne(String noteUid) async {
+    bool guardStateArmed = false;
+
     try {
       final note = await _noteRepository.getByUidOrNull(noteUid);
       if (note == null) return;
@@ -437,17 +469,34 @@ class TranscriptionQueueService {
         return;
       }
 
-      final modelName = _asrService.currentModel?.name ?? '';
-      _processingSupportsStreaming =
-          _asrService.currentModel?.supportsStreaming ?? false;
+      final model = _asrService.currentModel;
+      if (model == null) {
+        _asrReady = false;
+        _queue.addFirst(noteUid);
+        return;
+      }
+
+      final vadModelPath = await AsrVadAssetInstaller().resolveModelPath();
+      final transcriptionPlan = AsrTranscriptionPlanner.resolve(
+        model: model,
+        audioDuration: audio.duration,
+        vadModelPath: vadModelPath,
+      );
+
+      _processingSupportsInteractiveProgress =
+          transcriptionPlan.supportsInteractiveProgress;
+      _processingSupportsCancellation = transcriptionPlan.supportsCancellation;
       _currentCancelToken = AsrCancelToken();
       await _noteRepository.markTranscribing(noteUid);
+      await _queuePreferences.markRunningTranscription();
+      guardStateArmed = true;
       _emitSnapshot();
 
       final result = await _transcribeWithTimeout(
         audio,
         noteUid: noteUid,
         cancelToken: _currentCancelToken!,
+        transcriptionPlan: transcriptionPlan,
       );
 
       // Пользователь мог удалить или отменить заметку за время await —
@@ -458,13 +507,13 @@ class TranscriptionQueueService {
         uid: noteUid,
         text: result.text,
         language: result.detectedLanguage ?? '',
-        modelName: modelName,
+        modelName: model.name,
         wordCount: result.text.wordCount,
         deleteAudio: !_preferences.keepOriginals,
       );
       _breaker.recordSuccess();
     } on AsrCancelledException {
-      // Instant-cancel от streaming-воркера. Seed'нуть markCancelled
+      // Instant-cancel от interactive worker-пайплайна. Seed'нуть markCancelled
       // (если заметка ещё существует) и не трогать breaker — cancel
       // нейтрален, не success и не failure.
       _cancelRequested.remove(noteUid);
@@ -481,8 +530,10 @@ class TranscriptionQueueService {
     } catch (error, stackTrace) {
       await _handleProcessingFailure(noteUid, error, stackTrace);
     } finally {
+      if (guardStateArmed) await _queuePreferences.clearGuardState();
       _currentCancelToken = null;
-      _processingSupportsStreaming = false;
+      _processingSupportsInteractiveProgress = false;
+      _processingSupportsCancellation = false;
 
       if (_lastProgressNoteUid == noteUid) {
         _lastProgress = null;
@@ -521,6 +572,7 @@ class TranscriptionQueueService {
     NoteAudioEntity audio, {
     required String noteUid,
     required AsrCancelToken cancelToken,
+    required AsrTranscriptionPlan transcriptionPlan,
   }) async {
     final absolutePath = await _resolveAudioAbsolutePath(audio);
 
@@ -529,6 +581,8 @@ class TranscriptionQueueService {
           absolutePath,
           onProgress: (p) => _onProgress(p, noteUid),
           cancelToken: cancelToken,
+          strategyOverride: transcriptionPlan.strategy,
+          audioDurationHint: audio.duration,
         )
         .timeout(
           _transcribeTimeout,
@@ -628,12 +682,18 @@ class TranscriptionQueueService {
     processingProgress: _lastProgressNoteUid == _processing
         ? _lastProgress
         : null,
-    processingSupportsStreaming: _processingSupportsStreaming,
+    processingSupportsInteractiveProgress:
+        _processingSupportsInteractiveProgress,
+    processingSupportsCancellation: _processingSupportsCancellation,
   );
 
-  /// Причина простоя дренажа. Breaker приоритетнее, т.к. он — следствие
-  /// реальных провалов и требует явного сигнала пользователю.
+  /// Причина простоя дренажа. Interrupted-run guard приоритетнее breaker:
+  /// пользователю важнее увидеть, что auto-resume намеренно заблокирован
+  /// после оборванной транскрибации, а не общий paused-state по ошибкам.
   QueueRuntimeReason _computeRuntimeReason() {
+    if (_pausedAfterInterruptedRun) {
+      return QueueRuntimeReason.interruptedPreviousRun;
+    }
     if (_breaker.isPaused) return QueueRuntimeReason.breakerTripped;
     if (_bootstrapState.isReady && !_asrReady) {
       return QueueRuntimeReason.awaitingModel;
@@ -650,5 +710,18 @@ class TranscriptionQueueService {
 
     _lastSnapshot = nextSnapshot;
     _snapshotController.add(nextSnapshot);
+  }
+
+  Future<bool> _restoreInterruptedRunGuard() async {
+    final guardState = await _queuePreferences.getGuardState();
+    switch (guardState) {
+      case TranscriptionQueueGuardState.runningTranscription:
+        await _queuePreferences.markPausedAfterInterruption();
+        return true;
+      case TranscriptionQueueGuardState.pausedAfterInterruption:
+        return true;
+      case null:
+        return false;
+    }
   }
 }

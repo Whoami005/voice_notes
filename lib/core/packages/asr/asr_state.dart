@@ -4,20 +4,13 @@ class AsrState extends StatusState {
   /// Выбрана ли модель пользователем
   final bool hasModel;
 
-  //TODO: почему бы не хранить модель полностью ?
-  /// Название текущей модели (для отображения в UI)
-  final String? modelName;
-
-  /// Тип выбранной модели (whisper / parakeet). Нужен подписчикам для
-  /// оценок времени транскрибации (ETA) по RTF-таблице.
-  final AsrModelType? modelType;
+  final AsrModelEntity? model;
 
   const AsrState({
     super.status,
     super.failure,
     this.hasModel = false,
-    this.modelName,
-    this.modelType,
+    this.model,
   });
 
   /// ASR готов к транскрибации
@@ -28,18 +21,18 @@ class AsrState extends StatusState {
     Status? status,
     AppFailure? failure,
     bool? hasModel,
-    String? modelName,
+    AsrModelEntity? Function()? model,
+    AsrModelIdEnum? modelId,
     AsrModelType? modelType,
   }) {
     return AsrState(
       status: status ?? this.status,
       failure: failure ?? this.failure,
       hasModel: hasModel ?? this.hasModel,
-      modelName: modelName ?? this.modelName,
-      modelType: modelType ?? this.modelType,
+      model: model != null ? model() : this.model,
     );
   }
 
   @override
-  List<Object?> get props => [...super.props, hasModel, modelName, modelType];
+  List<Object?> get props => [...super.props, hasModel, model];
 }

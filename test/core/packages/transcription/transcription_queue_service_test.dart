@@ -10,12 +10,15 @@ import 'package:voice_notes/core/packages/asr/asr_exception.dart';
 import 'package:voice_notes/core/packages/asr/asr_result.dart';
 import 'package:voice_notes/core/packages/asr/asr_service.dart';
 import 'package:voice_notes/core/packages/asr/asr_transcribe_progress.dart';
+import 'package:voice_notes/core/packages/asr/asr_transcription_strategy.dart';
 import 'package:voice_notes/core/packages/transcription/transcription_queue_service.dart';
 import 'package:voice_notes/core/packages/transcription/transcription_queue_snapshot.dart';
 import 'package:voice_notes/feature/data/local/preferences/recording_preferences.dart';
+import 'package:voice_notes/feature/data/local/preferences/transcription_queue_preferences.dart';
 import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
 import 'package:voice_notes/feature/domain/entities/note_audio_entity.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
+import 'package:voice_notes/feature/domain/enums/queue_runtime_reason.dart';
 import 'package:voice_notes/feature/domain/enums/transcription_failure_reason.dart';
 import 'package:voice_notes/feature/domain/enums/transcription_status.dart';
 import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
@@ -24,6 +27,7 @@ void main() {
   late _FakeNoteRepository repo;
   late _FakeAsrService asr;
   late RecordingPreferences prefs;
+  late TranscriptionQueuePreferences queuePrefs;
 
   setUpAll(() {
     TestWidgetsFlutterBinding.ensureInitialized();
@@ -45,6 +49,9 @@ void main() {
     repo = _FakeNoteRepository();
     asr = _FakeAsrService();
     prefs = RecordingPreferences(await SharedPreferences.getInstance());
+    queuePrefs = TranscriptionQueuePreferences(
+      await SharedPreferences.getInstance(),
+    );
   });
 
   TranscriptionQueueService buildService({
@@ -54,6 +61,7 @@ void main() {
       noteRepository: repo,
       asrService: asr,
       preferences: prefs,
+      queuePreferences: queuePrefs,
       transcribeTimeout: transcribeTimeout,
     );
   }
@@ -107,6 +115,42 @@ void main() {
 
       await service.dispose();
     });
+
+    test(
+      'interrupted previous run pauses queue and does not auto-drain',
+      () async {
+        await queuePrefs.markRunningTranscription();
+
+        asr
+          ..isInitializedValue = true
+          ..currentModelValue = _whisperModel();
+
+        final note = _makeNote(
+          'n1',
+          status: TranscriptionStatus.queued,
+          audio: _makeAudio(duration: const Duration(minutes: 20)),
+        );
+        repo.addNote(note);
+
+        final service = buildService();
+        await service.start();
+        repo.emitQueued([note]);
+        await _pump();
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+
+        expect(
+          service.current.runtimeReason,
+          QueueRuntimeReason.interruptedPreviousRun,
+        );
+        expect(repo.markTranscribingCalls, isEmpty);
+        expect(
+          await queuePrefs.getGuardState(),
+          TranscriptionQueueGuardState.pausedAfterInterruption,
+        );
+
+        await service.dispose();
+      },
+    );
   });
 
   group('retryAll', () {
@@ -147,8 +191,12 @@ void main() {
       }
 
       await service.retryAll();
-      // After retryAll, breaker should be reset; paused=false
-      expect(service.current.paused, isFalse);
+      // After retryAll breaker must not stay tripped. With no ASR model
+      // runtimeReason is still awaitingModel, so `paused` is too broad.
+      expect(
+        service.current.runtimeReason,
+        isNot(QueueRuntimeReason.breakerTripped),
+      );
 
       await service.dispose();
     });
@@ -237,14 +285,20 @@ void main() {
       // trigger breaker (needs 3). Sanity: ensure no pause yet.
       await _pump();
 
-      expect(service.current.paused, isFalse);
+      expect(
+        service.current.runtimeReason,
+        isNot(QueueRuntimeReason.breakerTripped),
+      );
 
       // Now toggle ASR-ready false → true; breaker stays unpaused (reset).
       asr
         ..emitAsrReady(false)
         ..emitAsrReady(true);
       await _pump();
-      expect(service.current.paused, isFalse);
+      expect(
+        service.current.runtimeReason,
+        isNot(QueueRuntimeReason.breakerTripped),
+      );
 
       await service.dispose();
     });
@@ -402,18 +456,52 @@ void main() {
 
         expect(service.current.processingProgress, isNotNull);
         expect(service.current.processingProgress!.percent, 42);
-        expect(service.current.processingSupportsStreaming, isTrue);
+        expect(service.current.processingSupportsInteractiveProgress, isTrue);
+        expect(service.current.processingSupportsCancellation, isTrue);
 
         completer.complete(const AsrResult(text: 'done'));
         await Future<void>.delayed(const Duration(milliseconds: 20));
 
         // После завершения задачи snapshot progress сброшен.
         expect(service.current.processingProgress, isNull);
-        expect(service.current.processingSupportsStreaming, isFalse);
+        expect(service.current.processingSupportsInteractiveProgress, isFalse);
+        expect(service.current.processingSupportsCancellation, isFalse);
 
         await service.dispose();
       },
     );
+
+    test('long whisper note uses chunkedVad strategy and '
+        'exposes interactive progress', () async {
+      asr
+        ..isInitializedValue = true
+        ..currentModelValue = _whisperModel();
+
+      final note = _makeNote(
+        'n1',
+        status: TranscriptionStatus.queued,
+        audio: _makeAudio(duration: const Duration(minutes: 20)),
+      );
+      repo.addNote(note);
+
+      final completer = Completer<AsrResult>();
+      asr.transcribeFileImpl = (path) => completer.future;
+
+      final service = buildService();
+      await service.start();
+      repo.emitQueued([note]);
+      await _pump();
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+
+      expect(asr.lastStrategyOverride, AsrTranscriptionStrategy.chunkedVad);
+      expect(service.current.processingSupportsInteractiveProgress, isTrue);
+      expect(service.current.processingSupportsCancellation, isTrue);
+
+      completer.complete(const AsrResult(text: 'done'));
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+
+      await service.dispose();
+    });
 
     test('progress for cancelRequested note is dropped', () async {
       asr
@@ -463,9 +551,204 @@ void main() {
     });
   });
 
+  group('interrupted transcription guard', () {
+    test(
+      'resumeAfterInterruptedRun clears pause and starts queued note',
+      () async {
+        await queuePrefs.markPausedAfterInterruption();
+
+        asr
+          ..isInitializedValue = true
+          ..currentModelValue = _whisperModel();
+
+        final note = _makeNote(
+          'n1',
+          status: TranscriptionStatus.queued,
+          audio: _makeAudio(duration: const Duration(minutes: 20)),
+        );
+        repo.addNote(note);
+
+        final completer = Completer<AsrResult>();
+        asr.transcribeFileImpl = (path) => completer.future;
+
+        final service = buildService();
+        await service.start();
+        repo.emitQueued([note]);
+        await _pump();
+
+        expect(
+          service.current.runtimeReason,
+          QueueRuntimeReason.interruptedPreviousRun,
+        );
+        expect(repo.markTranscribingCalls, isEmpty);
+
+        await service.resumeAfterInterruptedRun();
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+
+        expect(service.current.runtimeReason, QueueRuntimeReason.none);
+        expect(repo.markTranscribingCalls, contains('n1'));
+
+        completer.complete(const AsrResult(text: 'done'));
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+
+        await service.dispose();
+      },
+    );
+
+    test(
+      'singlePass stores running transcription marker during decode',
+      () async {
+        asr
+          ..isInitializedValue = true
+          ..currentModelValue = _whisperModel();
+
+        final note = _makeNote(
+          'n1',
+          status: TranscriptionStatus.queued,
+          audio: _makeAudio(),
+        );
+        repo.addNote(note);
+
+        final completer = Completer<AsrResult>();
+        asr.transcribeFileImpl = (path) async {
+          expect(
+            await queuePrefs.getGuardState(),
+            TranscriptionQueueGuardState.runningTranscription,
+          );
+          return completer.future;
+        };
+
+        final service = buildService();
+        await service.start();
+        repo.emitQueued([note]);
+        await _pump();
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+
+        expect(asr.lastStrategyOverride, AsrTranscriptionStrategy.singlePass);
+
+        completer.complete(const AsrResult(text: 'done'));
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        expect(await queuePrefs.getGuardState(), isNull);
+
+        await service.dispose();
+      },
+    );
+
+    test('chunked stores running transcription marker during decode', () async {
+      asr
+        ..isInitializedValue = true
+        ..currentModelValue = _whisperModel();
+
+      final note = _makeNote(
+        'n1',
+        status: TranscriptionStatus.queued,
+        audio: _makeAudio(duration: const Duration(minutes: 4)),
+      );
+      repo.addNote(note);
+
+      final completer = Completer<AsrResult>();
+      asr.transcribeFileImpl = (path) async {
+        expect(
+          await queuePrefs.getGuardState(),
+          TranscriptionQueueGuardState.runningTranscription,
+        );
+        return completer.future;
+      };
+
+      final service = buildService();
+      await service.start();
+      repo.emitQueued([note]);
+      await _pump();
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+
+      expect(asr.lastStrategyOverride, AsrTranscriptionStrategy.chunked);
+
+      completer.complete(const AsrResult(text: 'done'));
+      await Future<void>.delayed(const Duration(milliseconds: 20));
+
+      expect(await queuePrefs.getGuardState(), isNull);
+
+      await service.dispose();
+    });
+
+    test(
+      'chunkedVad clears running transcription marker after success',
+      () async {
+        asr
+          ..isInitializedValue = true
+          ..currentModelValue = _whisperModel();
+
+        final note = _makeNote(
+          'n1',
+          status: TranscriptionStatus.queued,
+          audio: _makeAudio(duration: const Duration(minutes: 20)),
+        );
+        repo.addNote(note);
+
+        final completer = Completer<AsrResult>();
+        asr.transcribeFileImpl = (path) async {
+          expect(
+            await queuePrefs.getGuardState(),
+            TranscriptionQueueGuardState.runningTranscription,
+          );
+          return completer.future;
+        };
+
+        final service = buildService();
+        await service.start();
+        repo.emitQueued([note]);
+        await _pump();
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+
+        expect(asr.lastStrategyOverride, AsrTranscriptionStrategy.chunkedVad);
+
+        completer.complete(const AsrResult(text: 'done'));
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+
+        expect(await queuePrefs.getGuardState(), isNull);
+
+        await service.dispose();
+      },
+    );
+
+    test('failed transcription clears running transcription marker', () async {
+      asr
+        ..isInitializedValue = true
+        ..currentModelValue = _whisperModel();
+
+      final note = _makeNote(
+        'n1',
+        status: TranscriptionStatus.queued,
+        audio: _makeAudio(),
+      );
+      repo.addNote(note);
+
+      asr.transcribeFileImpl = (path) async {
+        expect(
+          await queuePrefs.getGuardState(),
+          TranscriptionQueueGuardState.runningTranscription,
+        );
+        throw const AsrProcessingException('boom');
+      };
+
+      final service = buildService();
+      await service.start();
+      repo.emitQueued([note]);
+      await Future<void>.delayed(const Duration(milliseconds: 50));
+
+      expect(
+        repo.failedCalls['n1'],
+        TranscriptionFailureReason.transcriptionFailed,
+      );
+      expect(await queuePrefs.getGuardState(), isNull);
+
+      await service.dispose();
+    });
+  });
+
   group('capability freeze', () {
     test(
-      'processingSupportsStreaming stays true even if model changes',
+      'interactive capabilities stay frozen even if model changes',
       () async {
         asr
           ..isInitializedValue = true
@@ -487,14 +770,16 @@ void main() {
         await _pump();
         await Future<void>.delayed(const Duration(milliseconds: 20));
 
-        expect(service.current.processingSupportsStreaming, isTrue);
+        expect(service.current.processingSupportsInteractiveProgress, isTrue);
+        expect(service.current.processingSupportsCancellation, isTrue);
 
         // Меняем модель на Whisper посреди задачи —
         // snapshot не должен реагировать.
         asr.currentModelValue = _whisperModel();
         await _pump();
 
-        expect(service.current.processingSupportsStreaming, isTrue);
+        expect(service.current.processingSupportsInteractiveProgress, isTrue);
+        expect(service.current.processingSupportsCancellation, isTrue);
 
         completer.complete(const AsrResult(text: 'done'));
         await Future<void>.delayed(const Duration(milliseconds: 20));
@@ -506,7 +791,9 @@ void main() {
 
   group('timeout classification', () {
     test('timeout → transcriptionTimedOut failure reason', () async {
-      asr.isInitializedValue = true;
+      asr
+        ..isInitializedValue = true
+        ..currentModelValue = _streamingModel();
 
       final note = _makeNote(
         'n1',
@@ -574,10 +861,10 @@ AsrModelEntity _whisperModel() {
   return AsrModelEntity.availableModels.firstWhere((m) => !m.supportsStreaming);
 }
 
-NoteAudioEntity _makeAudio() {
-  return const NoteAudioEntity(
+NoteAudioEntity _makeAudio({Duration duration = const Duration(seconds: 1)}) {
+  return NoteAudioEntity(
     relativePath: 'a.wav',
-    duration: Duration(seconds: 1),
+    duration: duration,
     sizeBytes: 1000,
     sampleRate: 16000,
   );
@@ -741,6 +1028,9 @@ class _FakeAsrService implements AsrService {
   /// в тестах (симуляция progress-событий от streaming-воркера).
   void Function(AsrTranscribeProgress progress)? lastOnProgress;
 
+  AsrTranscriptionStrategy? lastStrategyOverride;
+  Duration? lastAudioDurationHint;
+
   final StreamController<bool> _stateController =
       StreamController<bool>.broadcast();
 
@@ -763,9 +1053,13 @@ class _FakeAsrService implements AsrService {
     String filePath, {
     void Function(AsrTranscribeProgress progress)? onProgress,
     AsrCancelToken? cancelToken,
+    AsrTranscriptionStrategy strategyOverride = AsrTranscriptionStrategy.auto,
+    Duration? audioDurationHint,
   }) {
     lastCancelToken = cancelToken;
     lastOnProgress = onProgress;
+    lastStrategyOverride = strategyOverride;
+    lastAudioDurationHint = audioDurationHint;
     return transcribeFileImpl(filePath);
   }
 

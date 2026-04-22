@@ -30,30 +30,28 @@ void main() {
       AsrModelEntity.availableModels.firstWhere((m) => !m.supportsStreaming);
 
   group('ModelCard — capabilities + recommendations', () {
-    testWidgets(
-      'streaming model: shows three capability chips + streaming recommendation',
-      (tester) async {
-        await pumpModelCard(tester, model: findStreaming());
+    testWidgets('streaming model: shows three capability '
+        'chips + streaming recommendation', (tester) async {
+      await pumpModelCard(tester, model: findStreaming());
 
-        expect(
-          find.byKey(const Key('model-card-capability-realtime')),
-          findsOneWidget,
-        );
-        expect(
-          find.byKey(const Key('model-card-capability-cancelable')),
-          findsOneWidget,
-        );
-        expect(
-          find.byKey(const Key('model-card-capability-partial-text')),
-          findsOneWidget,
-        );
-        expect(
-          find.byKey(const Key('model-card-recommendation')),
-          findsOneWidget,
-        );
-        expect(find.textContaining('любой длины'), findsOneWidget);
-      },
-    );
+      expect(
+        find.byKey(const Key('model-card-capability-realtime')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('model-card-capability-cancelable')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('model-card-capability-partial-text')),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(const Key('model-card-recommendation')),
+        findsOneWidget,
+      );
+      expect(find.textContaining('любой длины'), findsOneWidget);
+    });
 
     testWidgets(
       'non-streaming model: no capability chips, offline recommendation',

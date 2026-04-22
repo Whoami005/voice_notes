@@ -59,21 +59,25 @@ class TranscriptionQueueSnapshot extends Equatable {
 
   /// Причина, по которой дренаж не идёт.
   /// - [QueueRuntimeReason.awaitingModel] — ждём выбор/загрузку ASR-модели.
+  /// - [QueueRuntimeReason.interruptedPreviousRun] — предыдущая
+  ///   транскрибация оборвалась до штатного завершения; требуется
+  ///   явный user resume.
   /// - [QueueRuntimeReason.breakerTripped] — circuit breaker (3 подряд
   ///   провала); снимается автоматически при появлении ASR-ready или
   ///   пользовательским retry().
   final QueueRuntimeReason runtimeReason;
 
   /// Прогресс текущей in-flight транскрибации. `null` для non-streaming
-  /// моделей или до первого progress-события.
+  /// стратегий или до первого progress-события.
   final AsrTranscribeProgress? processingProgress;
 
-  /// Зафиксированный на старте `_processOne` флаг: поддерживает ли
-  /// текущая ASR-модель streaming. UI читает его для отображения
-  /// determinate progress-бара и доступности cancel-кнопки. Не
-  /// зависит от актуального состояния AsrCubit — unload/switch в
-  /// середине задачи не ломает UI.
-  final bool processingSupportsStreaming;
+  /// Зафиксировано на старте `_processOne`: будет ли у текущей стратегии
+  /// determinate progress.
+  final bool processingSupportsInteractiveProgress;
+
+  /// Зафиксировано на старте `_processOne`: можно ли прервать задачу
+  /// кооперативно между чанками/сегментами.
+  final bool processingSupportsCancellation;
 
   const TranscriptionQueueSnapshot({
     this.bootstrapState = const QueueBootstrapNotStarted(),
@@ -82,7 +86,8 @@ class TranscriptionQueueSnapshot extends Equatable {
     this.cancelRequested = const {},
     this.runtimeReason = QueueRuntimeReason.none,
     this.processingProgress,
-    this.processingSupportsStreaming = false,
+    this.processingSupportsInteractiveProgress = false,
+    this.processingSupportsCancellation = false,
   });
 
   int get total => queued.length + (processing != null ? 1 : 0);
@@ -99,6 +104,7 @@ class TranscriptionQueueSnapshot extends Equatable {
     cancelRequested,
     runtimeReason,
     processingProgress,
-    processingSupportsStreaming,
+    processingSupportsInteractiveProgress,
+    processingSupportsCancellation,
   ];
 }

@@ -1,4 +1,28 @@
 import 'package:equatable/equatable.dart';
+import 'package:voice_notes/core/packages/asr/asr_transcription_segment.dart';
+import 'package:voice_notes/core/packages/asr/asr_transcription_strategy.dart';
+
+class AsrTranscriptionStats extends Equatable {
+  final int processedUnits;
+  final int totalUnits;
+  final bool usedVad;
+  final bool fellBackFromVad;
+
+  const AsrTranscriptionStats({
+    this.processedUnits = 0,
+    this.totalUnits = 0,
+    this.usedVad = false,
+    this.fellBackFromVad = false,
+  });
+
+  @override
+  List<Object?> get props => [
+    processedUnits,
+    totalUnits,
+    usedVad,
+    fellBackFromVad,
+  ];
+}
 
 /// Результат распознавания речи
 class AsrResult extends Equatable {
@@ -20,6 +44,18 @@ class AsrResult extends Equatable {
   /// Является ли результат промежуточным (partial)
   final bool isPartial;
 
+  /// Какая стратегия реально использовалась для decode.
+  final AsrTranscriptionStrategy strategyUsed;
+
+  /// Длительность исходного аудио, если была известна пайплайну.
+  final Duration audioDuration;
+
+  /// Сегментная метаинформация итоговой транскрибации.
+  final List<AsrTranscriptionSegment> segments;
+
+  /// Дополнительная статистика выполнения.
+  final AsrTranscriptionStats stats;
+
   const AsrResult({
     required this.text,
     this.tokens = const [],
@@ -27,6 +63,10 @@ class AsrResult extends Equatable {
     this.detectedLanguage,
     this.processingTime = Duration.zero,
     this.isPartial = false,
+    this.strategyUsed = AsrTranscriptionStrategy.singlePass,
+    this.audioDuration = Duration.zero,
+    this.segments = const [],
+    this.stats = const AsrTranscriptionStats(),
   });
 
   /// Пустой результат
@@ -40,6 +80,10 @@ class AsrResult extends Equatable {
     String? detectedLanguage,
     Duration? processingTime,
     bool? isPartial,
+    AsrTranscriptionStrategy? strategyUsed,
+    Duration? audioDuration,
+    List<AsrTranscriptionSegment>? segments,
+    AsrTranscriptionStats? stats,
   }) {
     return AsrResult(
       text: text ?? this.text,
@@ -48,6 +92,10 @@ class AsrResult extends Equatable {
       detectedLanguage: detectedLanguage ?? this.detectedLanguage,
       processingTime: processingTime ?? this.processingTime,
       isPartial: isPartial ?? this.isPartial,
+      strategyUsed: strategyUsed ?? this.strategyUsed,
+      audioDuration: audioDuration ?? this.audioDuration,
+      segments: segments ?? this.segments,
+      stats: stats ?? this.stats,
     );
   }
 
@@ -59,6 +107,10 @@ class AsrResult extends Equatable {
     detectedLanguage,
     processingTime,
     isPartial,
+    strategyUsed,
+    audioDuration,
+    segments,
+    stats,
   ];
 }
 

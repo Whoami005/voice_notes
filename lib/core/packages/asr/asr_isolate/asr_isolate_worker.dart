@@ -5,6 +5,7 @@ import 'dart:isolate';
 import 'package:sherpa_onnx/sherpa_onnx.dart' as sherpa;
 import 'package:voice_notes/core/packages/asr/asr_isolate/asr_commands.dart';
 import 'package:voice_notes/core/packages/asr/asr_isolate/asr_engine.dart';
+import 'package:voice_notes/core/packages/asr/asr_transcription_plan.dart';
 
 /// Точка входа фонового изолята для ASR.
 void startAsrWorker(SendPort mainPort) => _AsrWorker(mainPort)..run();
@@ -29,6 +30,8 @@ class _AsrWorker {
   /// ID'ы задач, отменённых через [CancelTranscribeCommand]. Streaming-
   /// engine проверяет это множество через `isCancelled()` между чанками.
   final Set<int> _cancelledRequestIds = {};
+
+  AsrTranscriptionPlan? _activeTranscriptionPlan;
 
   bool _bindingsInitialized = false;
 
@@ -83,6 +86,7 @@ class _AsrWorker {
     }
 
     _activeRequestId = cmd.requestId;
+    _activeTranscriptionPlan = cmd.transcriptionPlan;
     unawaited(_runTranscribeFile(engine, cmd));
   }
 
@@ -93,6 +97,7 @@ class _AsrWorker {
     try {
       final result = await engine.transcribeFile(
         cmd.filePath,
+        plan: cmd.transcriptionPlan,
         onProgress: (event) {
           _responses.send(
             TranscribeProgressResponse(
@@ -101,6 +106,10 @@ class _AsrWorker {
               partialText: event.partialText,
               processedSeconds: event.processedSeconds,
               totalSeconds: event.totalSeconds,
+              strategy: event.strategy,
+              stage: event.stage,
+              processedUnits: event.processedUnits,
+              totalUnits: event.totalUnits,
             ),
           );
         },
@@ -119,6 +128,7 @@ class _AsrWorker {
       );
     } finally {
       _activeRequestId = null;
+      _activeTranscriptionPlan = null;
       _cancelledRequestIds.remove(cmd.requestId);
     }
   }
@@ -162,11 +172,11 @@ class _AsrWorker {
   }
 
   void _handleCancelTranscribe(CancelTranscribeCommand cmd) {
-    final engine = _engine;
-    if (engine == null || !engine.supportsCancellation) {
+    final plan = _activeTranscriptionPlan;
+    if (_engine == null || plan == null || !plan.supportsCancellation) {
       developer.log(
         'CancelTranscribeCommand ignored for request ${cmd.requestId}: '
-        'engine does not support cancellation',
+        'active plan does not support cancellation',
         name: 'AsrIsolateWorker',
       );
       return;

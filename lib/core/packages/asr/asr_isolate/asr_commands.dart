@@ -2,6 +2,8 @@ import 'dart:typed_data';
 
 import 'package:voice_notes/core/packages/asr/asr_model_files.dart';
 import 'package:voice_notes/core/packages/asr/asr_result.dart';
+import 'package:voice_notes/core/packages/asr/asr_transcription_plan.dart';
+import 'package:voice_notes/core/packages/asr/asr_transcription_strategy.dart';
 import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
 
 // ============================================================================
@@ -51,7 +53,14 @@ final class TranscribeCommand extends AsrCommand {
   /// Путь к WAV файлу для транскрибации.
   final String filePath;
 
-  const TranscribeCommand({required this.requestId, required this.filePath});
+  /// Конкретный execution-план для этого decode.
+  final AsrTranscriptionPlan transcriptionPlan;
+
+  const TranscribeCommand({
+    required this.requestId,
+    required this.filePath,
+    this.transcriptionPlan = const AsrTranscriptionPlan.streaming(),
+  });
 }
 
 /// Транскрибация аудио буфера.
@@ -125,11 +134,10 @@ final class InitializeFailedResponse extends InitializeResponse {
   const InitializeFailedResponse(this.error);
 }
 
-/// Промежуточное событие прогресса streaming-транскрибации.
+/// Промежуточное событие прогресса interactive-транскрибации.
 ///
 /// Non-terminal ответ: worker эмитит N таких сообщений по ходу decode-loop'а
-/// перед финальным [TranscribeResponse]. Для non-streaming моделей
-/// не отправляется.
+/// перед финальным [TranscribeResponse]. Для `singlePass` не отправляется.
 final class TranscribeProgressResponse extends AsrResponse {
   /// ID запроса.
   final int requestId;
@@ -146,12 +154,28 @@ final class TranscribeProgressResponse extends AsrResponse {
   /// Полная длительность аудио в секундах.
   final double totalSeconds;
 
+  /// Какая стратегия сейчас используется в worker'е.
+  final AsrTranscriptionStrategy strategy;
+
+  /// Текущий этап пайплайна.
+  final AsrTranscribeStage stage;
+
+  /// Сколько processing-units завершено.
+  final int processedUnits;
+
+  /// Полное число processing-units.
+  final int totalUnits;
+
   const TranscribeProgressResponse({
     required this.requestId,
     required this.progress,
     required this.partialText,
     required this.processedSeconds,
     required this.totalSeconds,
+    this.strategy = AsrTranscriptionStrategy.streaming,
+    this.stage = AsrTranscribeStage.decoding,
+    this.processedUnits = 0,
+    this.totalUnits = 0,
   });
 }
 

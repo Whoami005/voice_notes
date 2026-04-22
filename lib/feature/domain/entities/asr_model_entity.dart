@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:voice_notes/core/packages/asr/asr_model_files.dart';
+import 'package:voice_notes/core/packages/asr/asr_transcription_plan.dart';
 
 /// Идентификатор модели ASR
 enum AsrModelIdEnum {
@@ -65,6 +66,11 @@ class AsrModelEntity extends Equatable {
   /// NeMo-моделей. Используется в `OnlineModelConfig`/`OfflineModelConfig`.
   final String? sherpaModelType;
 
+  /// Профиль выбора offline-стратегии.
+  ///
+  /// `null` для streaming-моделей, у которых execution-режим фиксирован.
+  final AsrOfflineTranscriptionProfile? offlineTranscriptionProfile;
+
   const AsrModelEntity({
     required this.uuid,
     required this.name,
@@ -77,6 +83,7 @@ class AsrModelEntity extends Equatable {
     this.isSelected = false,
     this.customFiles,
     this.sherpaModelType,
+    this.offlineTranscriptionProfile,
   });
 
   /// URL для скачивания модели с GitHub
@@ -85,6 +92,10 @@ class AsrModelEntity extends Equatable {
 
   /// Поддерживает ли модель streaming распознавание
   bool get supportsStreaming => modelType == AsrModelType.streamingTransducer;
+
+  /// Поддерживает ли модель progress/cancel/partial-text для file decode.
+  bool get supportsInteractiveTranscription =>
+      supportsStreaming || offlineTranscriptionProfile != null;
 
   /// Типизированный набор файлов модели для конфигурации sherpa-onnx.
   ///
@@ -136,6 +147,7 @@ class AsrModelEntity extends Equatable {
     isSelected,
     customFiles,
     sherpaModelType,
+    offlineTranscriptionProfile,
   ];
 
   /// Создать копию с изменёнными полями
@@ -151,6 +163,7 @@ class AsrModelEntity extends Equatable {
     bool? isSelected,
     AsrModelFiles? customFiles,
     String? sherpaModelType,
+    AsrOfflineTranscriptionProfile? offlineTranscriptionProfile,
   }) {
     return AsrModelEntity(
       uuid: uuid ?? this.uuid,
@@ -164,6 +177,8 @@ class AsrModelEntity extends Equatable {
       isSelected: isSelected ?? this.isSelected,
       customFiles: customFiles ?? this.customFiles,
       sherpaModelType: sherpaModelType ?? this.sherpaModelType,
+      offlineTranscriptionProfile:
+          offlineTranscriptionProfile ?? this.offlineTranscriptionProfile,
     );
   }
 
@@ -178,6 +193,7 @@ class AsrModelEntity extends Equatable {
       supportedLanguages: ['English'],
       modelDirName: 'sherpa-onnx-whisper-tiny.en',
       modelType: AsrModelType.whisper,
+      offlineTranscriptionProfile: AsrOfflineTranscriptionProfile.whisperTinyEn,
     ),
 
     // Whisper Small (~466MB)
@@ -189,6 +205,7 @@ class AsrModelEntity extends Equatable {
       supportedLanguages: _whisperLanguages,
       modelDirName: 'sherpa-onnx-whisper-small',
       modelType: AsrModelType.whisper,
+      offlineTranscriptionProfile: AsrOfflineTranscriptionProfile.whisperSmall,
     ),
 
     // Whisper Medium (~1.5GB)
@@ -200,6 +217,7 @@ class AsrModelEntity extends Equatable {
       supportedLanguages: _whisperLanguages,
       modelDirName: 'sherpa-onnx-whisper-medium',
       modelType: AsrModelType.whisper,
+      offlineTranscriptionProfile: AsrOfflineTranscriptionProfile.whisperMedium,
     ),
 
     // Parakeet TDT v3 — offline-only вариант (bundle не поддерживает
@@ -215,6 +233,8 @@ class AsrModelEntity extends Equatable {
       modelDirName: 'sherpa-onnx-nemo-parakeet-tdt-0.6b-v3-int8',
       modelType: AsrModelType.offlineTransducer,
       sherpaModelType: 'nemo_transducer',
+      offlineTranscriptionProfile:
+          AsrOfflineTranscriptionProfile.defaultOffline,
     ),
 
     // Streaming Zipformer English (~85 MB int8) — подтверждённая online

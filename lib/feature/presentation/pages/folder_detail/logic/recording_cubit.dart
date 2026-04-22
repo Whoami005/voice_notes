@@ -282,7 +282,10 @@ class RecordingCubit extends BaseCubit<RecordingState> {
         return;
       }
 
-      final asrResult = await _asrService.transcribeFile(filePath);
+      final asrResult = await _asrService.transcribeFile(
+        filePath,
+        audioDurationHint: duration,
+      );
 
       await _copyToClipboard(asrResult.text);
       _deleteAudioFile(filePath);

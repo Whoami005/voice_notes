@@ -9,6 +9,8 @@ class TranscriptionQueueState extends Equatable {
 
   QueueBootstrapState get bootstrapState => snapshot.bootstrapState;
 
+  QueueRuntimeReason get runtimeReason => snapshot.runtimeReason;
+
   @override
   List<Object?> get props => [snapshot];
 }

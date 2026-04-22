@@ -165,10 +165,10 @@ class _StatusContent extends StatelessWidget {
         selector: (state) =>
             _TranscribingViewData.fromSnapshot(state.snapshot, note.uuid),
         builder: (context, data) {
-          if (data.supportsStreaming) {
-            return _StreamingTranscribingRow(
+          if (data.supportsInteractiveProgress) {
+            return _InteractiveTranscribingRow(
               progress: data.progress,
-              cancelAction: cancelAction,
+              cancelAction: data.supportsCancellation ? cancelAction : null,
             );
           }
 
@@ -216,10 +216,15 @@ class _StatusContent extends StatelessWidget {
 
   String _transcribingLabel(BuildContext context) {
     final l10n = context.l10n;
-    final modelType = context.read<AsrCubit>().state.modelType;
+    final asrState = context.read<AsrCubit>().state;
+    final modelType = asrState.model?.modelType;
     if (modelType == null) return l10n.noteStatusTranscribing;
 
-    final eta = AsrRtfEstimates.estimate(note.duration, modelType);
+    final eta = AsrRtfEstimates.estimate(
+      note.duration,
+      modelId: asrState.model?.uuid,
+      modelType: modelType,
+    );
     return l10n.noteStatusTranscribingEta(eta.inSeconds);
   }
 }
@@ -305,11 +310,13 @@ class _StatusLine extends StatelessWidget {
 /// сейчас не `processing` в очереди — возвращаем fallback (нет progress'а,
 /// non-streaming), чтобы UI вёл себя как в легаси-сценарии.
 class _TranscribingViewData {
-  final bool supportsStreaming;
+  final bool supportsInteractiveProgress;
+  final bool supportsCancellation;
   final AsrTranscribeProgress? progress;
 
   const _TranscribingViewData({
-    required this.supportsStreaming,
+    required this.supportsInteractiveProgress,
+    required this.supportsCancellation,
     required this.progress,
   });
 
@@ -319,24 +326,27 @@ class _TranscribingViewData {
   ) {
     if (snapshot.processing != noteUid) {
       return const _TranscribingViewData(
-        supportsStreaming: false,
+        supportsInteractiveProgress: false,
+        supportsCancellation: false,
         progress: null,
       );
     }
 
     return _TranscribingViewData(
-      supportsStreaming: snapshot.processingSupportsStreaming,
+      supportsInteractiveProgress:
+          snapshot.processingSupportsInteractiveProgress,
+      supportsCancellation: snapshot.processingSupportsCancellation,
       progress: snapshot.processingProgress,
     );
   }
 }
 
-/// Streaming-модель: determinate-прогресс + `Расшифровка: N%` + cancel.
-class _StreamingTranscribingRow extends StatelessWidget {
+/// Interactive-стратегия: determinate-прогресс + `Расшифровка: N%` + cancel.
+class _InteractiveTranscribingRow extends StatelessWidget {
   final AsrTranscribeProgress? progress;
   final _StatusAction? cancelAction;
 
-  const _StreamingTranscribingRow({
+  const _InteractiveTranscribingRow({
     required this.progress,
     required this.cancelAction,
   });

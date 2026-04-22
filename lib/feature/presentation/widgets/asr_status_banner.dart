@@ -7,6 +7,7 @@ import 'package:voice_notes/core/packages/transcription/transcription_queue_snap
 import 'package:voice_notes/core/state/status/status_state.dart';
 import 'package:voice_notes/core/theme/app_colors.dart';
 import 'package:voice_notes/core/theme/app_typography.dart';
+import 'package:voice_notes/feature/domain/enums/queue_runtime_reason.dart';
 import 'package:voice_notes/feature/presentation/pages/queue/logic/transcription_queue_cubit.dart';
 import 'package:voice_notes/feature/presentation/pages/queue/screens/queue_management_screen.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/models/screens/models_settings_screen.dart';
@@ -26,8 +27,11 @@ class AsrStatusBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final queueBootstrap = context.select(
-      (TranscriptionQueueCubit c) => c.state.bootstrapState,
+    final queueState = context.select(
+      (TranscriptionQueueCubit c) => (
+        bootstrap: c.state.bootstrapState,
+        runtimeReason: c.state.runtimeReason,
+      ),
     );
     final asrState = context.select(
       (AsrCubit c) => (status: c.state.status, hasModel: c.state.hasModel),
@@ -38,8 +42,13 @@ class AsrStatusBanner extends StatelessWidget {
       curve: Curves.easeInOut,
       child: Builder(
         builder: (context) {
-          if (queueBootstrap is QueueBootstrapError) {
+          if (queueState.bootstrap is QueueBootstrapError) {
             return const _QueueBootstrapErrorBanner();
+          }
+
+          if (queueState.runtimeReason ==
+              QueueRuntimeReason.interruptedPreviousRun) {
+            return const _QueueInterruptedBanner();
           }
 
           return switch (asrState) {
@@ -191,6 +200,54 @@ class _QueueBootstrapErrorBanner extends StatelessWidget {
               Icons.chevron_right,
               size: AppSizes.iconMedium,
               color: themeColors.error,
+            ),
+            visualDensity: VisualDensity.compact,
+            onPressed: () => QueueManagementScreen.go(context),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _QueueInterruptedBanner extends StatelessWidget {
+  const _QueueInterruptedBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    final themeColors = context.themeColors;
+
+    return ListTile(
+      splashColor: AppColors.transparent,
+      onTap: context.read<TranscriptionQueueCubit>().resumeAfterInterruptedRun,
+      visualDensity: VisualDensity.compact,
+      tileColor: themeColors.warning.withValues(alpha: 0.12),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: AppSizes.screenPadding,
+      ),
+      leading: Icon(
+        Icons.pause_circle_outline,
+        size: AppSizes.iconSmall,
+        color: themeColors.warning,
+      ),
+      title: Text(
+        context.l10n.queueStatusInterrupted,
+        style: AppTypography.caption.copyWith(color: themeColors.warning),
+      ),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        spacing: AppSizes.p4,
+        children: [
+          Icon(
+            Icons.play_arrow,
+            size: AppSizes.iconMedium,
+            color: themeColors.warning,
+          ),
+          IconButton(
+            icon: Icon(
+              Icons.chevron_right,
+              size: AppSizes.iconMedium,
+              color: themeColors.warning,
             ),
             visualDensity: VisualDensity.compact,
             onPressed: () => QueueManagementScreen.go(context),

@@ -27,6 +27,10 @@ class QueueWarningBanner extends StatelessWidget {
         l10n.queueBannerBootstrapError,
         themeColors.error,
       ),
+      (_, QueueRuntimeReason.interruptedPreviousRun) => (
+        l10n.queueBannerInterruptedPreviousRun,
+        themeColors.warning,
+      ),
       (_, QueueRuntimeReason.awaitingModel) => (
         l10n.queueBannerAwaitingModel,
         themeColors.warning,

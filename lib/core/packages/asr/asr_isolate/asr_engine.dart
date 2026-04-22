@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'dart:typed_data';
 
 import 'package:sherpa_onnx/sherpa_onnx.dart' as sherpa;
@@ -6,89 +7,58 @@ import 'package:voice_notes/core/packages/asr/asr_exception.dart';
 import 'package:voice_notes/core/packages/asr/asr_isolate/asr_commands.dart';
 import 'package:voice_notes/core/packages/asr/asr_model_files.dart';
 import 'package:voice_notes/core/packages/asr/asr_result.dart';
+import 'package:voice_notes/core/packages/asr/asr_text_merge.dart';
+import 'package:voice_notes/core/packages/asr/asr_transcription_plan.dart';
+import 'package:voice_notes/core/packages/asr/asr_transcription_segment.dart';
+import 'package:voice_notes/core/packages/asr/asr_transcription_strategy.dart';
 import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
 
-/// Размер чанка для streaming decode-loop (samples @ 16kHz ≈ 0.2 сек).
-///
-/// Баланс между latency cancel'а (≤ длина чанка) и overhead decode-вызовов.
-/// Референс из sherpa C-API примера для online-recognizer'а — 3200 samples.
 const int _streamingChunkSamples = 3200;
-
-/// Частота дискретизации входных WAV-файлов. Все модели в каталоге
-/// требуют 16kHz.
 const int _sampleRate = 16000;
-
-/// Дефолтное число потоков для native sherpa recognizer'а. Совпадает с
-/// `AsrModelConfig.numThreads` (main-isolate streaming recognizer).
 const int _defaultNumThreads = 2;
 
-/// Событие прогресса streaming-engine'а. Воркер преобразует его в
-/// [TranscribeProgressResponse]. Offline-engine'ы прогресс не эмитят.
 typedef AsrProgressEvent = ({
   double progress,
   String partialText,
   double processedSeconds,
   double totalSeconds,
+  AsrTranscriptionStrategy strategy,
+  AsrTranscribeStage stage,
+  int processedUnits,
+  int totalUnits,
 });
 
-/// Коллбек прогресса streaming-engine'а.
 typedef AsrProgressSink = void Function(AsrProgressEvent event);
 
-/// Терминальный результат engine-уровня. Sealed — две опции вместо
-/// flag'а "was cancelled" внутри результата. Failure'ы по-прежнему идут
-/// через `throw` (воркер конвертирует в [TranscribeFailedResponse]).
 sealed class AsrEngineResult {
   const AsrEngineResult();
 }
 
-/// Успешная транскрибация.
 final class AsrEngineOk extends AsrEngineResult {
   final AsrResult result;
 
   const AsrEngineOk(this.result);
 }
 
-/// Транскрибация отменена кооперативным `isCancelled()` между чанками.
-/// Возможно только для движков с `supportsCancellation == true`.
 final class AsrEngineCancelled extends AsrEngineResult {
   const AsrEngineCancelled();
 }
 
-/// Sealed ASR engine — strategy per model-mode. Каждый движок владеет
-/// своим sherpa recognizer'ом, декларирует свои capabilities и реализует
-/// операции. Добавление нового режима (chunk+VAD и т.д.) = новый
-/// подкласс + одна ветка в [AsrEngineFactory].
-///
-/// Используется только внутри worker-isolate'а. Публичная видимость — для
-/// юнит-тестирования фабрики и полей capabilities (без FFI).
 sealed class AsrEngine {
-  /// Принимает ли движок `TranscribeAudioCommand` (raw buffer без WAV-файла).
   bool get supportsAudioBuffer;
 
-  /// Поддерживает ли движок кооперативный cancel между чанками.
-  bool get supportsCancellation;
-
-  /// Декодирует WAV-файл. [onProgress] вызывается только у движков со
-  /// streaming decode-loop'ом; [isCancelled] проверяется только у движков
-  /// с `supportsCancellation == true`.
   Future<AsrEngineResult> transcribeFile(
     String filePath, {
+    required AsrTranscriptionPlan plan,
     required AsrProgressSink onProgress,
     required bool Function() isCancelled,
   });
 
-  /// Декодирует audio-buffer. Движок обязан бросить [UnsupportedError]
-  /// если `supportsAudioBuffer == false` — воркер не должен вызывать
-  /// этот метод, guard на уровне capability.
   AsrResult transcribeBuffer(Float32List samples, int sampleRate);
 
   void dispose();
 }
 
-/// Offline-движок для Whisper и Transducer-offline. Обе модели используют
-/// `sherpa.OfflineRecognizer` — различие только в нативном конфиге,
-/// логика декода идентична (один blocking `decode()`, ни progress,
-/// ни cancel).
 final class OfflineAsrEngine extends AsrEngine {
   final sherpa.OfflineRecognizer _recognizer;
 
@@ -98,11 +68,9 @@ final class OfflineAsrEngine extends AsrEngine {
   bool get supportsAudioBuffer => true;
 
   @override
-  bool get supportsCancellation => false;
-
-  @override
   Future<AsrEngineResult> transcribeFile(
     String filePath, {
+    required AsrTranscriptionPlan plan,
     required AsrProgressSink onProgress,
     required bool Function() isCancelled,
   }) async {
@@ -111,12 +79,305 @@ final class OfflineAsrEngine extends AsrEngine {
       throw AsrInvalidAudioException('Failed to read WAV file: $filePath');
     }
 
-    return AsrEngineOk(_decode(waveData.samples, waveData.sampleRate));
+    final audioDuration = plan.audioDuration == Duration.zero
+        ? _samplesToDuration(waveData.samples.length, waveData.sampleRate)
+        : plan.audioDuration;
+
+    return switch (plan.strategy) {
+      AsrTranscriptionStrategy.auto ||
+      AsrTranscriptionStrategy.singlePass => AsrEngineOk(
+        _decodeSinglePass(
+          samples: waveData.samples,
+          sampleRate: waveData.sampleRate,
+          audioDuration: audioDuration,
+        ),
+      ),
+      AsrTranscriptionStrategy.chunked => _decodeChunked(
+        samples: waveData.samples,
+        sampleRate: waveData.sampleRate,
+        audioDuration: audioDuration,
+        plan: plan,
+        onProgress: onProgress,
+        isCancelled: isCancelled,
+      ),
+      AsrTranscriptionStrategy.chunkedVad => _decodeChunkedVad(
+        samples: waveData.samples,
+        sampleRate: waveData.sampleRate,
+        audioDuration: audioDuration,
+        plan: plan,
+        onProgress: onProgress,
+        isCancelled: isCancelled,
+      ),
+      AsrTranscriptionStrategy.streaming => throw const AsrProcessingException(
+        'Streaming plan is not supported on offline recognizer',
+      ),
+    };
   }
 
   @override
-  AsrResult transcribeBuffer(Float32List samples, int sampleRate) =>
-      _decode(samples, sampleRate);
+  AsrResult transcribeBuffer(Float32List samples, int sampleRate) {
+    final audioDuration = _samplesToDuration(samples.length, sampleRate);
+    return _decodeSinglePass(
+      samples: samples,
+      sampleRate: sampleRate,
+      audioDuration: audioDuration,
+    );
+  }
+
+  AsrResult _decodeSinglePass({
+    required Float32List samples,
+    required int sampleRate,
+    required Duration audioDuration,
+  }) {
+    final result = _decode(samples, sampleRate);
+    final segment = AsrTranscriptionSegment(
+      text: result.text,
+      start: Duration.zero,
+      end: audioDuration,
+      tokens: result.tokens,
+      timestamps: result.timestamps,
+      detectedLanguage: result.detectedLanguage,
+    );
+
+    return result.copyWith(
+      strategyUsed: AsrTranscriptionStrategy.singlePass,
+      audioDuration: audioDuration,
+      segments: [segment],
+      stats: const AsrTranscriptionStats(processedUnits: 1, totalUnits: 1),
+    );
+  }
+
+  Future<AsrEngineResult> _decodeChunked({
+    required Float32List samples,
+    required int sampleRate,
+    required Duration audioDuration,
+    required AsrTranscriptionPlan plan,
+    required AsrProgressSink onProgress,
+    required bool Function() isCancelled,
+    bool fellBackFromVad = false,
+  }) async {
+    final units = _buildChunkUnits(
+      samples: samples,
+      sampleRate: sampleRate,
+      chunkDuration: plan.chunkDuration,
+      chunkOverlap: plan.chunkOverlap,
+    );
+
+    return _decodeUnits(
+      units: units,
+      sampleRate: sampleRate,
+      audioDuration: audioDuration,
+      strategy: AsrTranscriptionStrategy.chunked,
+      usedVad: false,
+      fellBackFromVad: fellBackFromVad,
+      onProgress: onProgress,
+      isCancelled: isCancelled,
+    );
+  }
+
+  Future<AsrEngineResult> _decodeChunkedVad({
+    required Float32List samples,
+    required int sampleRate,
+    required Duration audioDuration,
+    required AsrTranscriptionPlan plan,
+    required AsrProgressSink onProgress,
+    required bool Function() isCancelled,
+  }) async {
+    final vadConfig = plan.vadConfig;
+    if (vadConfig == null || !vadConfig.isConfigured) {
+      return _decodeChunked(
+        samples: samples,
+        sampleRate: sampleRate,
+        audioDuration: audioDuration,
+        plan: plan,
+        onProgress: onProgress,
+        isCancelled: isCancelled,
+        fellBackFromVad: true,
+      );
+    }
+
+    final sherpa.VoiceActivityDetector detector;
+    try {
+      detector = sherpa.VoiceActivityDetector(
+        config: sherpa.VadModelConfig(
+          sileroVad: sherpa.SileroVadModelConfig(
+            model: vadConfig.modelPath,
+            threshold: vadConfig.threshold,
+            minSilenceDuration: _seconds(vadConfig.minSilenceDuration),
+            minSpeechDuration: _seconds(vadConfig.minSpeechDuration),
+            windowSize: vadConfig.windowSize,
+            maxSpeechDuration: _seconds(vadConfig.maxSpeechDuration),
+          ),
+          sampleRate: sampleRate,
+          debug: false,
+        ),
+        bufferSizeInSeconds: _seconds(vadConfig.bufferSize),
+      );
+    } catch (_) {
+      return _decodeChunked(
+        samples: samples,
+        sampleRate: sampleRate,
+        audioDuration: audioDuration,
+        plan: plan,
+        onProgress: onProgress,
+        isCancelled: isCancelled,
+        fellBackFromVad: true,
+      );
+    }
+
+    try {
+      final units = <_DecodeUnit>[];
+      final windowSamples = math.max(vadConfig.windowSize, 1);
+      final totalSamples = samples.length;
+      int processed = 0;
+
+      while (processed < totalSamples) {
+        if (isCancelled()) return const AsrEngineCancelled();
+
+        final end = math.min(processed + windowSamples, totalSamples);
+        final chunk = Float32List.sublistView(samples, processed, end);
+        detector.acceptWaveform(chunk);
+        processed = end;
+
+        _appendDetectedVadUnits(
+          detector: detector,
+          units: units,
+          sampleRate: sampleRate,
+          plan: plan,
+        );
+
+        onProgress((
+          progress: _detectionProgress(processed, totalSamples),
+          partialText: '',
+          processedSeconds: processed / sampleRate,
+          totalSeconds: totalSamples / sampleRate,
+          strategy: AsrTranscriptionStrategy.chunkedVad,
+          stage: AsrTranscribeStage.detectingSpeech,
+          processedUnits: 0,
+          totalUnits: 0,
+        ));
+
+        await Future<void>.delayed(Duration.zero);
+      }
+
+      detector.flush();
+      _appendDetectedVadUnits(
+        detector: detector,
+        units: units,
+        sampleRate: sampleRate,
+        plan: plan,
+      );
+
+      if (units.isEmpty) {
+        return AsrEngineOk(
+          AsrResult(
+            text: '',
+            audioDuration: audioDuration,
+            strategyUsed: AsrTranscriptionStrategy.chunkedVad,
+            stats: const AsrTranscriptionStats(usedVad: true),
+          ),
+        );
+      }
+
+      return _decodeUnits(
+        units: units,
+        sampleRate: sampleRate,
+        audioDuration: audioDuration,
+        strategy: AsrTranscriptionStrategy.chunkedVad,
+        usedVad: true,
+        onProgress: onProgress,
+        isCancelled: isCancelled,
+        initialProgress: 0.1,
+      );
+    } finally {
+      detector.free();
+    }
+  }
+
+  Future<AsrEngineResult> _decodeUnits({
+    required List<_DecodeUnit> units,
+    required int sampleRate,
+    required Duration audioDuration,
+    required AsrTranscriptionStrategy strategy,
+    required bool usedVad,
+    required AsrProgressSink onProgress,
+    required bool Function() isCancelled,
+    bool fellBackFromVad = false,
+    double initialProgress = 0,
+  }) async {
+    final stopwatch = Stopwatch()..start();
+    final tokens = <String>[];
+    final timestamps = <double>[];
+    final segments = <AsrTranscriptionSegment>[];
+    String? detectedLanguage;
+    String mergedText = '';
+    int processedUnits = 0;
+    final totalUnits = units.length;
+
+    for (final unit in units) {
+      if (isCancelled()) return const AsrEngineCancelled();
+
+      final result = _decode(unit.samples, sampleRate);
+      final shiftedTimestamps = _shiftTimestamps(result.timestamps, unit.start);
+      final segment = AsrTranscriptionSegment(
+        text: result.text,
+        start: unit.start,
+        end: unit.end,
+        tokens: result.tokens,
+        timestamps: shiftedTimestamps,
+        detectedLanguage: result.detectedLanguage,
+      );
+
+      processedUnits++;
+
+      if (segment.text.isNotEmpty) {
+        segments.add(segment);
+        tokens.addAll(result.tokens);
+        timestamps.addAll(shiftedTimestamps);
+        detectedLanguage ??= result.detectedLanguage;
+        mergedText = AsrTextMerge.merge(mergedText, segment.text);
+      }
+
+      final unitProgress =
+          initialProgress +
+          ((1 - initialProgress) * processedUnits / totalUnits);
+      onProgress((
+        progress: unitProgress,
+        partialText: mergedText,
+        processedSeconds:
+            unit.end.inMicroseconds / Duration.microsecondsPerSecond,
+        totalSeconds:
+            audioDuration.inMicroseconds / Duration.microsecondsPerSecond,
+        strategy: strategy,
+        stage: AsrTranscribeStage.decoding,
+        processedUnits: processedUnits,
+        totalUnits: totalUnits,
+      ));
+
+      await Future<void>.delayed(Duration.zero);
+    }
+
+    stopwatch.stop();
+
+    return AsrEngineOk(
+      AsrResult(
+        text: mergedText.trim(),
+        tokens: tokens,
+        timestamps: timestamps,
+        detectedLanguage: detectedLanguage,
+        processingTime: stopwatch.elapsed,
+        strategyUsed: strategy,
+        audioDuration: audioDuration,
+        segments: segments,
+        stats: AsrTranscriptionStats(
+          processedUnits: processedUnits,
+          totalUnits: totalUnits,
+          usedVad: usedVad,
+          fellBackFromVad: fellBackFromVad,
+        ),
+      ),
+    );
+  }
 
   AsrResult _decode(Float32List samples, int sampleRate) {
     final stopwatch = Stopwatch()..start();
@@ -140,13 +401,65 @@ final class OfflineAsrEngine extends AsrEngine {
     }
   }
 
+  List<_DecodeUnit> _buildChunkUnits({
+    required Float32List samples,
+    required int sampleRate,
+    required Duration chunkDuration,
+    required Duration chunkOverlap,
+    int absoluteStartSample = 0,
+  }) {
+    final chunkSamples = _durationToSamples(chunkDuration, sampleRate);
+    final overlapSamples = _durationToSamples(chunkOverlap, sampleRate);
+    final step = math.max(chunkSamples - overlapSamples, 1);
+    final units = <_DecodeUnit>[];
+    int localStart = 0;
+
+    while (localStart < samples.length) {
+      final localEnd = math.min(localStart + chunkSamples, samples.length);
+      final absoluteEnd = absoluteStartSample + localEnd;
+      final absoluteStart = absoluteStartSample + localStart;
+
+      units.add(
+        _DecodeUnit(
+          samples: Float32List.sublistView(samples, localStart, localEnd),
+          start: _samplesToDuration(absoluteStart, sampleRate),
+          end: _samplesToDuration(absoluteEnd, sampleRate),
+        ),
+      );
+
+      if (localEnd == samples.length) break;
+      localStart += step;
+    }
+
+    return units;
+  }
+
+  void _appendDetectedVadUnits({
+    required sherpa.VoiceActivityDetector detector,
+    required List<_DecodeUnit> units,
+    required int sampleRate,
+    required AsrTranscriptionPlan plan,
+  }) {
+    while (!detector.isEmpty()) {
+      final segment = detector.front();
+      detector.pop();
+
+      units.addAll(
+        _buildChunkUnits(
+          samples: segment.samples,
+          sampleRate: sampleRate,
+          chunkDuration: plan.chunkDuration,
+          chunkOverlap: plan.chunkOverlap,
+          absoluteStartSample: segment.start,
+        ),
+      );
+    }
+  }
+
   @override
   void dispose() => _recognizer.free();
 }
 
-/// Streaming-движок для Transducer online (Parakeet TDT, Zipformer
-/// streaming). Читает WAV, гонит чанки через `OnlineRecognizer`, эмитит
-/// progress между чанками, проверяет cancel.
 final class StreamingAsrEngine extends AsrEngine {
   final sherpa.OnlineRecognizer _recognizer;
 
@@ -156,11 +469,9 @@ final class StreamingAsrEngine extends AsrEngine {
   bool get supportsAudioBuffer => false;
 
   @override
-  bool get supportsCancellation => true;
-
-  @override
   Future<AsrEngineResult> transcribeFile(
     String filePath, {
+    required AsrTranscriptionPlan plan,
     required AsrProgressSink onProgress,
     required bool Function() isCancelled,
   }) async {
@@ -177,26 +488,26 @@ final class StreamingAsrEngine extends AsrEngine {
       final samples = waveData.samples;
       final totalSamples = samples.length;
       final totalSeconds = totalSamples / _sampleRate;
+      final totalUnits = (totalSamples / _streamingChunkSamples).ceil();
       stream = _recognizer.createStream();
 
       int processed = 0;
+      int processedUnits = 0;
       String lastEmittedText = '';
 
       while (processed < totalSamples) {
         if (isCancelled()) return const AsrEngineCancelled();
 
-        final end = (processed + _streamingChunkSamples).clamp(0, totalSamples);
+        final end = math.min(processed + _streamingChunkSamples, totalSamples);
         final chunk = Float32List.sublistView(samples, processed, end);
 
         stream.acceptWaveform(samples: chunk, sampleRate: waveData.sampleRate);
         while (_recognizer.isReady(stream)) _recognizer.decode(stream);
 
         processed = end;
+        processedUnits++;
         final partialText = _recognizer.getResult(stream).text;
 
-        // Прогресс эмитим только на реальных изменениях partial-text'а
-        // либо на финальном чанке — чтобы не насыщать port-канал
-        // дубликатами между чанками при одном и том же распознанном тексте.
         if (partialText != lastEmittedText || processed == totalSamples) {
           lastEmittedText = partialText;
           onProgress((
@@ -204,13 +515,16 @@ final class StreamingAsrEngine extends AsrEngine {
             partialText: partialText,
             processedSeconds: processed / _sampleRate,
             totalSeconds: totalSeconds,
+            strategy: AsrTranscriptionStrategy.streaming,
+            stage: AsrTranscribeStage.decoding,
+            processedUnits: processedUnits,
+            totalUnits: totalUnits,
           ));
         }
 
         await Future<void>.delayed(Duration.zero);
       }
 
-      // Финальный drain после inputFinished.
       stream.inputFinished();
       while (_recognizer.isReady(stream)) _recognizer.decode(stream);
 
@@ -223,6 +537,12 @@ final class StreamingAsrEngine extends AsrEngine {
           tokens: finalResult.tokens,
           timestamps: finalResult.timestamps,
           processingTime: stopwatch.elapsed,
+          strategyUsed: AsrTranscriptionStrategy.streaming,
+          audioDuration: _samplesToDuration(totalSamples, waveData.sampleRate),
+          stats: AsrTranscriptionStats(
+            processedUnits: processedUnits,
+            totalUnits: totalUnits,
+          ),
         ),
       );
     } finally {
@@ -241,13 +561,46 @@ final class StreamingAsrEngine extends AsrEngine {
   void dispose() => _recognizer.free();
 }
 
-/// Фабрика движков. Exhaustive по [AsrModelType] — при добавлении нового
-/// режима компилятор требует явно перечислить ветку.
-///
-/// Связь `modelType ↔ AsrModelFiles`-подкласс не гарантирована статически
-/// (см. [AsrModelEntity.getModelFiles]), поэтому проверяется в runtime —
-/// несоответствие означает баг в declaration'е модели и бросается как
-/// [ArgumentError].
+class _DecodeUnit {
+  final Float32List samples;
+  final Duration start;
+  final Duration end;
+
+  const _DecodeUnit({
+    required this.samples,
+    required this.start,
+    required this.end,
+  });
+}
+
+List<double> _shiftTimestamps(List<double> timestamps, Duration offset) {
+  final offsetSeconds = offset.inMicroseconds / Duration.microsecondsPerSecond;
+  return [for (final ts in timestamps) ts + offsetSeconds];
+}
+
+double _seconds(Duration value) =>
+    value.inMicroseconds / Duration.microsecondsPerSecond;
+
+Duration _samplesToDuration(int samples, int sampleRate) {
+  return Duration(
+    microseconds: (samples * Duration.microsecondsPerSecond / sampleRate)
+        .round(),
+  );
+}
+
+int _durationToSamples(Duration duration, int sampleRate) {
+  return math.max(
+    1,
+    (duration.inMicroseconds * sampleRate / Duration.microsecondsPerSecond)
+        .round(),
+  );
+}
+
+double _detectionProgress(int processedSamples, int totalSamples) {
+  if (totalSamples == 0) return 0;
+  return (processedSamples / totalSamples) * 0.1;
+}
+
 abstract final class AsrEngineFactory {
   static AsrEngine build(InitializeCommand cmd) {
     return switch (cmd.modelType) {
@@ -263,9 +616,6 @@ abstract final class AsrEngineFactory {
     };
   }
 
-  /// Приводит [InitializeCommand.files] к ожидаемому подклассу
-  /// [AsrModelFiles]. Рассогласование означает баг в declaration'е модели
-  /// (см. [AsrModelEntity.getModelFiles]) и бросается как [ArgumentError].
   static T _expect<T extends AsrModelFiles>(InitializeCommand cmd) {
     final files = cmd.files;
     if (files is T) return files;
@@ -285,9 +635,6 @@ abstract final class AsrEngineFactory {
           whisper: sherpa.OfflineWhisperModelConfig(
             encoder: '${cmd.modelPath}/${files.encoder}',
             decoder: '${cmd.modelPath}/${files.decoder}',
-            // Транскрипция, а не перевод на английский. Остальные
-            // параметры (language auto-detect, tailPaddings) наследуются
-            // из дефолтов sherpa.
             task: 'transcribe',
           ),
           tokens: '${cmd.modelPath}/${files.tokens}',

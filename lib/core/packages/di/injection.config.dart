@@ -25,6 +25,8 @@ import '../../../feature/data/local/data_sources/tag_local_data_source.dart'
     as _i952;
 import '../../../feature/data/local/preferences/recording_preferences.dart'
     as _i403;
+import '../../../feature/data/local/preferences/transcription_queue_preferences.dart'
+    as _i849;
 import '../../../feature/data/repositories/folder_repository_impl.dart'
     as _i749;
 import '../../../feature/data/repositories/model_repository_impl.dart' as _i465;
@@ -118,17 +120,8 @@ extension GetItInjectableX on _i174.GetIt {
     gh.singleton<_i403.RecordingPreferences>(
       () => _i403.RecordingPreferences(gh<_i460.SharedPreferences>()),
     );
-    await gh.singletonAsync<_i909.TranscriptionQueueService>(
-      () {
-        final i = _i909.TranscriptionQueueService(
-          noteRepository: gh<_i1032.NoteRepository>(),
-          asrService: gh<_i233.AsrService>(),
-          preferences: gh<_i403.RecordingPreferences>(),
-        );
-        return i.start().then((_) => i);
-      },
-      preResolve: true,
-      dispose: (i) => i.dispose(),
+    gh.singleton<_i849.TranscriptionQueuePreferences>(
+      () => _i849.TranscriptionQueuePreferences(gh<_i460.SharedPreferences>()),
     );
     gh.singleton<_i221.StorageStatsRepository>(
       () => _i803.StorageStatsRepositoryImpl(
@@ -141,6 +134,19 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.singleton<_i138.TransactionManager>(
       () => _i138.TransactionManager(gh<_i88.DatabaseClient>()),
+    );
+    await gh.singletonAsync<_i909.TranscriptionQueueService>(
+      () {
+        final i = _i909.TranscriptionQueueService(
+          noteRepository: gh<_i1032.NoteRepository>(),
+          asrService: gh<_i233.AsrService>(),
+          preferences: gh<_i403.RecordingPreferences>(),
+          queuePreferences: gh<_i849.TranscriptionQueuePreferences>(),
+        );
+        return i.start().then((_) => i);
+      },
+      preResolve: true,
+      dispose: (i) => i.dispose(),
     );
     gh.singleton<_i165.NoteIngestionService>(
       () => _i165.NoteIngestionService(

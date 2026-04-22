@@ -1,5 +1,6 @@
 import 'package:get_it/get_it.dart';
 import 'package:injectable/injectable.dart';
+import 'package:voice_notes/core/packages/asr/asr_vad_asset_installer.dart';
 import 'package:voice_notes/core/packages/di/app_initialization_result.dart';
 import 'package:voice_notes/core/packages/di/injection.config.dart';
 
@@ -13,6 +14,7 @@ Future<AppInitializationResult> configureDependencies({
   try {
     if (reset) await getIt.reset();
 
+    await AsrVadAssetInstaller().ensureInstalled();
     await getIt.init(environment: environment);
 
     return const AppInitializationSuccess();

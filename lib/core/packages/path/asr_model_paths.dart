@@ -8,6 +8,7 @@ class AsrModelPaths {
 
   static const String modelsSubdir = 'asr_models';
   static const String downloadsSubdir = 'downloads';
+  static const String vadModelFileName = 'silero_vad.onnx';
 
   /// Директория для распакованных моделей (Documents/asr_models)
   static Future<String> get modelsDir async {
@@ -42,6 +43,22 @@ class AsrModelPaths {
   static Future<String> archivePath(String modelDirName) async {
     final downloads = await downloadsDir;
     return '$downloads/$modelDirName.tar.bz2';
+  }
+
+  /// Полный путь к bundled VAD-модели в Documents/asr_models.
+  static Future<String> get vadModelPath async {
+    final models = await modelsDir;
+    return '$models/$vadModelFileName';
+  }
+
+  /// Путь к VAD-модели, если она положена рядом с ASR bundles.
+  static Future<String?> findVadModelPath([
+    String fileName = vadModelFileName,
+  ]) async {
+    final models = await modelsDir;
+    final path = '$models/$fileName';
+
+    return File(path).existsSync() ? path : null;
   }
 
   /// Создать необходимые директории

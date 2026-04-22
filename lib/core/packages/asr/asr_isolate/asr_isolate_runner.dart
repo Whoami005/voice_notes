@@ -9,6 +9,7 @@ import 'package:voice_notes/core/packages/asr/asr_isolate/asr_commands.dart';
 import 'package:voice_notes/core/packages/asr/asr_isolate/asr_isolate_worker.dart';
 import 'package:voice_notes/core/packages/asr/asr_result.dart';
 import 'package:voice_notes/core/packages/asr/asr_transcribe_progress.dart';
+import 'package:voice_notes/core/packages/asr/asr_transcription_plan.dart';
 import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
 
 /// Внутреннее представление in-flight [TranscribeCommand] на main-стороне.
@@ -126,16 +127,22 @@ class AsrIsolateRunner {
   /// Транскрибирует WAV файл в фоновом изоляте.
   ///
   /// [onProgress] вызывается для каждого [TranscribeProgressResponse].
-  /// Для non-streaming моделей не вызывается.
+  /// Для `singlePass` не вызывается.
   ///
   /// [cancelToken] при `cancel()` отправляет [CancelTranscribeCommand].
-  /// Для streaming-моделей это прерывает задачу между чанками.
+  /// Для interactive-стратегий это прерывает задачу между чанками.
   Future<AsrResult> transcribeFile(
     String filePath, {
+    AsrTranscriptionPlan transcriptionPlan =
+        const AsrTranscriptionPlan.streaming(),
     void Function(AsrTranscribeProgress progress)? onProgress,
     AsrCancelToken? cancelToken,
   }) => _submitTranscribe(
-    (id) => TranscribeCommand(requestId: id, filePath: filePath),
+    (id) => TranscribeCommand(
+      requestId: id,
+      filePath: filePath,
+      transcriptionPlan: transcriptionPlan,
+    ),
     onProgress: onProgress,
     cancelToken: cancelToken,
   );
@@ -244,6 +251,10 @@ class AsrIsolateRunner {
         partialText: message.partialText,
         processedAudio: _secondsToDuration(message.processedSeconds),
         totalAudio: _secondsToDuration(message.totalSeconds),
+        strategy: message.strategy,
+        stage: message.stage,
+        processedUnits: message.processedUnits,
+        totalUnits: message.totalUnits,
       ),
     );
   }

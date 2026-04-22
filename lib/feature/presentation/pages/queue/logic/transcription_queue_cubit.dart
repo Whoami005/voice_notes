@@ -4,6 +4,7 @@ import 'package:equatable/equatable.dart';
 import 'package:voice_notes/core/packages/transcription/transcription_queue_service.dart';
 import 'package:voice_notes/core/packages/transcription/transcription_queue_snapshot.dart';
 import 'package:voice_notes/core/state/core/base_cubit.dart';
+import 'package:voice_notes/feature/domain/enums/queue_runtime_reason.dart';
 
 part 'transcription_queue_state.dart';
 
@@ -38,6 +39,9 @@ class TranscriptionQueueCubit extends BaseCubit<TranscriptionQueueState> {
   Future<void> dismissFailed(String uid) => _service.dismissFailed(uid);
 
   Future<void> retryBootstrap() => _service.retryBootstrap();
+
+  Future<void> resumeAfterInterruptedRun() =>
+      _service.resumeAfterInterruptedRun();
 
   void onResume() => _service.resume();
 

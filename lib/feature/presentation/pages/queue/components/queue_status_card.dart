@@ -70,6 +70,13 @@ class _QueueSystemStatusRow extends StatelessWidget {
         label: Text(l10n.queueSystemActionRetry),
         onPressed: context.read<TranscriptionQueueCubit>().retryBootstrap,
       ),
+      (_, QueueRuntimeReason.interruptedPreviousRun) => TextButton.icon(
+        icon: const Icon(Icons.play_arrow, size: AppSizes.iconSmall),
+        label: Text(l10n.queueSystemActionResume),
+        onPressed: context
+            .read<TranscriptionQueueCubit>()
+            .resumeAfterInterruptedRun,
+      ),
       (_, QueueRuntimeReason.breakerTripped) => TextButton.icon(
         icon: const Icon(Icons.refresh, size: AppSizes.iconSmall),
         label: Text(l10n.queueSystemActionRetry),
@@ -99,6 +106,10 @@ class _QueueSystemStatusRow extends StatelessWidget {
       QueueBootstrapLoading() ||
       QueueBootstrapNotStarted() => (l10n.queueStatusLoading, themeColors.info),
       QueueBootstrapReady() => switch (runtimeReason) {
+        QueueRuntimeReason.interruptedPreviousRun => (
+          l10n.queueStatusInterrupted,
+          themeColors.warning,
+        ),
         QueueRuntimeReason.breakerTripped => (
           l10n.queueStatusPaused,
           themeColors.warning,

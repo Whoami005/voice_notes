@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:voice_notes/core/packages/asr/asr_transcription_strategy.dart';
 
 /// Прогресс транскрибации для streaming-совместимых моделей.
 ///
@@ -17,11 +18,27 @@ class AsrTranscribeProgress extends Equatable {
   /// Полная длительность аудио.
   final Duration totalAudio;
 
+  /// Какая стратегия исполнения сейчас активна.
+  final AsrTranscriptionStrategy strategy;
+
+  /// Текущий этап пайплайна.
+  final AsrTranscribeStage stage;
+
+  /// Сколько decode/VAD-units уже завершено.
+  final int processedUnits;
+
+  /// Общее число decode/VAD-units.
+  final int totalUnits;
+
   const AsrTranscribeProgress({
     required this.progress,
     required this.partialText,
     required this.processedAudio,
     required this.totalAudio,
+    this.strategy = AsrTranscriptionStrategy.streaming,
+    this.stage = AsrTranscribeStage.decoding,
+    this.processedUnits = 0,
+    this.totalUnits = 0,
   });
 
   /// Прогресс в целых процентах для отображения в UI.
@@ -33,5 +50,9 @@ class AsrTranscribeProgress extends Equatable {
     partialText,
     processedAudio,
     totalAudio,
+    strategy,
+    stage,
+    processedUnits,
+    totalUnits,
   ];
 }

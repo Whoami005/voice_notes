@@ -6,7 +6,6 @@ import 'package:mocktail/mocktail.dart';
 import 'package:voice_notes/core/packages/asr/asr_cubit.dart';
 import 'package:voice_notes/core/packages/asr/asr_transcribe_progress.dart';
 import 'package:voice_notes/core/packages/transcription/transcription_queue_snapshot.dart';
-import 'package:voice_notes/core/state/status/status_state.dart';
 import 'package:voice_notes/core/theme/app_theme.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
 import 'package:voice_notes/feature/domain/enums/transcription_status.dart';
@@ -38,7 +37,7 @@ void main() {
     asrCubit = MockAsrCubit();
     // Дефолтное состояние ASR — не готов. Реальный label берётся из
     // _transcribingLabel; если modelType null, использует generic.
-    when(() => asrCubit.state).thenReturn(const AsrState(status: Status.init));
+    when(() => asrCubit.state).thenReturn(const AsrState());
   });
 
   Future<void> pumpNoteBubble(
@@ -88,15 +87,16 @@ void main() {
 
   TranscriptionQueueState stateFor({
     String? processing,
-    bool supportsStreaming = false,
+    bool supportsInteractiveProgress = false,
+    bool supportsCancellation = false,
     AsrTranscribeProgress? progress,
   }) {
     return TranscriptionQueueState(
       snapshot: TranscriptionQueueSnapshot(
         bootstrapState: const QueueBootstrapReady(),
-        queued: const [],
         processing: processing,
-        processingSupportsStreaming: supportsStreaming,
+        processingSupportsInteractiveProgress: supportsInteractiveProgress,
+        processingSupportsCancellation: supportsCancellation,
         processingProgress: progress,
       ),
     );
@@ -104,7 +104,7 @@ void main() {
 
   group('NoteBubble — transcribing branches', () {
     testWidgets(
-      'streaming model + progress: shows progress bar + cancel button',
+      'interactive strategy + progress: shows progress bar + cancel button',
       (tester) async {
         final note = makeNote();
         await pumpNoteBubble(
@@ -112,7 +112,8 @@ void main() {
           note: note,
           queueState: stateFor(
             processing: 'n1',
-            supportsStreaming: true,
+            supportsInteractiveProgress: true,
+            supportsCancellation: true,
             progress: const AsrTranscribeProgress(
               progress: 0.42,
               partialText: '',
@@ -141,11 +142,7 @@ void main() {
         await pumpNoteBubble(
           tester,
           note: note,
-          queueState: stateFor(
-            processing: 'n1',
-            supportsStreaming: false,
-            progress: null,
-          ),
+          queueState: stateFor(processing: 'n1'),
           onCancel: () {},
         );
 

@@ -70,14 +70,7 @@ class AsrCubit extends InitializableStatusCubit<AsrState> {
 
   Future<void> _initializeWithModel(AsrModelEntity model) async {
     try {
-      emit(
-        AsrState(
-          status: Status.loading,
-          hasModel: true,
-          modelName: model.name,
-          modelType: model.modelType,
-        ),
-      );
+      emit(AsrState(status: Status.loading, hasModel: true, model: model));
 
       final path = await _modelRepository.getModelPath(model.uuid.value);
       if (path == null) {
@@ -87,13 +80,7 @@ class AsrCubit extends InitializableStatusCubit<AsrState> {
 
       await _asrService.switchModel(model, path).atLeast();
 
-      emitSuccess(
-        AsrState(
-          hasModel: true,
-          modelName: model.name,
-          modelType: model.modelType,
-        ),
-      );
+      emitSuccess(AsrState(hasModel: true, model: model));
     } catch (e, s) {
       emitError(logError(e, s));
     }

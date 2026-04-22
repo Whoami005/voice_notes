@@ -9,6 +9,10 @@ import 'package:voice_notes/core/packages/asr/asr_isolate/asr_isolate_runner.dar
 import 'package:voice_notes/core/packages/asr/asr_result.dart';
 import 'package:voice_notes/core/packages/asr/asr_service.dart';
 import 'package:voice_notes/core/packages/asr/asr_transcribe_progress.dart';
+import 'package:voice_notes/core/packages/asr/asr_transcription_planner.dart';
+import 'package:voice_notes/core/packages/asr/asr_transcription_strategy.dart';
+import 'package:voice_notes/core/packages/asr/asr_vad_asset_installer.dart';
+import 'package:voice_notes/core/packages/asr/asr_wav_duration_reader.dart';
 import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
 
 /// Реализация ASR на базе sherpa-onnx. Поддерживает Whisper и Transducer
@@ -79,6 +83,8 @@ class SherpaAsrService implements AsrService {
     String filePath, {
     void Function(AsrTranscribeProgress progress)? onProgress,
     AsrCancelToken? cancelToken,
+    AsrTranscriptionStrategy strategyOverride = AsrTranscriptionStrategy.auto,
+    Duration? audioDurationHint,
   }) async {
     _ensureInitialized();
 
@@ -87,8 +93,21 @@ class SherpaAsrService implements AsrService {
       throw AsrInvalidAudioException('File not found: $filePath');
     }
 
+    final model = _currentModel!;
+    final audioDuration =
+        audioDurationHint ?? await AsrWavDurationReader.readDuration(filePath);
+    final vadModelPath = await AsrVadAssetInstaller().resolveModelPath();
+
+    final plan = AsrTranscriptionPlanner.resolve(
+      model: model,
+      audioDuration: audioDuration ?? Duration.zero,
+      strategyOverride: strategyOverride,
+      vadModelPath: vadModelPath,
+    );
+
     return _isolateRunner!.transcribeFile(
       filePath,
+      transcriptionPlan: plan,
       onProgress: onProgress,
       cancelToken: cancelToken,
     );
