@@ -18,22 +18,13 @@ abstract class InitializableStatusCubit<S extends StatusState>
       emitError(failure);
     }
   }
-}
 
-/// [StatusCubit] с автоматическим init() и методом refresh().
-abstract class RefreshableStatusCubit<S extends StatusState>
-    extends StatusCubit<S>
-    implements Refreshable {
-  RefreshableStatusCubit(super.initialState) {
-    _autoInit();
-  }
-
-  Future<void> _autoInit() async {
+  @override
+  Future<void> refresh() async {
     try {
       await init();
     } catch (e, s) {
-      final failure = logError(e, s);
-      emitError(failure);
+      addError(e, s);
     }
   }
 }

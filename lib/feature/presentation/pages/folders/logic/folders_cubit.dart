@@ -12,7 +12,7 @@ import 'package:voice_notes/feature/presentation/widgets/bottom_sheet/create_fol
 
 part 'folders_state.dart';
 
-class FoldersCubit extends RefreshableAsyncCubit<FoldersState>
+class FoldersCubit extends InitializableAsyncCubit<FoldersState>
     with LocalSearchMixin {
   final FolderRepository _repository;
 
@@ -32,7 +32,7 @@ class FoldersCubit extends RefreshableAsyncCubit<FoldersState>
       emitLoading();
       if (isClosed) return;
 
-      _subscription = _repository.watchAll().listen(
+      _subscription ??= _repository.watchAll().listen(
         (folders) => state.maybeWhen(
           success: (data) => emitSuccess(data.copyWith(folders: folders)),
           orElse: () => emitSuccess(FoldersState(folders: folders)),

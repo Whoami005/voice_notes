@@ -6,7 +6,7 @@ import 'package:voice_notes/core/state/state.dart';
 ///
 /// Поддерживает два режима:
 /// 1. Явный callback через [onRefresh]
-/// 2. Автоматический через generic [C] — если кубит реализует [Refreshable]
+/// 2. Автоматический через generic [C] — если кубит реализует [Initializable]
 ///
 /// Примеры:
 /// ```dart
@@ -27,14 +27,14 @@ class RefreshableWrapper<C extends Cubit<dynamic>> extends StatelessWidget {
 
   const RefreshableWrapper({required this.child, super.key, this.onRefresh});
 
-  RefreshCallback? _resolveRefreshCallback(BuildContext context)  {
+  RefreshCallback? _resolveRefreshCallback(BuildContext context) {
     if (onRefresh != null) return onRefresh;
 
     // Проверяем что generic был указан (не дефолтный Cubit)
     if (C != dynamic && C != Cubit) {
       final cubit = context.read<C>();
 
-      if (cubit is Refreshable) return (cubit as Refreshable).refresh;
+      if (cubit is Initializable) return (cubit as Initializable).refresh;
     }
 
     return null;

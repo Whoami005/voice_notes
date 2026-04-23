@@ -10,7 +10,7 @@ import 'package:voice_notes/feature/domain/repositories/storage_stats_repository
 part 'folder_storage_state.dart';
 
 /// Cubit детального экрана хранилища (список записей одной папки).
-class FolderStorageCubit extends RefreshableStatusCubit<FolderStorageState> {
+class FolderStorageCubit extends InitializableStatusCubit<FolderStorageState> {
   final StorageStatsRepository _repository;
   final String? folderUid;
 

@@ -18,7 +18,7 @@ part 'models_state.dart';
 /// Отвечает за UI экрана настроек: список моделей, скачивание, удаление, выбор.
 /// Не управляет жизненным циклом AsrService — этим занимается AsrCubit,
 /// который реагирует на изменения выбранной модели через БД (local-first).
-class ModelsCubit extends RefreshableAsyncCubit<ModelsState> {
+class ModelsCubit extends InitializableAsyncCubit<ModelsState> {
   final ModelRepository _repository;
 
   StreamSubscription<ModelDownloadProgress>? _downloadSubscription;

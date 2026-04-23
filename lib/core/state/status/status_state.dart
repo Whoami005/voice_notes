@@ -46,7 +46,7 @@ abstract class StatusState extends Equatable {
   StatusState copyWith({Status? status, AppFailure? failure});
 
   @override
-  List<Object?> get props => [status, failure];
+  List<Object?> get props => [status, failure, isEmpty];
 }
 
 /// Extension-методы для удобной работы с [StatusState]

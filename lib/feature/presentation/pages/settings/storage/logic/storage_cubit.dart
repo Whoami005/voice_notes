@@ -11,7 +11,7 @@ import 'package:voice_notes/feature/domain/repositories/storage_stats_repository
 part 'storage_state.dart';
 
 /// Cubit главного экрана хранилища.
-class StorageCubit extends RefreshableStatusCubit<StorageState> {
+class StorageCubit extends InitializableStatusCubit<StorageState> {
   final StorageStatsRepository _repository;
 
   StreamSubscription<StorageState>? _subscription;
@@ -24,7 +24,7 @@ class StorageCubit extends RefreshableStatusCubit<StorageState> {
   Future<void> init() async {
     emitLoading();
     try {
-      _subscription = Rx.combineLatest2(
+      _subscription ??= Rx.combineLatest2(
         _repository.watchOverview(),
         _repository.watchFolderStats(),
         (overview, folders) =>

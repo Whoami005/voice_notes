@@ -12,7 +12,7 @@ import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
 
 part 'folder_detail_state.dart';
 
-class FolderDetailCubit extends RefreshableAsyncCubit<FolderDetailData> {
+class FolderDetailCubit extends InitializableAsyncCubit<FolderDetailData> {
   final NoteRepository _noteRepository;
   final FolderRepository _folderRepository;
   final String folderId;
@@ -32,7 +32,7 @@ class FolderDetailCubit extends RefreshableAsyncCubit<FolderDetailData> {
       emitLoading();
       if (isClosed) return;
 
-      _subscription =
+      _subscription ??=
           Rx.combineLatest2<FolderEntity, List<NoteEntity>, FolderDetailData>(
             _folderRepository.watchByUid(folderId).whereType<FolderEntity>(),
             _noteRepository.watchByFolderId(folderId),
