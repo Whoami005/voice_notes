@@ -1,3 +1,4 @@
+import 'package:voice_notes/core/packages/asr/asr_result.dart';
 import 'package:voice_notes/core/packages/transcription/transcription_queue_snapshot.dart';
 
 /// Узкий control surface для UI и screen-scoped cubit'ов, работающих
@@ -6,6 +7,12 @@ abstract interface class TranscriptionQueueController {
   Stream<TranscriptionQueueSnapshot> get snapshots;
 
   TranscriptionQueueSnapshot get current;
+
+  Future<AsrResult> transcribePriorityFile(
+    String filePath, {
+    required Duration audioDurationHint,
+    void Function()? onStarted,
+  });
 
   Future<void> retry(String noteUid);
 

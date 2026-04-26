@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:developer' as developer;
 
 import 'package:flutter/foundation.dart' show visibleForTesting;
@@ -82,6 +83,8 @@ class TranscriptionQueueService implements TranscriptionQueueController {
   final Duration _transcribeTimeout;
 
   final UniqueQueue<String> _queue = UniqueQueue<String>();
+  final Queue<_PriorityTranscriptionTask> _priorityQueue =
+      Queue<_PriorityTranscriptionTask>();
 
   /// User-initiated cancel для in-flight заметки. Показывается в snapshot,
   /// по завершении ASR пишется `markCancelled`.
@@ -140,11 +143,41 @@ class TranscriptionQueueService implements TranscriptionQueueController {
   TranscriptionQueueSnapshot get current => _lastSnapshot ??= _buildSnapshot();
 
   bool get _canStartDrain =>
-      !_draining &&
+      !_draining && (_canProcessPriorityWork || _canProcessQueuedWork);
+
+  bool get _canProcessPriorityWork =>
+      _priorityQueue.isNotEmpty && _hasReadyModel;
+
+  bool get _canProcessQueuedWork =>
       !_breaker.isPaused &&
       !_pausedAfterInterruptedRun &&
       _asrReady &&
-      _bootstrapState.isReady;
+      _bootstrapState.isReady &&
+      _queue.isNotEmpty;
+
+  bool get _hasReadyModel =>
+      _asrService.isInitialized && _asrService.currentModel != null;
+
+  @override
+  Future<AsrResult> transcribePriorityFile(
+    String filePath, {
+    required Duration audioDurationHint,
+    void Function()? onStarted,
+  }) async {
+    _ensurePriorityModelReady();
+
+    final task = _PriorityTranscriptionTask(
+      filePath: filePath,
+      audioDurationHint: audioDurationHint,
+      onStarted: onStarted,
+      completer: Completer<AsrResult>.sync(),
+    );
+
+    _priorityQueue.add(task);
+    _scheduleDrain();
+
+    return task.future;
+  }
 
   /// Cold-start recovery + подписка на repo. Не бросает — любая ошибка
   /// становится `bootstrapState.error(failure)`. Автоматически вызывается
@@ -451,8 +484,14 @@ class TranscriptionQueueService implements TranscriptionQueueController {
 
     _draining = true;
     try {
-      while (_queue.isNotEmpty) {
-        if (!_asrReady || _breaker.isPaused) break;
+      while (_priorityQueue.isNotEmpty || _queue.isNotEmpty) {
+        if (_priorityQueue.isNotEmpty) {
+          final task = _priorityQueue.removeFirst();
+          await _processPriority(task);
+          continue;
+        }
+
+        if (!_canProcessQueuedWork) break;
 
         final noteUid = _queue.removeFirst();
         _processing = noteUid;
@@ -473,7 +512,34 @@ class TranscriptionQueueService implements TranscriptionQueueController {
     } finally {
       _draining = false;
       _emitSnapshot();
+      if (_canStartDrain) _scheduleDrain();
     }
+  }
+
+  Future<void> _processPriority(_PriorityTranscriptionTask task) async {
+    try {
+      _ensurePriorityModelReady();
+      task.markStarted();
+
+      final result = await _asrService.transcribeFile(
+        task.filePath,
+        audioDurationHint: task.audioDurationHint,
+      );
+      task.complete(result);
+    } catch (error, stackTrace) {
+      task.completeError(error, stackTrace);
+    }
+  }
+
+  void _ensurePriorityModelReady() {
+    if (_hasReadyModel) return;
+
+    if (_asrReady) {
+      _asrReady = false;
+      _emitSnapshot();
+    }
+
+    throw const AsrNotInitializedException();
   }
 
   Future<void> _processOne(String noteUid) async {
@@ -798,6 +864,36 @@ class TranscriptionQueueService implements TranscriptionQueueController {
         return true;
       case null:
         return false;
+    }
+  }
+}
+
+final class _PriorityTranscriptionTask {
+  final String filePath;
+  final Duration audioDurationHint;
+  final void Function()? onStarted;
+  final Completer<AsrResult> completer;
+
+  const _PriorityTranscriptionTask({
+    required this.filePath,
+    required this.audioDurationHint,
+    required this.onStarted,
+    required this.completer,
+  });
+
+  Future<AsrResult> get future => completer.future;
+
+  void markStarted() {
+    onStarted?.call();
+  }
+
+  void complete(AsrResult result) {
+    if (!completer.isCompleted) completer.complete(result);
+  }
+
+  void completeError(Object error, StackTrace stackTrace) {
+    if (!completer.isCompleted) {
+      completer.completeError(error, stackTrace);
     }
   }
 }

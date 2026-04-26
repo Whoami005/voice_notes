@@ -298,6 +298,8 @@
     "description": "Toast shown when Quick Record waits for pending queue",
     "placeholders": { "count": { "type": "int" } }
   },
+  "quickRecordWaitingCurrentTranscription": "Waiting for transcription",
+  "@quickRecordWaitingCurrentTranscription": { "description": "Small label above Quick Record button while it waits for the active ASR task to finish" },
   "transcriptionQueueInitializingTitle": "Connecting to transcription queue…",
   "@transcriptionQueueInitializingTitle": { "description": "Banner shown while the transcription queue is booting up (seed phase)" },
 

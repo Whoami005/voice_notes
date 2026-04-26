@@ -6,19 +6,17 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/packages/asr/asr_cubit.dart';
-import 'package:voice_notes/core/packages/asr/asr_service.dart';
 import 'package:voice_notes/core/packages/audio/audio_recording_service.dart';
 import 'package:voice_notes/core/packages/di/injection.dart';
 import 'package:voice_notes/core/packages/note_ingestion/note_ingestion_service.dart';
 import 'package:voice_notes/core/packages/player/audio_playback_controller.dart';
+import 'package:voice_notes/core/packages/transcription/transcription_queue_controller.dart';
 import 'package:voice_notes/core/theme/app_colors.dart';
 import 'package:voice_notes/core/theme/app_typography.dart';
 import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/logic/recording_cubit.dart';
-import 'package:voice_notes/feature/presentation/pages/queue/logic/transcription_queue_cubit.dart';
 import 'package:voice_notes/feature/presentation/widgets/dialogs/error_dialog.dart';
 import 'package:voice_notes/feature/presentation/widgets/dialogs/success_dialog.dart';
-import 'package:voice_notes/feature/presentation/widgets/toasts/app_toast.dart';
 
 abstract final class _Styles {
   static const double buttonSize = 60;
@@ -32,6 +30,8 @@ abstract final class _Styles {
   static const double glowBlurRadius = AppSizes.blurXL;
   static const Offset shadowOffset = Offset(0, 8);
   static const double timerBadgeOffset = 10;
+  static const double waitingBadgeMaxWidth = 240;
+  static const double waitingBadgeScreenPadding = AppSizes.p16;
   static const double rippleExpansion = 80;
 }
 
@@ -47,7 +47,7 @@ class VoiceRecordButton extends StatelessWidget {
     return BlocProvider(
       create: (_) => RecordingCubit(
         recordingService: getIt<AudioRecordingService>(),
-        asrService: getIt<AsrService>(),
+        queueController: getIt<TranscriptionQueueController>(),
         noteRepository: getIt<NoteRepository>(),
         playbackController: getIt<AudioPlaybackController>(),
         ingestionService: getIt<NoteIngestionService>(),
@@ -61,23 +61,6 @@ class VoiceRecordButton extends StatelessWidget {
 
   void _handleStateChange(BuildContext context, RecordingState state) {
     switch (state) {
-      //TODO(K): для быстрой транскрибации давать
-      // приоритет и класть в начало очереди.
-      case RecordingTranscribingState():
-        // Quick Record синхронен и идёт через ту же FIFO-очередь команд
-        // изолята, что и заметки пользователя в других папках. Если там
-        // что-то есть — сообщим, что ждать придётся дольше.
-        final queueTotal = context
-            .read<TranscriptionQueueCubit>()
-            .state
-            .snapshot
-            .total;
-        if (queueTotal > 0) {
-          AppToast.info(
-            context,
-            message: context.l10n.quickRecordWaitingQueue(queueTotal),
-          );
-        }
       case RecordingSuccessState(:final text):
         SuccessDialog.showClipboardSuccess(context, text: text);
       case RecordingErrorState(:final failure):
@@ -132,9 +115,7 @@ class _VoiceRecordButtonContentState extends State<_VoiceRecordButtonContent>
     _pulseController.dispose();
     _gradientController.dispose();
     _rippleSpawnTimer?.cancel();
-    for (final ripple in _ripples) {
-      ripple.controller.dispose();
-    }
+    for (final ripple in _ripples) ripple.controller.dispose();
     super.dispose();
   }
 
@@ -184,11 +165,10 @@ class _VoiceRecordButtonContentState extends State<_VoiceRecordButtonContent>
     controller
       ..addStatusListener((status) {
         if (status == AnimationStatus.completed) {
-          if (mounted) {
-            setState(() => _ripples.remove(ripple));
-          } else {
-            _ripples.remove(ripple);
-          }
+          mounted
+              ? setState(() => _ripples.remove(ripple))
+              : _ripples.remove(ripple);
+
           controller.dispose();
         }
       })
@@ -216,6 +196,7 @@ class _VoiceRecordButtonContentState extends State<_VoiceRecordButtonContent>
       builder: (context, state) {
         final isRecording = state.isRecording;
         final isTranscribing = state.isTranscribing;
+        final isWaitingTranscriptionSlot = state.isWaitingTranscriptionSlot;
         final duration = state is RecordingActiveState
             ? state.duration
             : Duration.zero;
@@ -263,6 +244,16 @@ class _VoiceRecordButtonContentState extends State<_VoiceRecordButtonContent>
                     ),
                   ),
                 ),
+              if (isWaitingTranscriptionSlot)
+                Positioned(
+                  right: 0,
+                  bottom: _Styles.buttonSize + _Styles.timerBadgeOffset,
+                  child: _WaitingBadge(
+                    label: context.l10n.quickRecordWaitingCurrentTranscription,
+                    colors: _vbColors(context),
+                    maxWidth: _waitingBadgeMaxWidth(context),
+                  ),
+                ),
             ],
           ),
         );
@@ -273,6 +264,18 @@ class _VoiceRecordButtonContentState extends State<_VoiceRecordButtonContent>
   VoiceButtonColors _vbColors(BuildContext context) => context.isDarkMode
       ? AppColors.dark.voiceButton
       : AppColors.light.voiceButton;
+
+  double _waitingBadgeMaxWidth(BuildContext context) {
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final safePadding = MediaQuery.paddingOf(context);
+    final availableWidth =
+        screenWidth -
+        safePadding.left -
+        safePadding.right -
+        (_Styles.waitingBadgeScreenPadding * 2);
+
+    return availableWidth.clamp(0, _Styles.waitingBadgeMaxWidth).toDouble();
+  }
 }
 
 class _AnimatedButton extends StatelessWidget {
@@ -400,6 +403,53 @@ class _RippleWidget extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _WaitingBadge extends StatelessWidget {
+  final String label;
+  final VoiceButtonColors colors;
+  final double maxWidth;
+
+  const _WaitingBadge({
+    required this.label,
+    required this.colors,
+    required this.maxWidth,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: maxWidth),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(
+            sigmaX: AppSizes.blurModerate,
+            sigmaY: AppSizes.blurModerate,
+          ),
+          child: Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSizes.p12,
+              vertical: AppSizes.p6,
+            ),
+            decoration: BoxDecoration(
+              color: colors.timerBg,
+              borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+            ),
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTypography.caption.copyWith(
+                color: colors.timerText,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:voice_notes/core/packages/asr/asr_result.dart';
 import 'package:voice_notes/core/packages/transcription/transcription_queue_controller.dart';
 import 'package:voice_notes/core/packages/transcription/transcription_queue_snapshot.dart';
 import 'package:voice_notes/feature/presentation/pages/queue/logic/transcription_queue_cubit.dart';
@@ -91,6 +92,13 @@ class _FakeController implements TranscriptionQueueController {
 
   @override
   TranscriptionQueueSnapshot get current => currentSnapshot;
+
+  @override
+  Future<AsrResult> transcribePriorityFile(
+    String filePath, {
+    required Duration audioDurationHint,
+    void Function()? onStarted,
+  }) async => const AsrResult(text: 'priority');
 
   @override
   Future<void> retry(String uid) async {

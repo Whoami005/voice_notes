@@ -6,12 +6,12 @@ import 'package:flutter/services.dart';
 import 'package:voice_notes/core/error/app_failure.dart';
 import 'package:voice_notes/core/extensions/string_extensions.dart';
 import 'package:voice_notes/core/packages/asr/asr_exception.dart';
-import 'package:voice_notes/core/packages/asr/asr_service.dart';
 import 'package:voice_notes/core/packages/audio/audio_recording_exception.dart';
 import 'package:voice_notes/core/packages/audio/audio_recording_service.dart';
 import 'package:voice_notes/core/packages/note_ingestion/note_ingestion_exception.dart';
 import 'package:voice_notes/core/packages/note_ingestion/note_ingestion_service.dart';
 import 'package:voice_notes/core/packages/player/audio_playback_controller.dart';
+import 'package:voice_notes/core/packages/transcription/transcription_queue_controller.dart';
 import 'package:voice_notes/core/packages/uuid/uuid_manager.dart';
 import 'package:voice_notes/core/state/core/base_cubit.dart';
 import 'package:voice_notes/feature/domain/enums/recording_state.dart'
@@ -28,7 +28,8 @@ part 'recording_state.dart';
 ///   транскрибация идёт в очереди асинхронно. Прогресс показывается per-note
 ///   в `note_bubble`, не в баре записи.
 /// - **Quick Record** (`folderId == null`): запись → синхронная транскрибация
-///   через [AsrService] → clipboard. Заметка не создаётся.
+///   через priority-lane [TranscriptionQueueController] → clipboard. Заметка
+///   не создаётся.
 ///
 /// ## Каналы ошибок
 ///
@@ -46,7 +47,7 @@ part 'recording_state.dart';
 ///   заметка уже в списке.
 class RecordingCubit extends BaseCubit<RecordingState> {
   final AudioRecordingService _recordingService;
-  final AsrService _asrService;
+  final TranscriptionQueueController _queueController;
   final NoteRepository _noteRepository;
   final AudioPlaybackController _playbackController;
   final NoteIngestionService _ingestionService;
@@ -69,13 +70,13 @@ class RecordingCubit extends BaseCubit<RecordingState> {
 
   RecordingCubit({
     required AudioRecordingService recordingService,
-    required AsrService asrService,
+    required TranscriptionQueueController queueController,
     required NoteRepository noteRepository,
     required AudioPlaybackController playbackController,
     required NoteIngestionService ingestionService,
     this.folderId,
   }) : _recordingService = recordingService,
-       _asrService = asrService,
+       _queueController = queueController,
        _noteRepository = noteRepository,
        _playbackController = playbackController,
        _ingestionService = ingestionService,
@@ -169,15 +170,6 @@ class RecordingCubit extends BaseCubit<RecordingState> {
         );
         return;
       }
-
-      // Quick Record — синхронная транскрибация. Transcribing state жив
-      // для спиннера на кнопке VoiceRecordButton.
-      emit(
-        RecordingTranscribingState(
-          filePath: result.filePath,
-          duration: result.duration,
-        ),
-      );
 
       unawaited(
         _processQuickRecord(
@@ -283,25 +275,34 @@ class RecordingCubit extends BaseCubit<RecordingState> {
   }
 
   /// Quick Record: синхронная транскрибация и копирование в буфер обмена.
-  /// Заметка не создаётся. Если очередь не пуста — команда транскрибации
-  /// всё равно встанет в хвост FIFO-команд изолята; пользователь увидит
-  /// ожидание через toast в UI (показывается в `VoiceRecordButton`).
+  /// Заметка не создаётся. Запрос идёт через priority-lane очереди, чтобы
+  /// ASR worker оставался последовательным и Quick Record был следующим после
+  /// уже активной транскрибации.
   Future<void> _processQuickRecord({
     required String filePath,
     required Duration duration,
   }) async {
     try {
-      if (!_asrService.isInitialized) {
-        _failQuickRecord(
-          filePath: filePath,
-          failure: const RecordingFailure.noModelSelected(),
-        );
-        return;
-      }
+      final isWaitingForCurrentTranscription =
+          _queueController.current.processing != null;
 
-      final asrResult = await _asrService.transcribeFile(
+      safeEmit(
+        isWaitingForCurrentTranscription
+            ? RecordingWaitingTranscriptionSlotState(
+                filePath: filePath,
+                duration: duration,
+              )
+            : RecordingTranscribingState(
+                filePath: filePath,
+                duration: duration,
+              ),
+      );
+
+      final asrResult = await _queueController.transcribePriorityFile(
         filePath,
         audioDurationHint: duration,
+        onStarted: () =>
+            _emitQuickRecordStarted(filePath: filePath, duration: duration),
       );
 
       await _copyToClipboard(asrResult.text);
@@ -332,6 +333,21 @@ class RecordingCubit extends BaseCubit<RecordingState> {
     } catch (e, s) {
       _failQuickRecord(filePath: filePath, failure: logError(e, s));
     }
+  }
+
+  void _emitQuickRecordStarted({
+    required String filePath,
+    required Duration duration,
+  }) {
+    if (isClosed) return;
+
+    final current = state;
+    if (current is! RecordingWaitingTranscriptionSlotState) return;
+    if (current.filePath != filePath) return;
+
+    safeEmit(
+      RecordingTranscribingState(filePath: filePath, duration: duration),
+    );
   }
 
   Future<void> _copyToClipboard(String text) async {

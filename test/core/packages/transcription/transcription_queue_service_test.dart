@@ -226,6 +226,217 @@ void main() {
     });
   });
 
+  group('priority direct transcription', () {
+    test(
+      'runs priority request before queued notes when ASR is free',
+      () async {
+        asr
+          ..isInitializedValue = true
+          ..currentModelValue = _streamingModel();
+
+        final queued = _makeNote(
+          'q1',
+          status: TranscriptionStatus.queued,
+          audio: _makeAudio(),
+        );
+        repo.addNote(queued);
+
+        final calls = <String>[];
+        asr.transcribeFileImpl = (path) async {
+          calls.add(path);
+          return AsrResult(text: path == '/tmp/quick.wav' ? 'quick' : 'queued');
+        };
+
+        final service = buildService();
+        await service.start();
+
+        final priorityFuture = service.transcribePriorityFile(
+          '/tmp/quick.wav',
+          audioDurationHint: const Duration(seconds: 1),
+        );
+        repo.emitQueued([queued]);
+
+        final result = await priorityFuture;
+        await Future<void>.delayed(const Duration(milliseconds: 30));
+
+        expect(result.text, 'quick');
+        expect(calls.first, '/tmp/quick.wav');
+        expect(repo.completeCalls, contains('q1'));
+
+        await service.dispose();
+      },
+    );
+
+    test(
+      'waits for active queued transcription before priority request',
+      () async {
+        asr
+          ..isInitializedValue = true
+          ..currentModelValue = _streamingModel();
+
+        final queued = _makeNote(
+          'q1',
+          status: TranscriptionStatus.queued,
+          audio: _makeAudio(),
+        );
+        repo.addNote(queued);
+
+        final queuedCompleter = Completer<AsrResult>();
+        final calls = <String>[];
+        asr.transcribeFileImpl = (path) {
+          calls.add(path);
+          if (path == '/tmp/quick.wav') {
+            return Future.value(const AsrResult(text: 'quick'));
+          }
+          return queuedCompleter.future;
+        };
+
+        final service = buildService();
+        await service.start();
+        repo.emitQueued([queued]);
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+
+        expect(repo.markTranscribingCalls, contains('q1'));
+
+        final priorityFuture = service.transcribePriorityFile(
+          '/tmp/quick.wav',
+          audioDurationHint: const Duration(seconds: 1),
+          onStarted: () => calls.add('priority-started'),
+        );
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+
+        expect(calls, hasLength(1));
+
+        queuedCompleter.complete(const AsrResult(text: 'queued'));
+        final result = await priorityFuture;
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+
+        expect(result.text, 'quick');
+        expect(calls, [
+          '/tmp/voice_notes_test_docs/a.wav',
+          'priority-started',
+          '/tmp/quick.wav',
+        ]);
+        expect(calls.last, '/tmp/quick.wav');
+        expect(repo.failedCalls, isEmpty);
+
+        await service.dispose();
+      },
+    );
+
+    test('works while breaker is tripped without resetting breaker', () async {
+      asr
+        ..isInitializedValue = true
+        ..currentModelValue = _streamingModel();
+
+      final notes = [
+        for (final uid in ['q1', 'q2', 'q3'])
+          _makeNote(
+            uid,
+            status: TranscriptionStatus.queued,
+            audio: _makeAudio(),
+          ),
+      ];
+      for (final note in notes) {
+        repo.addNote(note);
+      }
+
+      final service = buildService();
+      asr.transcribeFileImpl = (_) =>
+          throw const AsrProcessingException('boom');
+
+      await service.start();
+      repo.emitQueued(notes);
+      await Future<void>.delayed(const Duration(milliseconds: 80));
+
+      expect(service.current.runtimeReason, QueueRuntimeReason.breakerTripped);
+
+      asr.transcribeFileImpl = (_) async => const AsrResult(text: 'quick');
+
+      final result = await service.transcribePriorityFile(
+        '/tmp/quick.wav',
+        audioDurationHint: const Duration(seconds: 1),
+      );
+
+      expect(result.text, 'quick');
+      expect(service.current.runtimeReason, QueueRuntimeReason.breakerTripped);
+
+      await service.dispose();
+    });
+
+    test(
+      'works while interrupted guard is active without clearing guard',
+      () async {
+        await queuePrefs.markPausedAfterInterruption();
+
+        asr
+          ..isInitializedValue = true
+          ..currentModelValue = _streamingModel();
+
+        final queued = _makeNote(
+          'q1',
+          status: TranscriptionStatus.queued,
+          audio: _makeAudio(),
+        );
+        repo.addNote(queued);
+
+        final service = buildService();
+        await service.start();
+        repo.emitQueued([queued]);
+        await _pump();
+
+        expect(
+          service.current.runtimeReason,
+          QueueRuntimeReason.interruptedPreviousRun,
+        );
+        expect(repo.markTranscribingCalls, isEmpty);
+
+        final result = await service.transcribePriorityFile(
+          '/tmp/quick.wav',
+          audioDurationHint: const Duration(seconds: 1),
+        );
+
+        expect(result.text, 'ok');
+        expect(
+          await queuePrefs.getGuardState(),
+          TranscriptionQueueGuardState.pausedAfterInterruption,
+        );
+        expect(
+          service.current.runtimeReason,
+          QueueRuntimeReason.interruptedPreviousRun,
+        );
+
+        await service.dispose();
+      },
+    );
+
+    test('fast-fails when ASR is not ready or model is missing', () async {
+      final service = buildService();
+
+      await expectLater(
+        service.transcribePriorityFile(
+          '/tmp/quick.wav',
+          audioDurationHint: const Duration(seconds: 1),
+        ),
+        throwsA(isA<AsrNotInitializedException>()),
+      );
+
+      asr.isInitializedValue = true;
+
+      await expectLater(
+        service.transcribePriorityFile(
+          '/tmp/quick.wav',
+          audioDurationHint: const Duration(seconds: 1),
+        ),
+        throwsA(isA<AsrNotInitializedException>()),
+      );
+
+      expect(asr.transcribeCalls, isEmpty);
+
+      await service.dispose();
+    });
+  });
+
   group('clearFailedAll / dismissFailed', () {
     test('clearFailedAll: all failed notes become cancelled', () async {
       asr.isInitializedValue = false;
@@ -1052,6 +1263,8 @@ class _FakeAsrService implements AsrService {
   /// в тестах (симуляция progress-событий от streaming-воркера).
   void Function(AsrTranscribeProgress progress)? lastOnProgress;
 
+  final List<String> transcribeCalls = <String>[];
+
   AsrTranscriptionStrategy? lastStrategyOverride;
   Duration? lastAudioDurationHint;
 
@@ -1080,6 +1293,7 @@ class _FakeAsrService implements AsrService {
     AsrTranscriptionStrategy strategyOverride = AsrTranscriptionStrategy.auto,
     Duration? audioDurationHint,
   }) {
+    transcribeCalls.add(filePath);
     lastCancelToken = cancelToken;
     lastOnProgress = onProgress;
     lastStrategyOverride = strategyOverride;

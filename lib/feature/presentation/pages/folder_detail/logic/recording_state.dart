@@ -51,6 +51,19 @@ final class RecordingTranscribingState extends RecordingState {
   List<Object?> get props => [filePath, duration, partialText];
 }
 
+final class RecordingWaitingTranscriptionSlotState extends RecordingState {
+  final String filePath;
+  final Duration duration;
+
+  const RecordingWaitingTranscriptionSlotState({
+    required this.filePath,
+    required this.duration,
+  });
+
+  @override
+  List<Object?> get props => [filePath, duration];
+}
+
 final class RecordingSuccessState extends RecordingState {
   final String text;
   final Duration duration;
@@ -92,7 +105,12 @@ extension RecordingStateX on RecordingState {
 
   bool get isRecording => this is RecordingActiveState;
 
-  bool get isTranscribing => this is RecordingTranscribingState;
+  bool get isWaitingTranscriptionSlot =>
+      this is RecordingWaitingTranscriptionSlotState;
+
+  bool get isTranscribing =>
+      this is RecordingWaitingTranscriptionSlotState ||
+      this is RecordingTranscribingState;
 
   bool get isSuccess => this is RecordingSuccessState;
 
@@ -104,6 +122,7 @@ extension RecordingStateX on RecordingState {
   RecordingInputState get uiState => switch (this) {
     RecordingIdleState() => RecordingInputState.idle,
     RecordingActiveState() => RecordingInputState.recording,
+    RecordingWaitingTranscriptionSlotState() => RecordingInputState.idle,
     RecordingTranscribingState() => RecordingInputState.idle,
     RecordingSuccessState() => RecordingInputState.idle,
     RecordingErrorState() => RecordingInputState.idle,
@@ -111,6 +130,7 @@ extension RecordingStateX on RecordingState {
 
   Duration? get durationOrNull => switch (this) {
     RecordingActiveState(:final duration) => duration,
+    RecordingWaitingTranscriptionSlotState(:final duration) => duration,
     RecordingTranscribingState(:final duration) => duration,
     RecordingSuccessState(:final duration) => duration,
     _ => null,

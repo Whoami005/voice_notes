@@ -4,11 +4,11 @@ import 'package:go_router/go_router.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/packages/app_router/app_route_wrapper.dart';
 import 'package:voice_notes/core/packages/app_router/routes/app_routes.dart';
-import 'package:voice_notes/core/packages/asr/asr_service.dart';
 import 'package:voice_notes/core/packages/audio/audio_recording_service.dart';
 import 'package:voice_notes/core/packages/di/injection.dart';
 import 'package:voice_notes/core/packages/note_ingestion/note_ingestion_service.dart';
 import 'package:voice_notes/core/packages/player/audio_playback_controller.dart';
+import 'package:voice_notes/core/packages/transcription/transcription_queue_controller.dart';
 import 'package:voice_notes/core/state/async/async_state_widgets.dart';
 import 'package:voice_notes/feature/domain/repositories/folder_repository.dart';
 import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
@@ -46,7 +46,7 @@ class FolderDetailScreen extends StatefulWidget implements AppRouteWrapper {
           create: (_) => RecordingCubit(
             folderId: folderId,
             recordingService: getIt<AudioRecordingService>(),
-            asrService: getIt<AsrService>(),
+            queueController: getIt<TranscriptionQueueController>(),
             noteRepository: getIt<NoteRepository>(),
             playbackController: getIt<AudioPlaybackController>(),
             ingestionService: getIt<NoteIngestionService>(),
