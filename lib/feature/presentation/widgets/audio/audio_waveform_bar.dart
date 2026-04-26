@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 
 /// Полоска прогресса с поддержкой seek через drag.
@@ -89,14 +90,15 @@ class _AudioWaveformBarState extends State<AudioWaveformBar> {
   @override
   Widget build(BuildContext context) {
     final themeColors = context.themeColors;
-    final waveformData = widget.waveformData;
+    final waveformData = widget.waveformData ?? [];
 
-    if (waveformData != null && waveformData.isNotEmpty) {
+    if (waveformData.isNotEmpty) {
       return SizedBox(
-        height: 32,
+        height: AppSizes.p32,
         child: LayoutBuilder(
           builder: (context, constraints) {
             final totalWidth = constraints.maxWidth;
+
             return GestureDetector(
               onTapDown: (details) =>
                   _onWaveformSeek(details.localPosition.dx, totalWidth),
@@ -106,7 +108,7 @@ class _AudioWaveformBarState extends State<AudioWaveformBar> {
                   _onWaveformDragUpdate(details, totalWidth),
               onHorizontalDragEnd: _onWaveformDragEnd,
               child: CustomPaint(
-                size: Size(totalWidth, 32),
+                size: Size(totalWidth, AppSizes.p32),
                 painter: _WaveformPainter(
                   data: waveformData,
                   progress: _progress.clamp(0.0, 1.0),
@@ -126,20 +128,23 @@ class _AudioWaveformBarState extends State<AudioWaveformBar> {
         .toDouble();
     final isInteractive = sliderMax > 0;
 
-    return SliderTheme(
-      data: SliderTheme.of(context).copyWith(
-        trackHeight: 3,
-        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 5),
-        overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
-      ),
-      child: Slider(
-        value: _sliderDisplayValue(sliderValue),
-        max: isInteractive ? sliderMax : 1,
-        onChangeStart: isInteractive ? _onSliderDragStart : null,
-        onChanged: isInteractive ? _onSliderDragUpdate : null,
-        onChangeEnd: isInteractive ? _onSliderDragEnd : null,
-        activeColor: themeColors.accentPrimary,
-        inactiveColor: themeColors.borderSecondary,
+    return SizedBox(
+      height: AppSizes.p32,
+      child: SliderTheme(
+        data: SliderTheme.of(context).copyWith(
+          trackHeight: 3,
+          thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 5),
+          overlayShape: const RoundSliderOverlayShape(overlayRadius: 12),
+        ),
+        child: Slider(
+          value: _sliderDisplayValue(sliderValue),
+          max: isInteractive ? sliderMax : 1,
+          onChangeStart: isInteractive ? _onSliderDragStart : null,
+          onChanged: isInteractive ? _onSliderDragUpdate : null,
+          onChangeEnd: isInteractive ? _onSliderDragEnd : null,
+          activeColor: themeColors.accentPrimary,
+          inactiveColor: themeColors.borderSecondary,
+        ),
       ),
     );
   }
