@@ -36,12 +36,7 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
 
   late bool _keepOriginals = _recordingPrefs.keepOriginals;
 
-  // Mock settings state — эти поля остаются заглушками до соответствующих
-  // фич и не влияют на реальную работу приложения.
-  bool _vadEnabled = true;
   bool _autoTags = false;
-  final String _recordingQuality = 'Высокое';
-  final String _defaultLanguage = 'Русский';
 
   Future<void> _onKeepOriginalsChanged(bool value) async {
     setState(() => _keepOriginals = value);
@@ -76,20 +71,8 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
     );
   }
 
-  void _onRecordingQualityTap() {
-    // TODO(W): Show quality picker
-  }
-
-  void _onDefaultLanguageTap() {
-    // TODO(W): Show language dialog
-  }
-
   void _onExportTap() {
     // TODO(W): Export data
-  }
-
-  void _onClearCacheTap() {
-    // TODO(settings): Show confirm dialog
   }
 
   /// Количество заметок во всех «активных» состояниях пайплайна:
@@ -125,23 +108,6 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
                   value: _keepOriginals,
                   onChanged: _onKeepOriginalsChanged,
                 ),
-              ),
-              SettingsRow(
-                icon: Icons.tune,
-                title: l10n.settingsRecordingQuality,
-                trailing: SettingsChevron(value: _recordingQuality),
-                onTap: _onRecordingQualityTap,
-                isEnabled: false,
-              ),
-              SettingsRow(
-                icon: Icons.mic_off_outlined,
-                title: l10n.settingsVadTitle,
-                subtitle: l10n.settingsVadSubtitle,
-                trailing: SettingsToggle(
-                  value: _vadEnabled,
-                  onChanged: (value) => setState(() => _vadEnabled = value),
-                ),
-                isEnabled: false,
                 showDivider: false,
               ),
             ],
@@ -150,13 +116,6 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
           SettingsSection(
             title: l10n.settingsSectionTranscription,
             children: [
-              SettingsRow(
-                icon: Icons.language,
-                title: l10n.settingsDefaultLanguage,
-                trailing: SettingsChevron(value: _defaultLanguage),
-                onTap: _onDefaultLanguageTap,
-                isEnabled: false,
-              ),
               SettingsRow(
                 icon: Icons.tag,
                 title: l10n.settingsAutoTags,
@@ -256,14 +215,6 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
                 title: l10n.settingsExportData,
                 trailing: const SettingsChevron(),
                 onTap: _onExportTap,
-                isEnabled: false,
-              ),
-              SettingsRow(
-                icon: Icons.delete_sweep_outlined,
-                title: l10n.settingsClearCache,
-                subtitle: l10n.settingsClearCacheSubtitle,
-                trailing: const SettingsChevron(),
-                onTap: _onClearCacheTap,
                 isEnabled: false,
                 showDivider: false,
               ),

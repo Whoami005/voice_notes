@@ -48,6 +48,7 @@ class SettingsRow extends StatelessWidget {
                   AppSpacer.p14,
                   Expanded(
                     child: Column(
+                      spacing: AppSizes.p2,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
@@ -56,18 +57,17 @@ class SettingsRow extends StatelessWidget {
                             color: themeColors.textPrimary,
                           ),
                         ),
-                        if (subtitle != null) ...[
-                          AppSpacer.p2,
+                        if (subtitle != null)
                           Text(
                             subtitle!,
                             style: AppTypography.caption.copyWith(
                               color: themeColors.textTertiary,
                             ),
                           ),
-                        ],
                       ],
                     ),
                   ),
+                  AppSpacer.p2,
                   ?trailing,
                 ],
               ),
