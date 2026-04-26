@@ -50,8 +50,8 @@ import '../downloader/download_manager.dart' as _i551;
 import '../note_ingestion/note_ingestion_service.dart' as _i165;
 import '../player/audio_playback_controller.dart' as _i99;
 import '../player/controller/just_audio_playback_controller.dart' as _i451;
+import '../transcription/queue/transcription_queue_service.dart' as _i663;
 import '../transcription/transcription_queue_controller.dart' as _i971;
-import '../transcription/transcription_queue_service.dart' as _i909;
 import 'modules/prefs_module.dart' as _i12;
 
 extension GetItInjectableX on _i174.GetIt {
@@ -138,7 +138,7 @@ extension GetItInjectableX on _i174.GetIt {
     );
     await gh.singletonAsync<_i971.TranscriptionQueueController>(
       () {
-        final i = _i909.TranscriptionQueueService(
+        final i = _i663.TranscriptionQueueService(
           noteRepository: gh<_i1032.NoteRepository>(),
           asrService: gh<_i233.AsrService>(),
           preferences: gh<_i403.RecordingPreferences>(),

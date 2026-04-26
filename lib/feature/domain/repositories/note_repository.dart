@@ -91,8 +91,8 @@ abstract interface class NoteRepository {
   /// обновлялся при изменениях сущности (title, folder).
   Stream<List<NoteEntity>> watchTranscribing();
 
-  /// Эмит ДО фактического удаления — даёт подписчикам (очередь
-  /// транскрибации) шанс отменить in-flight операции.
+  /// Эмит после успешного удаления из БД. Подписчики могут безопасно считать,
+  /// что заметка уже не существует, и отменять in-flight операции без rollback.
   Stream<String> get onDeleted;
 
   Future<void> dispose();

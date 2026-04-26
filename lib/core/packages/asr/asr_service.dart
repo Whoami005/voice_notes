@@ -4,6 +4,7 @@ import 'package:voice_notes/core/packages/asr/asr_cancel_token.dart';
 import 'package:voice_notes/core/packages/asr/asr_exception.dart';
 import 'package:voice_notes/core/packages/asr/asr_result.dart';
 import 'package:voice_notes/core/packages/asr/asr_transcribe_progress.dart';
+import 'package:voice_notes/core/packages/asr/asr_transcription_plan.dart';
 import 'package:voice_notes/core/packages/asr/asr_transcription_strategy.dart';
 import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
 
@@ -66,6 +67,10 @@ abstract interface class AsrService {
   /// [audioDurationHint] помогает сервису построить детерминированный
   /// план без дополнительного чтения WAV-заголовка.
   ///
+  /// [transcriptionPlan] позволяет очереди передать уже рассчитанный план и
+  /// избежать повторного планирования внутри сервиса. В этом режиме
+  /// [expectedModel] фиксирует модель, под которую построен план.
+  ///
   /// Выбрасывает:
   /// - [AsrNotInitializedException] если сервис не инициализирован
   /// - [AsrInvalidAudioException] при неверном формате аудио
@@ -78,6 +83,8 @@ abstract interface class AsrService {
     AsrCancelToken? cancelToken,
     AsrTranscriptionStrategy strategyOverride = AsrTranscriptionStrategy.auto,
     Duration? audioDurationHint,
+    AsrTranscriptionPlan? transcriptionPlan,
+    AsrModelEntity? expectedModel,
   });
 
   /// [samples] — PCM аудио в формате Float32 (-1.0 to 1.0).

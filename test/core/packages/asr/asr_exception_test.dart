@@ -24,6 +24,7 @@ void main() {
       String describe(AsrException e) => switch (e) {
         AsrNotInitializedException() => 'not-init',
         AsrModelNotFoundException() => 'model-404',
+        AsrModelChangedException() => 'model-changed',
         AsrInvalidAudioException() => 'bad-audio',
         AsrProcessingException() => 'processing',
         AsrStreamingNotSupportedException() => 'stream-unsupported',

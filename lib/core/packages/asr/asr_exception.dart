@@ -24,6 +24,13 @@ class AsrModelNotFoundException extends AsrException {
   const AsrModelNotFoundException(super.message);
 }
 
+/// Загруженная модель сменилась между планированием и стартом транскрибации.
+class AsrModelChangedException extends AsrException {
+  const AsrModelChangedException([
+    super.message = 'ASR model changed before transcription started',
+  ]);
+}
+
 /// Некорректный формат аудио
 class AsrInvalidAudioException extends AsrException {
   const AsrInvalidAudioException(super.message);

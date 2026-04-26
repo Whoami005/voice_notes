@@ -9,6 +9,7 @@ import 'package:voice_notes/core/packages/asr/asr_isolate/asr_isolate_runner.dar
 import 'package:voice_notes/core/packages/asr/asr_result.dart';
 import 'package:voice_notes/core/packages/asr/asr_service.dart';
 import 'package:voice_notes/core/packages/asr/asr_transcribe_progress.dart';
+import 'package:voice_notes/core/packages/asr/asr_transcription_plan.dart';
 import 'package:voice_notes/core/packages/asr/asr_transcription_planner.dart';
 import 'package:voice_notes/core/packages/asr/asr_transcription_strategy.dart';
 import 'package:voice_notes/core/packages/asr/asr_vad_asset_installer.dart';
@@ -85,6 +86,8 @@ class SherpaAsrService implements AsrService {
     AsrCancelToken? cancelToken,
     AsrTranscriptionStrategy strategyOverride = AsrTranscriptionStrategy.auto,
     Duration? audioDurationHint,
+    AsrTranscriptionPlan? transcriptionPlan,
+    AsrModelEntity? expectedModel,
   }) async {
     _ensureInitialized();
 
@@ -94,22 +97,42 @@ class SherpaAsrService implements AsrService {
     }
 
     final model = _currentModel!;
-    final audioDuration =
-        audioDurationHint ?? await AsrWavDurationReader.readDuration(filePath);
-    final vadModelPath = await AsrVadAssetInstaller().resolveModelPath();
+    if (expectedModel != null && model.uuid != expectedModel.uuid) {
+      throw const AsrModelChangedException();
+    }
 
-    final plan = AsrTranscriptionPlanner.resolve(
-      model: model,
-      audioDuration: audioDuration ?? Duration.zero,
-      strategyOverride: strategyOverride,
-      vadModelPath: vadModelPath,
-    );
+    final plan =
+        transcriptionPlan ??
+        await _buildTranscriptionPlan(
+          filePath: filePath,
+          model: model,
+          strategyOverride: strategyOverride,
+          audioDurationHint: audioDurationHint,
+        );
 
     return _isolateRunner!.transcribeFile(
       filePath,
       transcriptionPlan: plan,
       onProgress: onProgress,
       cancelToken: cancelToken,
+    );
+  }
+
+  Future<AsrTranscriptionPlan> _buildTranscriptionPlan({
+    required String filePath,
+    required AsrModelEntity model,
+    required AsrTranscriptionStrategy strategyOverride,
+    required Duration? audioDurationHint,
+  }) async {
+    final audioDuration =
+        audioDurationHint ?? await AsrWavDurationReader.readDuration(filePath);
+    final vadModelPath = await AsrVadAssetInstaller().resolveModelPath();
+
+    return AsrTranscriptionPlanner.resolve(
+      model: model,
+      audioDuration: audioDuration ?? Duration.zero,
+      strategyOverride: strategyOverride,
+      vadModelPath: vadModelPath,
     );
   }
 

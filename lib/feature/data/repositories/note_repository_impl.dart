@@ -156,14 +156,13 @@ class NoteRepositoryImpl implements NoteRepository {
 
   @override
   Future<void> delete(String uid) async {
-    // Эмитим uid ДО фактического delete, чтобы подписчики (очередь
-    // транскрибации) успели добавить uid в cancelled set и корректно
-    // отбросить in-flight результат ASR.
-    _deletedController.add(uid);
-
     // DataSource транзакционно удаляет NoteObject + NoteAudioObject и
     // возвращает относительный путь файла (или null, если аудио не было).
     final audioRelativePath = await _noteDataSource.delete(uid);
+
+    // Событие означает committed delete. Если транзакция выше упала, очередь
+    // не снимает uid из runtime-очереди и не отбрасывает будущий ASR-result.
+    _deletedController.add(uid);
 
     // Удаление файла — вне транзакции, best-effort. deleteFile не throw'ит,
     // поэтому БД остаётся консистентной даже если файл уже удалён извне.

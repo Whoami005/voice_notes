@@ -10,8 +10,9 @@ import 'package:voice_notes/core/packages/asr/asr_exception.dart';
 import 'package:voice_notes/core/packages/asr/asr_result.dart';
 import 'package:voice_notes/core/packages/asr/asr_service.dart';
 import 'package:voice_notes/core/packages/asr/asr_transcribe_progress.dart';
+import 'package:voice_notes/core/packages/asr/asr_transcription_plan.dart';
 import 'package:voice_notes/core/packages/asr/asr_transcription_strategy.dart';
-import 'package:voice_notes/core/packages/transcription/transcription_queue_service.dart';
+import 'package:voice_notes/core/packages/transcription/queue/transcription_queue_service.dart';
 import 'package:voice_notes/core/packages/transcription/transcription_queue_snapshot.dart';
 import 'package:voice_notes/feature/data/local/preferences/recording_preferences.dart';
 import 'package:voice_notes/feature/data/local/preferences/transcription_queue_preferences.dart';
@@ -1289,6 +1290,8 @@ class _FakeAsrService implements AsrService {
     AsrCancelToken? cancelToken,
     AsrTranscriptionStrategy strategyOverride = AsrTranscriptionStrategy.auto,
     Duration? audioDurationHint,
+    AsrTranscriptionPlan? transcriptionPlan,
+    AsrModelEntity? expectedModel,
   }) {
     transcribeCalls.add(filePath);
     lastCancelToken = cancelToken;
