@@ -59,6 +59,8 @@
   "@folderDetailTitle": { "description": "Folder detail screen title" },
   "recordingInputHint": "Введите текст или запишите...",
   "@recordingInputHint": { "description": "Recording input text field hint" },
+  "recordingSwipeToCancel": "Свайп влево для отмены",
+  "@recordingSwipeToCancel": { "description": "Hint shown under recording bar — swipe left gesture to cancel" },
   "transcribing": "Транскрибирование...",
   "@transcribing": { "description": "Transcribing status text" },
 

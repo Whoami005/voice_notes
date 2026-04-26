@@ -39,6 +39,8 @@ class AppSizes {
   static const double buttonRadius = 10;
   static const double chipRadius = 20;
   static const double bubbleRadius = 18;
+  static const double recordingBarHeight = 48;
+  static const double recordingBarRadius = 14;
 
   // Icons
   static const double iconSmall = 16;

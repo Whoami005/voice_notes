@@ -25,6 +25,7 @@
 
   "folderDetailTitle": "Folder",
   "recordingInputHint": "Type text or record...",
+  "recordingSwipeToCancel": "Swipe left to cancel",
   "transcribing": "Transcribing...",
 
   "searchFilterAll": "All",
