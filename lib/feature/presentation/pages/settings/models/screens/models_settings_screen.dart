@@ -11,7 +11,7 @@ import 'package:voice_notes/core/state/async/async_state_widgets.dart';
 import 'package:voice_notes/core/theme/app_typography.dart';
 import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/models/logic/models_cubit.dart';
-import 'package:voice_notes/feature/presentation/pages/settings/models/widgets/model_card.dart';
+import 'package:voice_notes/feature/presentation/pages/settings/models/widgets/model_card/model_card.dart';
 import 'package:voice_notes/feature/presentation/widgets/dialogs/error_dialog.dart';
 
 class ModelsSettingsScreen extends StatefulWidget {
@@ -35,8 +35,7 @@ class _ModelsSettingsScreenState extends State<ModelsSettingsScreen> {
 
     for (final entry in state.downloads.entries) {
       final progress = entry.value;
-      if (progress.status == DownloadStatus.failed &&
-          progress.errorMessage != null) {
+      if (progress.status.isFailed && progress.errorMessage != null) {
         _showErrorDialog(context, progress.errorMessage!);
         break;
       }

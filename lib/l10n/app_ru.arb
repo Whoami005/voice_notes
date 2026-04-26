@@ -196,6 +196,8 @@
 
   "modelCardActive": "АКТИВНА",
   "@modelCardActive": { "description": "Model card: active badge" },
+  "modelStatusPreparing": "Подготовка...",
+  "@modelStatusPreparing": { "description": "Model download: preparing" },
   "modelStatusQueued": "В очереди...",
   "@modelStatusQueued": { "description": "Model download: queued" },
   "modelStatusDownloading": "Загрузка...",

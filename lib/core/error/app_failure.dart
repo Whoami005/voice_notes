@@ -136,6 +136,8 @@ final class DownloadFailure extends AppFailure {
 
   const DownloadFailure.extractionFailed()
     : super('Не удалось распаковать модель');
+
+  const DownloadFailure.enqueue() : super('Не удалось добавить в очередь');
 }
 
 /// Ошибка при проверке хранилища

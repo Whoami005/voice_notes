@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:voice_notes/core/theme/app_theme.dart';
 import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
-import 'package:voice_notes/feature/presentation/pages/settings/models/widgets/model_card.dart';
+import 'package:voice_notes/feature/presentation/pages/settings/models/widgets/model_card/model_card.dart';
 import 'package:voice_notes/l10n/app_localizations.dart';
 
 void main() {
@@ -74,7 +74,7 @@ void main() {
           find.byKey(const Key('model-card-recommendation')),
           findsOneWidget,
         );
-        expect(find.textContaining('5 минут'), findsOneWidget);
+        expect(find.textContaining('чанкинг'), findsOneWidget);
       },
     );
   });

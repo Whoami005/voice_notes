@@ -99,6 +99,7 @@
   "deleteModelMessage": "Model \"{name}\" will be deleted from the device. You can download it again.",
 
   "modelCardActive": "ACTIVE",
+  "modelStatusPreparing": "Preparing...",
   "modelStatusQueued": "Queued...",
   "modelStatusDownloading": "Downloading...",
   "modelStatusExtracting": "Extracting...",

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:background_downloader/background_downloader.dart';
 import 'package:equatable/equatable.dart';
 import 'package:injectable/injectable.dart';
+import 'package:voice_notes/core/error/app_failure.dart';
 import 'package:voice_notes/core/packages/downloader/download_status.dart';
 import 'package:voice_notes/core/packages/path/asr_model_paths.dart';
 import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
@@ -130,24 +131,18 @@ class DownloadManager {
     _modelIdToTaskId[modelId] = task.taskId;
     _taskIdToModelId[task.taskId] = modelId;
 
-    // Отправляем начальный статус
+    try {
+      final success = await FileDownloader().enqueue(task);
+      if (!success) throw const DownloadFailure.enqueue();
+    } catch (_) {
+      _modelIdToTaskId.remove(modelId);
+      _taskIdToModelId.remove(task.taskId);
+      rethrow;
+    }
+
     _progressController.add(
       ModelDownloadProgress(modelId: modelId, status: DownloadStatus.queued),
     );
-
-    final success = await FileDownloader().enqueue(task);
-    if (!success) {
-      _modelIdToTaskId.remove(modelId);
-      _taskIdToModelId.remove(task.taskId);
-
-      _progressController.add(
-        ModelDownloadProgress(
-          modelId: modelId,
-          status: DownloadStatus.failed,
-          errorMessage: 'Не удалось добавить в очередь',
-        ),
-      );
-    }
 
     return task.taskId;
   }

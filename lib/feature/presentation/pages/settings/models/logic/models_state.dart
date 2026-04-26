@@ -36,7 +36,8 @@ class ModelsState extends Equatable {
   }
 
   bool _isActiveDownload(DownloadStatus status) {
-    return status == DownloadStatus.queued ||
+    return status == DownloadStatus.preparing ||
+        status == DownloadStatus.queued ||
         status == DownloadStatus.downloading ||
         status == DownloadStatus.extracting ||
         status == DownloadStatus.paused;

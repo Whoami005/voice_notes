@@ -7,6 +7,7 @@ import 'package:voice_notes/core/packages/downloader/download_manager.dart';
 import 'package:voice_notes/core/packages/downloader/download_status.dart';
 import 'package:voice_notes/core/packages/internet/internet_checker.dart';
 import 'package:voice_notes/core/packages/storage/storage_checker.dart';
+import 'package:voice_notes/core/state/async/async_state.dart';
 import 'package:voice_notes/core/state/async/initializable_async_cubits.dart';
 import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
 import 'package:voice_notes/feature/domain/repositories/model_repository.dart';
@@ -19,6 +20,8 @@ part 'models_state.dart';
 /// Не управляет жизненным циклом AsrService — этим занимается AsrCubit,
 /// который реагирует на изменения выбранной модели через БД (local-first).
 class ModelsCubit extends InitializableAsyncCubit<ModelsState> {
+  static const double _downloadStorageMultiplier = 2.2;
+
   final ModelRepository _repository;
 
   StreamSubscription<ModelDownloadProgress>? _downloadSubscription;
@@ -111,44 +114,74 @@ class ModelsCubit extends InitializableAsyncCubit<ModelsState> {
   /// 1. Подключение к интернету
   /// 2. Достаточно места на устройстве
   Future<AppFailure?> downloadModel(AsrModelEntity model) async {
-    // Проверяем интернет
+    final modelId = model.uuid.value;
+    final current = state.dataOrNull;
+    if (current == null) return null;
+
+    if (_isDownloadBlocked(current, model)) return null;
+
+    _emitPreparing(modelId);
+
+    try {
+      final failure = await _checkDownloadPreconditions(model);
+      if (failure != null) {
+        _removeDownloadProgress(modelId);
+        return failure;
+      }
+
+      await _repository.downloadModel(model);
+    } catch (e, s) {
+      _removeDownloadProgress(modelId);
+      return logError(e, s);
+    }
+
+    return null;
+  }
+
+  bool _isDownloadBlocked(ModelsState current, AsrModelEntity model) {
+    final modelId = model.uuid.value;
+    final currentModel = current.models.firstWhereOrNull(
+      (item) => item.uuid.value == modelId,
+    );
+
+    return (currentModel?.isDownloaded ?? model.isDownloaded) ||
+        current.isDownloading(modelId);
+  }
+
+  void _emitPreparing(String modelId) {
+    _handleDownloadProgress(
+      ModelDownloadProgress(modelId: modelId, status: DownloadStatus.preparing),
+    );
+  }
+
+  Future<AppFailure?> _checkDownloadPreconditions(AsrModelEntity model) async {
     final hasConnection = await InternetChecker.hasConnection();
     if (!hasConnection) return const NetworkFailure.noConnection();
 
-    // Парсим размер модели для проверки места
     final requiredBytes = _parseModelSize(model.size);
-    if (requiredBytes != null) {
-      // Нужно место для архива + распакованной модели + буфер
-      final totalRequired = (requiredBytes * 2.2).toInt();
-      final hasSpace = await StorageChecker.hasEnoughSpace(totalRequired);
+    if (requiredBytes == null) return null;
 
-      if (!hasSpace) {
-        final available = await StorageChecker.getAvailableSpace();
+    // Нужно место для архива + распакованной модели + буфер.
+    final totalRequired = (requiredBytes * _downloadStorageMultiplier).toInt();
+    final available = await StorageChecker.getAvailableSpace();
+    if (available == null) return const StorageFailure.cannotCheck();
 
-        return StorageFailure.insufficientSpace(
-          requiredBytes: totalRequired,
-          availableBytes: available,
-        );
-      }
-    }
-
-    // Запускаем скачивание
-    try {
-      await _repository.downloadModel(model);
-    } catch (e, s) {
-      final failure = logError(e, s);
-
-      // Обновляем прогресс с ошибкой
-      _handleDownloadProgress(
-        ModelDownloadProgress(
-          modelId: model.uuid.value,
-          status: DownloadStatus.failed,
-          errorMessage: failure.message,
-        ),
+    if (available < totalRequired) {
+      return StorageFailure.insufficientSpace(
+        requiredBytes: totalRequired,
+        availableBytes: available,
       );
     }
 
     return null;
+  }
+
+  void _removeDownloadProgress(String modelId) {
+    whenData((current) {
+      final updated = {...current.downloads}..remove(modelId);
+
+      emitSuccess(current.copyWith(downloads: updated));
+    });
   }
 
   /// Парсинг размера модели из строки (например "466 MB" -> bytes)

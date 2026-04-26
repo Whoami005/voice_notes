@@ -3,6 +3,9 @@ enum DownloadStatus {
   /// Модель не скачана
   idle,
 
+  /// Выполняются проверки перед скачиванием
+  preparing,
+
   /// В очереди на скачивание
   queued,
 
@@ -25,6 +28,8 @@ enum DownloadStatus {
   paused;
 
   bool get isIdle => this == idle;
+
+  bool get isPreparing => this == preparing;
 
   bool get isQueued => this == queued;
 
