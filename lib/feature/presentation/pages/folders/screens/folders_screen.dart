@@ -10,7 +10,7 @@ import 'package:voice_notes/feature/domain/repositories/folder_repository.dart';
 import 'package:voice_notes/feature/presentation/pages/folders/components/folders_app_bar.dart';
 import 'package:voice_notes/feature/presentation/pages/folders/components/folders_list_section.dart';
 import 'package:voice_notes/feature/presentation/pages/folders/logic/folders_cubit.dart';
-import 'package:voice_notes/feature/presentation/pages/folders/widgets/voice_record_button.dart';
+import 'package:voice_notes/feature/presentation/pages/folders/widgets/voice_record_button/voice_record_button.dart';
 import 'package:voice_notes/feature/presentation/widgets/asr_status_banner.dart';
 import 'package:voice_notes/feature/presentation/widgets/base_preferred_app_bar.dart';
 import 'package:voice_notes/feature/presentation/widgets/refresh/refreshable_wrapper.dart';

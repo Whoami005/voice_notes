@@ -336,10 +336,7 @@ void main() {
             status: TranscriptionStatus.queued,
             audio: _makeAudio(),
           ),
-      ];
-      for (final note in notes) {
-        repo.addNote(note);
-      }
+      ]..forEach(repo.addNote);
 
       final service = buildService();
       asr.transcribeFileImpl = (_) =>
