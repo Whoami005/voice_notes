@@ -36,8 +36,17 @@ class AudioRecordingService {
   DateTime? _recordingStartTime;
   Timer? _durationTimer;
   Timer? _maxDurationTimer;
+  StreamSubscription<Amplitude>? _amplitudeSubscription;
 
   final _durationController = StreamController<Duration>.broadcast();
+  final _amplitudeController = StreamController<double>.broadcast();
+
+  /// Нижняя граница нормализации dBFS → [0, 1]. Значения тише -60 dBFS
+  /// считаем тишиной (mapped в 0).
+  static const double _silenceFloorDb = -60;
+
+  /// Интервал, с которым `record` пакет эмитит amplitude-сэмплы.
+  static const Duration _amplitudeInterval = Duration(milliseconds: 100);
 
   // Callback для auto-stop по достижению max duration
   void Function()? _onMaxDurationReached;
@@ -52,6 +61,10 @@ class AudioRecordingService {
 
   /// Stream обновлений длительности (эмитит каждые 100ms во время записи)
   Stream<Duration> get durationStream => _durationController.stream;
+
+  /// Stream нормализованной амплитуды микрофона в диапазоне [0.0, 1.0].
+  /// Эмитит каждые 100ms во время записи.
+  Stream<double> get amplitudeStream => _amplitudeController.stream;
 
   /// Текущая длительность записи
   Duration get currentDuration {
@@ -118,6 +131,9 @@ class AudioRecordingService {
       // Запускаем обновления длительности
       _startDurationUpdates();
 
+      // Запускаем стрим амплитуды
+      _startAmplitudeUpdates();
+
       // Запускаем таймер max duration
       _startMaxDurationTimer();
     } catch (e) {
@@ -183,6 +199,7 @@ class AudioRecordingService {
   Future<void> dispose() async {
     await cancelRecording();
     await _durationController.close();
+    await _amplitudeController.close();
     await _recorder.dispose();
   }
 
@@ -194,6 +211,28 @@ class AudioRecordingService {
         _durationController.add(currentDuration);
       }
     });
+  }
+
+  void _startAmplitudeUpdates() {
+    final stream = _recorder.onAmplitudeChanged(_amplitudeInterval);
+    _amplitudeSubscription = stream.listen(
+      (amp) {
+        if (!_isRecording || _amplitudeController.isClosed) return;
+
+        // Нормализация: значения тише `_silenceFloorDb` → 0.0, 0 dBFS → 1.0.
+        final normalized = ((amp.current - _silenceFloorDb) / -_silenceFloorDb)
+            .clamp(0.0, 1.0);
+        _amplitudeController.add(normalized);
+      },
+      // Источник — внешний (`record` пакет), ошибки прокидываем подписчикам,
+      // чтобы Cubit мог их залогировать через `addError`. Без этого падение
+      // улетало бы в `Zone.current.handleUncaughtError`.
+      onError: (Object e, StackTrace s) {
+        if (!_amplitudeController.isClosed) {
+          _amplitudeController.addError(e, s);
+        }
+      },
+    );
   }
 
   void _startMaxDurationTimer() {
@@ -210,6 +249,8 @@ class AudioRecordingService {
     _durationTimer = null;
     _maxDurationTimer?.cancel();
     _maxDurationTimer = null;
+    _amplitudeSubscription?.cancel();
+    _amplitudeSubscription = null;
   }
 
   void _resetState() {

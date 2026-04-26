@@ -51,8 +51,13 @@ class RecordingCubit extends BaseCubit<RecordingState> {
   final AudioPlaybackController _playbackController;
   final NoteIngestionService _ingestionService;
 
-  StreamSubscription<Duration>? _durationSubscription;
+  StreamSubscription<double>? _amplitudeSubscription;
   Timer? _idleResetTimer;
+
+  /// Скользящее окно последних N амплитуд для live-waveform.
+  /// При 100ms-интервале 64 сэмпла ≈ 6.4 секунды истории.
+  static const int _amplitudeBufferSize = 64;
+  final List<double> _amplitudeBuffer = [];
 
   /// `null` = Quick Record в буфер обмена.
   final String? folderId;
@@ -94,14 +99,24 @@ class RecordingCubit extends BaseCubit<RecordingState> {
       // Отменяем возможный delayed-reset от предыдущего success/error,
       // чтобы он не переключил Active → Idle посреди новой записи.
       _idleResetTimer?.cancel();
+      _amplitudeBuffer.clear();
       emit(const RecordingActiveState());
 
-      _durationSubscription = _recordingService.durationStream.listen((
-        duration,
-      ) {
-        if (state is RecordingActiveState) {
-          emit(RecordingActiveState(duration: duration));
+      _amplitudeSubscription = _recordingService.amplitudeStream.listen((amp) {
+        if (state is! RecordingActiveState) return;
+
+        _amplitudeBuffer.add(amp);
+        if (_amplitudeBuffer.length > _amplitudeBufferSize) {
+          _amplitudeBuffer.removeAt(0);
         }
+
+        final current = state as RecordingActiveState;
+        emit(
+          current.copyWith(
+            duration: _recordingService.currentDuration,
+            amplitudes: List.unmodifiable(_amplitudeBuffer),
+          ),
+        );
       }, onError: addError);
     } on MicrophonePermissionDeniedException {
       _pendingNoteUuid = null;
@@ -131,7 +146,8 @@ class RecordingCubit extends BaseCubit<RecordingState> {
     if (noteUuid == null) return;
 
     try {
-      await _durationSubscription?.cancel();
+      await _amplitudeSubscription?.cancel();
+      _amplitudeBuffer.clear();
 
       final result = await _recordingService.stopRecording();
 
@@ -183,7 +199,8 @@ class RecordingCubit extends BaseCubit<RecordingState> {
     if (state is! RecordingActiveState) return;
 
     try {
-      await _durationSubscription?.cancel();
+      await _amplitudeSubscription?.cancel();
+      _amplitudeBuffer.clear();
       await _recordingService.cancelRecording();
 
       _pendingNoteUuid = null;
@@ -356,7 +373,8 @@ class RecordingCubit extends BaseCubit<RecordingState> {
   @override
   Future<void> close() async {
     _idleResetTimer?.cancel();
-    await _durationSubscription?.cancel();
+    await _amplitudeSubscription?.cancel();
+    _amplitudeBuffer.clear();
     // Сбрасывает `_isRecording` в singleton-сервисе, если запись была активна.
     await _recordingService.cancelRecording();
     return super.close();

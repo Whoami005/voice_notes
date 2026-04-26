@@ -15,17 +15,23 @@ final class RecordingIdleState extends RecordingState {
 
 final class RecordingActiveState extends RecordingState {
   final Duration duration;
-  final double? amplitude;
+  final List<double> amplitudes;
 
-  const RecordingActiveState({this.duration = Duration.zero, this.amplitude});
+  const RecordingActiveState({
+    this.duration = Duration.zero,
+    this.amplitudes = const [],
+  });
 
   @override
-  List<Object?> get props => [duration, amplitude];
+  List<Object?> get props => [duration, amplitudes];
 
-  RecordingActiveState copyWith({Duration? duration, double? amplitude}) {
+  RecordingActiveState copyWith({
+    Duration? duration,
+    List<double>? amplitudes,
+  }) {
     return RecordingActiveState(
       duration: duration ?? this.duration,
-      amplitude: amplitude ?? this.amplitude,
+      amplitudes: amplitudes ?? this.amplitudes,
     );
   }
 }

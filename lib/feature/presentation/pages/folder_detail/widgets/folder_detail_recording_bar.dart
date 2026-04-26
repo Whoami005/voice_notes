@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/logic/recording_cubit.dart';
-import 'package:voice_notes/feature/presentation/pages/folder_detail/widgets/recording_input.dart';
+import 'package:voice_notes/feature/presentation/pages/folder_detail/widgets/recording_input/recording_input.dart';
 
 /// Recording input bar for folder detail screen.
 ///
@@ -32,19 +32,18 @@ class FolderDetailRecordingBar extends StatelessWidget {
           child: RecordingInput(
             state: state.uiState,
             recordingDuration: state.durationOrNull ?? Duration.zero,
+            amplitudes: switch (state) {
+              RecordingActiveState(:final amplitudes) => amplitudes,
+              _ => const [],
+            },
             onStartRecording: cubit.startRecording,
             onStopRecording: cubit.stopRecording,
             onCancelRecording: cubit.cancelRecording,
-            onUploadFile: _onUploadFile,
             onTextSubmit: cubit.createTextNote,
           ),
         );
       },
     );
-  }
-
-  void _onUploadFile() {
-    // TODO(W): Open file picker
   }
 
   void _handleRecordingStateChange(BuildContext context, RecordingState state) {

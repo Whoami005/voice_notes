@@ -39,6 +39,8 @@ class AppSizes {
   static const double buttonRadius = 10;
   static const double chipRadius = 20;
   static const double bubbleRadius = 18;
+  static const double recordingBarHeight = 48;
+  static const double recordingBarRadius = 14;
 
   // Icons
   static const double iconSmall = 16;
@@ -66,6 +68,9 @@ class AppSizes {
   static const double fabSize = 56;
   static const double fabRadius = 16;
   static const double micButtonSize = 48;
+  static const double actionCircleSize = 32;
+  static const double actionGlowBlur = 14;
+  static const double actionGlowOffsetY = 4;
 
   // Toggle
   static const double toggleWidth = 52;
