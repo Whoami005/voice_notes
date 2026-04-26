@@ -31,6 +31,10 @@ class FolderDetailScreen extends StatefulWidget implements AppRouteWrapper {
     context.router.go(AppRoutes.folders.detail(folderId));
   }
 
+  static void push(BuildContext context, {required String folderId}) {
+    context.router.push(AppRoutes.folders.detail(folderId));
+  }
+
   @override
   Widget wrappedRoute(BuildContext context) {
     return MultiBlocProvider(

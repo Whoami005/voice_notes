@@ -4,18 +4,21 @@ import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/feature/domain/entities/folder_entity.dart';
+import 'package:voice_notes/feature/presentation/widgets/highlighted_text.dart';
 import 'package:voice_notes/l10n/app_localizations.dart';
 
 class FolderCard extends StatelessWidget {
   final FolderEntity folder;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
+  final String? highlightQuery;
 
   const FolderCard({
     required this.folder,
     super.key,
     this.onTap,
     this.onLongPress,
+    this.highlightQuery,
   });
 
   @override
@@ -37,7 +40,10 @@ class FolderCard extends StatelessWidget {
             _IconContainer(color: folder.color, icon: folder.iconData),
             AppSpacer.p14,
             Expanded(
-              child: _TextContent(folder: folder),
+              child: _TextContent(
+                folder: folder,
+                highlightQuery: highlightQuery,
+              ),
             ),
             Icon(
               Icons.chevron_right,
@@ -73,8 +79,9 @@ class _IconContainer extends StatelessWidget {
 
 class _TextContent extends StatelessWidget {
   final FolderEntity folder;
+  final String? highlightQuery;
 
-  const _TextContent({required this.folder});
+  const _TextContent({required this.folder, this.highlightQuery});
 
   @override
   Widget build(BuildContext context) {
@@ -83,14 +90,17 @@ class _TextContent extends StatelessWidget {
     final l10n = context.l10n;
     final localeCode = Localizations.localeOf(context).languageCode;
 
+    final query = highlightQuery ?? '';
+    final titleStyle = textTheme.titleMedium;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          folder.name,
-          style: textTheme.titleMedium,
+        HighlightedText(
+          text: folder.name,
+          query: query,
+          style: titleStyle,
           maxLines: 1,
-          overflow: TextOverflow.ellipsis,
         ),
         AppSpacer.p2,
         Text(
@@ -109,6 +119,7 @@ class _TextContent extends StatelessWidget {
     final count = folder.notesCount;
     final noteWord = l10n.folderCardNotesCount(count);
     final timeAgo = _formatTimeAgo(folder.updatedAt, l10n, localeCode);
+
     return '$noteWord \u2022 $timeAgo';
   }
 

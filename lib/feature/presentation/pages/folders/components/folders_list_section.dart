@@ -28,7 +28,7 @@ class FoldersListSection extends StatelessWidget {
       AsyncState<FoldersState>,
       FolderEntity
     >(
-      selector: (state) => state.requireData.filteredFolders,
+      selector: (state) => state.requireData.folders,
       padding: const EdgeInsets.only(
         top: AppSizes.p12,
         left: AppSizes.screenPadding,

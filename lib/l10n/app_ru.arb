@@ -73,6 +73,16 @@
   "searchFilterDate": "Дата",
   "@searchFilterDate": { "description": "Search filter: date" },
 
+  "searchScreenEmptyHint": "Начните вводить, чтобы найти папку",
+  "@searchScreenEmptyHint": { "description": "Hint shown on the folder search screen when the query is empty" },
+  "searchScreenNoResultsTitle": "Ничего не найдено",
+  "@searchScreenNoResultsTitle": { "description": "Title shown when search has no results" },
+  "searchScreenNoResultsHint": "По запросу «{query}» ничего не нашлось",
+  "@searchScreenNoResultsHint": {
+    "description": "Hint shown when search has no results, with the query",
+    "placeholders": { "query": { "type": "String" } }
+  },
+
   "noteDetailTitle": "Заметка",
   "@noteDetailTitle": { "description": "Note detail screen title" },
   "noteDetailSectionText": "Текст",

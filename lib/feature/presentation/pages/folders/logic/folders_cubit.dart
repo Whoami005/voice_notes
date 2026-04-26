@@ -4,27 +4,19 @@ import 'package:equatable/equatable.dart';
 import 'package:voice_notes/core/state/async/async_state.dart';
 import 'package:voice_notes/core/state/async/initializable_async_cubits.dart';
 import 'package:voice_notes/core/state/effect/common_effects.dart';
-import 'package:voice_notes/core/state/searchable/local_search_mixin.dart';
-import 'package:voice_notes/core/state/searchable/search_matchers.dart';
 import 'package:voice_notes/feature/domain/entities/folder_entity.dart';
 import 'package:voice_notes/feature/domain/repositories/folder_repository.dart';
 import 'package:voice_notes/feature/presentation/widgets/bottom_sheet/create_folder_sheet.dart';
 
 part 'folders_state.dart';
 
-class FoldersCubit extends InitializableAsyncCubit<FoldersState>
-    with LocalSearchMixin {
+class FoldersCubit extends InitializableAsyncCubit<FoldersState> {
   final FolderRepository _repository;
 
   StreamSubscription<List<FolderEntity>>? _subscription;
 
   FoldersCubit({required FolderRepository repository})
     : _repository = repository;
-
-  @override
-  void onSearch(String query) {
-    whenData((data) => emitSuccess(data.copyWith(query: query)));
-  }
 
   @override
   Future<void> init() async {

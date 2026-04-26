@@ -25,6 +25,9 @@ class _FoldersRoutes {
   /// Путь для навигации: /folders
   String get root => '/folders';
 
+  /// Путь для навигации: /folders/search
+  String get search => '$pattern/search';
+
   /// Путь для навигации: /folders/:id
   String detail(String id) => '$pattern/$id';
 

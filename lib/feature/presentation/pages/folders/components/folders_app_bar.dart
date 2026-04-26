@@ -4,54 +4,17 @@ import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/state/async/async_state.dart';
 import 'package:voice_notes/core/theme/app_colors.dart';
+import 'package:voice_notes/feature/presentation/pages/folder_search/screens/folder_search_screen.dart';
 import 'package:voice_notes/feature/presentation/pages/folders/logic/folders_cubit.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/general/screens/general_settings_screen.dart';
 
-/// AppBar for folders screen with integrated search functionality.
+/// AppBar for the folders screen.
 ///
-/// Manages its own search state internally, including the search visibility
-/// toggle and text controller. The search bar appears as a bottom widget
-/// of the SliverAppBar when visible.
-class FoldersAppBar extends StatefulWidget {
+/// Tapping the search icon pushes the dedicated [FolderSearchScreen] route
+/// instead of revealing an inline search field. The icon is hidden when
+/// the folders list is empty (nothing to search).
+class FoldersAppBar extends StatelessWidget {
   const FoldersAppBar({super.key});
-
-  @override
-  State<FoldersAppBar> createState() => _FoldersAppBarState();
-}
-
-class _FoldersAppBarState extends State<FoldersAppBar> {
-  bool _isSearchVisible = false;
-  late final TextEditingController _searchController;
-
-  @override
-  void initState() {
-    super.initState();
-    _searchController = TextEditingController();
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  void _toggleSearch() {
-    setState(() {
-      _isSearchVisible = !_isSearchVisible;
-      if (!_isSearchVisible) {
-        _searchController.clear();
-        context.read<FoldersCubit>().clearSearch();
-      }
-    });
-  }
-
-  void _clearSearch() {
-    _searchController.clear();
-    context.read<FoldersCubit>().clearSearch();
-    setState(() {});
-  }
-
-  void _onSettingsTap() => GeneralSettingsScreen.go(context);
 
   @override
   Widget build(BuildContext context) {
@@ -70,68 +33,14 @@ class _FoldersAppBarState extends State<FoldersAppBar> {
       actions: [
         if (!isEmpty)
           IconButton(
-            icon: Icon(
-              _isSearchVisible ? Icons.close : Icons.search,
-              color: themeColors.textSecondary,
-            ),
-            onPressed: _toggleSearch,
+            icon: Icon(Icons.search, color: themeColors.textSecondary),
+            onPressed: () => FolderSearchScreen.go(context),
           ),
         IconButton(
           icon: Icon(Icons.settings_outlined, color: themeColors.textSecondary),
-          onPressed: _onSettingsTap,
+          onPressed: () => GeneralSettingsScreen.go(context),
         ),
       ],
-      bottom: _isSearchVisible
-          ? PreferredSize(
-              preferredSize: const Size.fromHeight(64),
-              child: _SearchField(
-                controller: _searchController,
-                onClear: _clearSearch,
-                onChanged: (query) =>
-                    context.read<FoldersCubit>().search(query),
-              ),
-            )
-          : null,
-    );
-  }
-}
-
-class _SearchField extends StatelessWidget {
-  final TextEditingController controller;
-  final VoidCallback onClear;
-  final ValueChanged<String> onChanged;
-
-  const _SearchField({
-    required this.controller,
-    required this.onClear,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final themeColors = context.themeColors;
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      curve: Curves.easeOut,
-      padding: const EdgeInsets.symmetric(
-        vertical: AppSizes.p8,
-        horizontal: AppSizes.screenPadding,
-      ),
-      child: TextField(
-        controller: controller,
-        onChanged: onChanged,
-        decoration: InputDecoration(
-          hintText: context.l10n.foldersSearchHint,
-          prefixIcon: Icon(Icons.search, color: themeColors.textTertiary),
-          suffixIcon: controller.text.isNotEmpty
-              ? IconButton(
-                  icon: Icon(Icons.clear, color: themeColors.textTertiary),
-                  onPressed: onClear,
-                )
-              : null,
-        ),
-      ),
     );
   }
 }

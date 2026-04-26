@@ -33,6 +33,10 @@
   "searchFilterTags": "Tags",
   "searchFilterDate": "Date",
 
+  "searchScreenEmptyHint": "Start typing to find a folder",
+  "searchScreenNoResultsTitle": "No results",
+  "searchScreenNoResultsHint": "Nothing matches “{query}”",
+
   "noteDetailTitle": "Note",
   "noteDetailSectionText": "Text",
   "noteDetailSectionTags": "Tags",
