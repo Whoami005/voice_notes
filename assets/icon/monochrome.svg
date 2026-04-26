@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Voice Notes app icon — Concept 5 "Transcribe"
+       Android 13+ themed monochrome layer (1024×1024, transparent bg, single-color silhouette) -->
+  <path d="M 282 360 Q 362 200, 442 360 T 602 360 T 762 360"
+        stroke="#FFFFFF" stroke-width="48" fill="none"
+        stroke-linecap="round"/>
+  <g fill="#FFFFFF">
+    <rect x="282" y="540" width="460" height="44" rx="22"/>
+    <rect x="282" y="616" width="360" height="44" rx="22"/>
+    <rect x="282" y="692" width="430" height="44" rx="22"/>
+  </g>
+</svg>

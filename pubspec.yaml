@@ -89,6 +89,7 @@ dev_dependencies:
   objectbox_generator: 5.3.1
   flutter_gen_runner: 5.13.0+1
   injectable_generator: 2.12.1
+  flutter_launcher_icons: 0.14.4
 
 #dependency_overrides:
 
@@ -141,3 +142,18 @@ objectbox:
   # output_dir:
   #   lib: custom
   #   test: other
+
+flutter_launcher_icons:
+  android: "ic_launcher"
+  ios: true
+  image_path: "assets/icon/master.png"
+
+  # Android adaptive icon (API 26+)
+  adaptive_icon_background: "#191919"
+  adaptive_icon_foreground: "assets/icon/foreground.png"
+
+  # Android themed icon (API 33+)
+  adaptive_icon_monochrome: "assets/icon/monochrome.png"
+
+  # iOS — App Store rejects icons with alpha channel
+  remove_alpha_ios: true
