@@ -90,6 +90,7 @@ dev_dependencies:
   flutter_gen_runner: 5.13.0+1
   injectable_generator: 2.12.1
   flutter_launcher_icons: 0.14.4
+  flutter_native_splash: 2.4.7
 
 #dependency_overrides:
 
@@ -157,3 +158,20 @@ flutter_launcher_icons:
 
   # iOS — App Store rejects icons with alpha channel
   remove_alpha_ios: true
+
+flutter_native_splash:
+  # iOS + Android < 12: full V4 design (glow baked into logo image)
+  color: "#191919"
+  image: "assets/splash/logo.png"
+
+  # Android 12+ system Splash API: only icon + bg color (decorative glow ignored).
+  # Reuse existing launcher icon foreground — same glyph shape.
+  android_12:
+    color: "#191919"
+    image: "assets/icon/foreground.png"
+    icon_background_color: "#191919"
+
+  # Targets
+  android: true
+  ios: true
+  web: false

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 1500" width="1500" height="1500">
+  <!-- Voice Notes splash logo — Concept V4 "Soft Glow"
+       1500×1500 canvas: centered glyph (Concept 5 wave + 3 lines) wrapped in
+       a radial amber glow that fades to transparent at canvas edges.
+       Splash background color (#191919) shows through transparency. -->
+  <defs>
+    <radialGradient id="splash-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#F59E0B" stop-opacity="0.22"/>
+      <stop offset="40%"  stop-color="#F59E0B" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#F59E0B" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Glow fill -->
+  <rect width="1500" height="1500" fill="url(#splash-glow)"/>
+
+  <!-- Centered glyph: 1024 viewBox embedded in 1500 canvas, offset by (238, 238) -->
+  <g transform="translate(238, 238)">
+    <path d="M 282 360 Q 362 200, 442 360 T 602 360 T 762 360"
+          stroke="#F59E0B" stroke-width="48" fill="none"
+          stroke-linecap="round"/>
+    <g fill="#F59E0B">
+      <rect x="282" y="540" width="460" height="44" rx="22"/>
+      <rect x="282" y="616" width="360" height="44" rx="22"/>
+      <rect x="282" y="692" width="430" height="44" rx="22"/>
+    </g>
+  </g>
+</svg>
