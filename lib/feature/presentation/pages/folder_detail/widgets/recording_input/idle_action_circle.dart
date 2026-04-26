@@ -25,16 +25,16 @@ class _IdleActionCircle extends StatelessWidget {
       onTap: hasText ? onSend : onStartRecording,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        width: 32,
-        height: 32,
+        width: AppSizes.actionCircleSize,
+        height: AppSizes.actionCircleSize,
         decoration: BoxDecoration(
           color: backgroundColor,
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
               color: glowColor,
-              blurRadius: 14,
-              offset: const Offset(0, 4),
+              blurRadius: AppSizes.actionGlowBlur,
+              offset: const Offset(0, AppSizes.actionGlowOffsetY),
             ),
           ],
         ),

@@ -13,6 +13,9 @@ class _PulseDot extends StatefulWidget {
 
 class _PulseDotState extends State<_PulseDot>
     with SingleTickerProviderStateMixin {
+  static const double _dotSize = 6;
+  static const double _glowBlur = 6;
+
   late final AnimationController _controller;
 
   @override
@@ -38,15 +41,15 @@ class _PulseDotState extends State<_PulseDot>
         final opacity = 1.0 - (_controller.value * 0.5);
 
         return Container(
-          width: 6,
-          height: 6,
+          width: _dotSize,
+          height: _dotSize,
           decoration: BoxDecoration(
             color: widget.color.withValues(alpha: opacity),
             shape: BoxShape.circle,
             boxShadow: [
               BoxShadow(
                 color: widget.color.withValues(alpha: opacity * 0.5),
-                blurRadius: 6,
+                blurRadius: _glowBlur,
               ),
             ],
           ),

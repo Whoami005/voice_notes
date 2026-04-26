@@ -215,14 +215,24 @@ class AudioRecordingService {
 
   void _startAmplitudeUpdates() {
     final stream = _recorder.onAmplitudeChanged(_amplitudeInterval);
-    _amplitudeSubscription = stream.listen((amp) {
-      if (!_isRecording || _amplitudeController.isClosed) return;
+    _amplitudeSubscription = stream.listen(
+      (amp) {
+        if (!_isRecording || _amplitudeController.isClosed) return;
 
-      // Нормализация: значения тише `_silenceFloorDb` → 0.0, 0 dBFS → 1.0.
-      final normalized = ((amp.current - _silenceFloorDb) / -_silenceFloorDb)
-          .clamp(0.0, 1.0);
-      _amplitudeController.add(normalized);
-    });
+        // Нормализация: значения тише `_silenceFloorDb` → 0.0, 0 dBFS → 1.0.
+        final normalized = ((amp.current - _silenceFloorDb) / -_silenceFloorDb)
+            .clamp(0.0, 1.0);
+        _amplitudeController.add(normalized);
+      },
+      // Источник — внешний (`record` пакет), ошибки прокидываем подписчикам,
+      // чтобы Cubit мог их залогировать через `addError`. Без этого падение
+      // улетало бы в `Zone.current.handleUncaughtError`.
+      onError: (Object e, StackTrace s) {
+        if (!_amplitudeController.isClosed) {
+          _amplitudeController.addError(e, s);
+        }
+      },
+    );
   }
 
   void _startMaxDurationTimer() {

@@ -6,6 +6,8 @@ part of 'recording_input.dart';
 /// Новый сэмпл всегда у правого края, старые уходят влево — визуально запись
 /// «течёт» направо налево.
 class _LiveWaveform extends StatelessWidget {
+  static const double _waveformHeight = 28;
+
   final List<double> amplitudes;
   final Color color;
 
@@ -15,7 +17,7 @@ class _LiveWaveform extends StatelessWidget {
   Widget build(BuildContext context) {
     return RepaintBoundary(
       child: SizedBox(
-        height: 28,
+        height: _waveformHeight,
         child: CustomPaint(
           painter: _LiveWaveformPainter(amplitudes: amplitudes, color: color),
           size: Size.infinite,

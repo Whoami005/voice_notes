@@ -1,10 +1,5 @@
 part of 'recording_input.dart';
 
-/// Доля высоты экрана, до которой может разрастись idle-капсула при
-/// многострочном вводе. ~30% даёт ~10 строк на iPhone — достаточно для
-/// длинной заметки, не закрывая большую часть экрана.
-const double _idleMaxHeightFraction = 0.3;
-
 class _IdleState extends StatefulWidget {
   final VoidCallback? onStartRecording;
   final VoidCallback? onUploadFile;
@@ -26,6 +21,11 @@ class _IdleStateState extends State<_IdleState> {
   late final TextEditingController _controller;
   bool _hasText = false;
 
+  /// Доля высоты экрана, до которой может разрастись idle-капсула при
+  /// многострочном вводе. ~30% даёт ~10 строк на iPhone — достаточно для
+  /// длинной заметки, не закрывая большую часть экрана.
+  static const double _idleMaxHeightFraction = 0.3;
+
   @override
   void initState() {
     super.initState();
@@ -36,9 +36,7 @@ class _IdleStateState extends State<_IdleState> {
 
   void _onTextChanged() {
     final hasText = _controller.text.trim().isNotEmpty;
-    if (hasText != _hasText) {
-      setState(() => _hasText = hasText);
-    }
+    if (hasText != _hasText) setState(() => _hasText = hasText);
   }
 
   void _onSubmit() {

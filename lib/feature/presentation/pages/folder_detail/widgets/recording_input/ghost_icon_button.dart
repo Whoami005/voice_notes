@@ -15,8 +15,8 @@ class _GhostIconButton extends StatelessWidget {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: SizedBox(
-        width: 32,
-        height: 32,
+        width: AppSizes.actionCircleSize,
+        height: AppSizes.actionCircleSize,
         child: Icon(icon, size: AppSizes.iconMedium, color: color),
       ),
     );

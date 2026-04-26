@@ -51,7 +51,6 @@ class RecordingCubit extends BaseCubit<RecordingState> {
   final AudioPlaybackController _playbackController;
   final NoteIngestionService _ingestionService;
 
-  StreamSubscription<Duration>? _durationSubscription;
   StreamSubscription<double>? _amplitudeSubscription;
   Timer? _idleResetTimer;
 
@@ -103,15 +102,6 @@ class RecordingCubit extends BaseCubit<RecordingState> {
       _amplitudeBuffer.clear();
       emit(const RecordingActiveState());
 
-      _durationSubscription = _recordingService.durationStream.listen((
-        duration,
-      ) {
-        if (state is! RecordingActiveState) return;
-
-        final current = state as RecordingActiveState;
-        emit(current.copyWith(duration: duration));
-      }, onError: addError);
-
       _amplitudeSubscription = _recordingService.amplitudeStream.listen((amp) {
         if (state is! RecordingActiveState) return;
 
@@ -121,7 +111,12 @@ class RecordingCubit extends BaseCubit<RecordingState> {
         }
 
         final current = state as RecordingActiveState;
-        emit(current.copyWith(amplitudes: List.unmodifiable(_amplitudeBuffer)));
+        emit(
+          current.copyWith(
+            duration: _recordingService.currentDuration,
+            amplitudes: List.unmodifiable(_amplitudeBuffer),
+          ),
+        );
       }, onError: addError);
     } on MicrophonePermissionDeniedException {
       _pendingNoteUuid = null;
@@ -151,7 +146,6 @@ class RecordingCubit extends BaseCubit<RecordingState> {
     if (noteUuid == null) return;
 
     try {
-      await _durationSubscription?.cancel();
       await _amplitudeSubscription?.cancel();
       _amplitudeBuffer.clear();
 
@@ -205,7 +199,6 @@ class RecordingCubit extends BaseCubit<RecordingState> {
     if (state is! RecordingActiveState) return;
 
     try {
-      await _durationSubscription?.cancel();
       await _amplitudeSubscription?.cancel();
       _amplitudeBuffer.clear();
       await _recordingService.cancelRecording();
@@ -380,7 +373,6 @@ class RecordingCubit extends BaseCubit<RecordingState> {
   @override
   Future<void> close() async {
     _idleResetTimer?.cancel();
-    await _durationSubscription?.cancel();
     await _amplitudeSubscription?.cancel();
     _amplitudeBuffer.clear();
     // Сбрасывает `_isRecording` в singleton-сервисе, если запись была активна.

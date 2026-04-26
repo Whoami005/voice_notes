@@ -35,12 +35,18 @@ class _RecordingStateState extends State<_RecordingState>
   /// в gap между баром и safe-area, не сдвигая ленту заметок наверху.
   static const double _hintOverhang = 22;
 
+  static const double _hintIconSize = 14;
+
+  static const double _capsuleShadowBlur = 20;
+  static const double _capsuleShadowSpread = -2;
+
   double _dragOffset = 0;
   bool _hintVisible = false;
   double _snapFrom = 0;
 
   late final AnimationController _snapController;
   late final Animation<double> _snapAnimation;
+  Timer? _hintTimer;
 
   @override
   void initState() {
@@ -55,13 +61,14 @@ class _RecordingStateState extends State<_RecordingState>
     );
     _snapController.addListener(_onSnapTick);
 
-    Future.delayed(_hintDelay, () {
+    _hintTimer = Timer(_hintDelay, () {
       if (mounted) setState(() => _hintVisible = true);
     });
   }
 
   @override
   void dispose() {
+    _hintTimer?.cancel();
     _snapController
       ..removeListener(_onSnapTick)
       ..dispose();
@@ -186,8 +193,8 @@ class _RecordingStateState extends State<_RecordingState>
                                   BoxShadow(
                                     color: themeColors.recordingPulse
                                         .withValues(alpha: 0.15),
-                                    blurRadius: 20,
-                                    spreadRadius: -2,
+                                    blurRadius: _capsuleShadowBlur,
+                                    spreadRadius: _capsuleShadowSpread,
                                   ),
                                 ],
                               ),
@@ -249,7 +256,7 @@ class _RecordingStateState extends State<_RecordingState>
                   children: [
                     Icon(
                       Icons.chevron_left,
-                      size: 14,
+                      size: _hintIconSize,
                       color: themeColors.textTertiary,
                     ),
                     Text(

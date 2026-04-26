@@ -68,6 +68,9 @@ class AppSizes {
   static const double fabSize = 56;
   static const double fabRadius = 16;
   static const double micButtonSize = 48;
+  static const double actionCircleSize = 32;
+  static const double actionGlowBlur = 14;
+  static const double actionGlowOffsetY = 4;
 
   // Toggle
   static const double toggleWidth = 52;
