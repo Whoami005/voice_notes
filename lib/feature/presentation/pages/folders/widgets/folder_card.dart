@@ -45,11 +45,8 @@ class FolderCard extends StatelessWidget {
                 highlightQuery: highlightQuery,
               ),
             ),
-            Icon(
-              Icons.chevron_right,
-              size: AppSizes.iconMedium,
-              color: themeColors.textTertiary,
-            ),
+            AppSpacer.p12,
+            _CountPill(count: folder.notesCount),
           ],
         ),
       ),
@@ -91,7 +88,8 @@ class _TextContent extends StatelessWidget {
     final localeCode = Localizations.localeOf(context).languageCode;
 
     final query = highlightQuery ?? '';
-    final titleStyle = textTheme.titleMedium;
+    final description = folder.description?.trim() ?? '';
+    final hasDescription = description.isNotEmpty;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -99,12 +97,23 @@ class _TextContent extends StatelessWidget {
         HighlightedText(
           text: folder.name,
           query: query,
-          style: titleStyle,
+          style: textTheme.titleMedium,
           maxLines: 1,
         ),
+        if (hasDescription) ...[
+          AppSpacer.p2,
+          HighlightedText(
+            text: description,
+            query: query,
+            style: textTheme.bodySmall?.copyWith(
+              color: themeColors.textSecondary,
+            ),
+            maxLines: 1,
+          ),
+        ],
         AppSpacer.p2,
         Text(
-          _buildSubtitle(l10n, localeCode),
+          _formatTimeAgo(folder.updatedAt, l10n, localeCode),
           style: textTheme.labelMedium?.copyWith(
             color: themeColors.textTertiary,
           ),
@@ -113,14 +122,6 @@ class _TextContent extends StatelessWidget {
         ),
       ],
     );
-  }
-
-  String _buildSubtitle(AppLocalizations l10n, String localeCode) {
-    final count = folder.notesCount;
-    final noteWord = l10n.folderCardNotesCount(count);
-    final timeAgo = _formatTimeAgo(folder.updatedAt, l10n, localeCode);
-
-    return '$noteWord \u2022 $timeAgo';
   }
 
   String _formatTimeAgo(
@@ -142,5 +143,35 @@ class _TextContent extends StatelessWidget {
     } else {
       return DateFormat('d MMM', localeCode).format(dateTime);
     }
+  }
+}
+
+class _CountPill extends StatelessWidget {
+  final int count;
+
+  const _CountPill({required this.count});
+
+  @override
+  Widget build(BuildContext context) {
+    final themeColors = context.themeColors;
+    final textTheme = context.textTheme;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSizes.p12,
+        vertical: AppSizes.p4,
+      ),
+      decoration: BoxDecoration(
+        color: themeColors.bgTertiary,
+        borderRadius: BorderRadius.circular(AppSizes.radiusFull),
+      ),
+      child: Text(
+        count.toString(),
+        style: textTheme.labelMedium?.copyWith(
+          color: themeColors.textPrimary,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
   }
 }

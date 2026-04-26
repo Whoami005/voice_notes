@@ -28,7 +28,7 @@ class FolderSearchResultsSection extends StatelessWidget {
 
         return SliverPadding(
           padding: const EdgeInsets.only(
-            top: AppSizes.p12,
+            top: AppSizes.p32,
             left: AppSizes.screenPadding,
             right: AppSizes.screenPadding,
             bottom: AppSizes.screenPadding,

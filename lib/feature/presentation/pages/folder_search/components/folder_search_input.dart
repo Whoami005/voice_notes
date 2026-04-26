@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
-import 'package:voice_notes/core/theme/app_colors.dart';
 
-/// Pinned SliverAppBar for the folder search screen.
-class FolderSearchAppBar extends StatelessWidget {
+/// Sliver containing the folder search text field.
+///
+/// Lives directly under `FolderSearchAppBar` in the search screen body.
+/// Owns no state — receives controller, focus node and clear callback
+/// from the parent screen, which drives the search cubit on every change.
+class FolderSearchInput extends StatelessWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
   final VoidCallback onClear;
 
-  const FolderSearchAppBar({
+  const FolderSearchInput({
     required this.controller,
     required this.focusNode,
     required this.onClear,
@@ -21,20 +24,21 @@ class FolderSearchAppBar extends StatelessWidget {
     final themeColors = context.themeColors;
     final hasText = controller.text.isNotEmpty;
 
-    return SliverAppBar(
-      pinned: true,
-      backgroundColor: themeColors.bgPrimary,
-      surfaceTintColor: AppColors.transparent,
-      leading: BackButton(color: themeColors.textPrimary),
-      title: Padding(
-        padding: const EdgeInsets.only(right: AppSizes.p16),
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+          AppSizes.screenPadding,
+          AppSizes.p12,
+          AppSizes.screenPadding,
+          AppSizes.p8,
+        ),
         child: TextField(
           controller: controller,
           focusNode: focusNode,
           autofocus: true,
           textInputAction: TextInputAction.search,
           decoration: InputDecoration(
-            hintText: context.l10n.foldersSearchHint,
+            hintText: context.l10n.searchHint,
             prefixIcon: Icon(Icons.search, color: themeColors.textTertiary),
             suffixIcon: hasText
                 ? IconButton(

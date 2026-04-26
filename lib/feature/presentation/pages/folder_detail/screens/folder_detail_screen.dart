@@ -97,21 +97,16 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               slivers: [
                 AsrStatusBanner.sliver(),
-                // if (_isSearchVisible)
+                // if (hasDescription)
                 //   SliverToBoxAdapter(
-                //     child: SearchBarWithFilters(
-                //       padding: const EdgeInsets.only(
-                //         left: AppSizes.screenPadding,
-                //         right: AppSizes.screenPadding,
-                //         bottom: AppSizes.p16,
+                //     child: Padding(
+                //       padding: const EdgeInsets.fromLTRB(
+                //         AppSizes.screenPadding,
+                //         AppSizes.p12,
+                //         AppSizes.screenPadding,
+                //         AppSizes.p4,
                 //       ),
-                //       query: _searchQuery,
-                //       onQueryChanged: (q) =>
-                //       setState(() => _searchQuery = q),
-                //       activeFilter: _activeFilter,
-                //       onFilterChanged: (f) =>
-                //       setState(() => _activeFilter = f),
-                //       placeholder: 'Поиск в папке...',
+                //       child: FolderAboutCard(folder: folder),
                 //     ),
                 //   ),
                 NotesListSection(),

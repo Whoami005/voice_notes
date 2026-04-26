@@ -5,7 +5,9 @@
   "navSettings": "Settings",
 
   "foldersTitle": "Notes",
+  "searchHint": "Search ...",
   "foldersSearchHint": "Search notes...",
+  "foldersSearchTitle": "Search folders",
   "foldersSectionTitle": "Folders",
   "foldersNewButton": "New",
 
@@ -24,6 +26,7 @@
   "deleteFolderAppBarAction": "Delete folder",
 
   "folderDetailTitle": "Folder",
+  "folderAboutLabel": "About folder",
   "recordingInputHint": "Type text or record...",
   "recordingSwipeToCancel": "Swipe left to cancel",
   "transcribing": "Transcribing...",

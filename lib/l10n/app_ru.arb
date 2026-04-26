@@ -8,8 +8,12 @@
 
   "foldersTitle": "Заметки",
   "@foldersTitle": { "description": "Main screen title" },
+  "searchHint": "Поиск ...",
+  "@searchHint": { "description": "Search hint text" },
   "foldersSearchHint": "Поиск заметок...",
   "@foldersSearchHint": { "description": "Search field hint text" },
+  "foldersSearchTitle": "Поиск папок",
+  "@foldersSearchTitle": { "description": "App bar title on the folder search screen" },
   "foldersSectionTitle": "Папки",
   "@foldersSectionTitle": { "description": "Folders section header" },
   "foldersNewButton": "Новая",
@@ -57,6 +61,8 @@
 
   "folderDetailTitle": "Папка",
   "@folderDetailTitle": { "description": "Folder detail screen title" },
+  "folderAboutLabel": "О папке",
+  "@folderAboutLabel": { "description": "Label for the About card on folder detail screen" },
   "recordingInputHint": "Введите текст или запишите...",
   "@recordingInputHint": { "description": "Recording input text field hint" },
   "recordingSwipeToCancel": "Свайп влево для отмены",
