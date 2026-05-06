@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
+import 'package:voice_notes/feature/presentation/widgets/bottom_navigation_bar/app_nav_destination.dart';
 
 class AppBottomNav extends StatelessWidget {
   final int currentIndex;
@@ -14,6 +15,7 @@ class AppBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeColors = context.themeColors;
+    final l10n = context.l10n;
 
     return Container(
       decoration: BoxDecoration(
@@ -24,16 +26,12 @@ class AppBottomNav extends StatelessWidget {
         currentIndex: currentIndex,
         onTap: onTap,
         items: [
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.folder_outlined),
-            activeIcon: const Icon(Icons.folder),
-            label: context.l10n.navNotes,
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.settings_outlined),
-            activeIcon: const Icon(Icons.settings),
-            label: context.l10n.navSettings,
-          ),
+          for (final destination in AppNavDestination.items)
+            BottomNavigationBarItem(
+              icon: Icon(destination.icon),
+              activeIcon: Icon(destination.selectedIcon),
+              label: destination.labelBuilder(l10n),
+            ),
         ],
       ),
     );
