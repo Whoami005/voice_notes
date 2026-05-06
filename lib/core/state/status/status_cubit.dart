@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:voice_notes/core/error/app_failure.dart';
+import 'package:voice_notes/core/state/effect/app_effect_error_mixin.dart';
 import 'package:voice_notes/core/state/effect/base_effect.dart';
 import 'package:voice_notes/core/state/effect/effect_base.dart';
 import 'package:voice_notes/core/state/status/status_state.dart';
@@ -15,7 +16,8 @@ import 'package:voice_notes/core/state/status/status_state.dart';
 /// }
 /// ```
 abstract class StatusCubit<S extends StatusState>
-    extends EffectCubit<S, BaseEffect> {
+    extends EffectCubit<S, BaseEffect>
+    with AppEffectErrorMixin<S> {
   StatusCubit(super.initialState);
 
   // ═══════════════════════════════════════════════════════════════════

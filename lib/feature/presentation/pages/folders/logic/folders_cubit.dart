@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:equatable/equatable.dart';
 import 'package:voice_notes/core/state/async/async_state.dart';
 import 'package:voice_notes/core/state/async/initializable_async_cubits.dart';
-import 'package:voice_notes/core/state/effect/common_effects.dart';
 import 'package:voice_notes/feature/domain/entities/folder_entity.dart';
 import 'package:voice_notes/feature/domain/repositories/folder_repository.dart';
 import 'package:voice_notes/feature/presentation/widgets/bottom_sheet/create_folder_sheet.dart';
@@ -44,7 +43,7 @@ class FoldersCubit extends InitializableAsyncCubit<FoldersState> {
       final folders = await _repository.getAll();
       emitSuccess(FoldersState(folders: folders));
     } catch (e, s) {
-      emitEffect(ShowErrorEffect(logError(e, s)));
+      handleEffectError(e, s);
     }
   }
 

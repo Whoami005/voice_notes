@@ -80,13 +80,9 @@ class FolderStorageScreen extends StatelessWidget implements AppRouteWrapper {
                         return NoteAudioTile(
                           key: ValueKey('note_audio_${item.note.uuid}'),
                           stats: item,
-                          onDismissRequest: () async {
-                            await context
-                                .read<FolderStorageCubit>()
-                                .deleteNoteAudio(item.note.uuid);
-
-                            return true;
-                          },
+                          onDismissRequest: () => context
+                              .read<FolderStorageCubit>()
+                              .deleteNoteAudio(item.note.uuid),
                         );
                       },
                       separatorBuilder: (_, _) => AppSpacer.p8,

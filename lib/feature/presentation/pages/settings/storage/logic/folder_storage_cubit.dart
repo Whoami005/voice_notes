@@ -26,7 +26,13 @@ class FolderStorageCubit extends InitializableStatusCubit<FolderStorageState> {
   Future<void> init() => load(_fetchDetail);
 
   @override
-  Future<void> refresh() => guard(_fetchDetail);
+  Future<void> refresh() async {
+    try {
+      emitSuccess(await _fetchDetail());
+    } catch (e, s) {
+      handleEffectError(e, s);
+    }
+  }
 
   Future<FolderStorageState> _fetchDetail() async {
     final detail = await _repository.getFolderDetail(folderUid);
@@ -34,13 +40,23 @@ class FolderStorageCubit extends InitializableStatusCubit<FolderStorageState> {
     return state.copyWith(folder: detail.folder, notes: detail.notes);
   }
 
-  Future<void> deleteNoteAudio(String noteUid) async {
+  Future<bool> deleteNoteAudio(String noteUid) async {
     try {
       await _repository.deleteNoteAudio(noteUid);
-      final detail = await _repository.getFolderDetail(folderUid);
-      emitSuccess(state.copyWith(notes: detail.notes));
+
+      emitSuccess(
+        state.copyWith(
+          notes: [
+            for (final item in state.notes)
+              if (item.note.uuid != noteUid) item,
+          ],
+        ),
+      );
+
+      return true;
     } catch (e, s) {
-      emitError(logError(e, s));
+      handleEffectError(e, s);
+      return false;
     }
   }
 
@@ -49,7 +65,7 @@ class FolderStorageCubit extends InitializableStatusCubit<FolderStorageState> {
       await _repository.deleteFolderAudio(folderUid);
       emitSuccess(state.copyWith(notes: const []));
     } catch (e, s) {
-      emitError(logError(e, s));
+      handleEffectError(e, s);
     }
   }
 }

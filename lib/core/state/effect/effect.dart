@@ -11,6 +11,7 @@
 /// - `AppEffect` — стандартные эффекты (ShowError, ShowSuccess)
 library;
 
+export 'app_effect_error_mixin.dart';
 export 'app_effect_listener.dart';
 export 'base_effect.dart';
 export 'common_effects.dart';

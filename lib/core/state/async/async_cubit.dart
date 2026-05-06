@@ -2,8 +2,8 @@ import 'dart:async';
 
 import 'package:voice_notes/core/error/app_failure.dart';
 import 'package:voice_notes/core/state/async/async_state.dart';
+import 'package:voice_notes/core/state/effect/app_effect_error_mixin.dart';
 import 'package:voice_notes/core/state/effect/base_effect.dart';
-import 'package:voice_notes/core/state/effect/common_effects.dart';
 import 'package:voice_notes/core/state/effect/effect_base.dart';
 
 /// Cubit для работы с [AsyncState] — Initial/Loading/Success/Error.
@@ -15,7 +15,8 @@ import 'package:voice_notes/core/state/effect/effect_base.dart';
 ///   Future<void> init() => load(() => repository.getModels());
 /// }
 /// ```
-abstract class AsyncCubit<T> extends EffectCubit<AsyncState<T>, BaseEffect> {
+abstract class AsyncCubit<T> extends EffectCubit<AsyncState<T>, BaseEffect>
+    with AppEffectErrorMixin<AsyncState<T>> {
   AsyncCubit([AsyncState<T>? initialState])
     : super(initialState ?? const AsyncState.initial());
 
@@ -91,7 +92,7 @@ abstract class AsyncCubit<T> extends EffectCubit<AsyncState<T>, BaseEffect> {
       await action(data);
     } catch (e, s) {
       final failure = logError(e, s);
-      onError == null ? emitEffect(ShowErrorEffect(failure)) : onError(failure);
+      onError == null ? showErrorEffect(failure) : onError(failure);
     }
   }
 

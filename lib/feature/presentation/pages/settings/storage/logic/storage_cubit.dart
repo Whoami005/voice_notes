@@ -36,20 +36,24 @@ class StorageCubit extends InitializableStatusCubit<StorageState> {
   }
 
   @override
-  Future<void> refresh() => guard(() async {
-    final (overview, folders) = await (
-      _repository.getOverview(),
-      _repository.getFolderStats(),
-    ).wait;
+  Future<void> refresh() async {
+    try {
+      final (overview, folders) = await (
+        _repository.getOverview(),
+        _repository.getFolderStats(),
+      ).wait;
 
-    return state.copyWith(overview: overview, folders: folders);
-  });
+      emitSuccess(state.copyWith(overview: overview, folders: folders));
+    } catch (e, s) {
+      handleEffectError(e, s);
+    }
+  }
 
   Future<void> deleteFolderAudio(String? folderUid) async {
     try {
       await _repository.deleteFolderAudio(folderUid);
     } catch (e, s) {
-      emitError(logError(e, s));
+      handleEffectError(e, s);
     }
   }
 
@@ -57,7 +61,7 @@ class StorageCubit extends InitializableStatusCubit<StorageState> {
     try {
       await _repository.deleteAllAudio();
     } catch (e, s) {
-      emitError(logError(e, s));
+      handleEffectError(e, s);
     }
   }
 
@@ -66,7 +70,14 @@ class StorageCubit extends InitializableStatusCubit<StorageState> {
   // ─────────────────────────────────────────────────────────────
 
   void _onStreamError(Object error, StackTrace stackTrace) {
-    emitError(logError(error, stackTrace));
+    final failure = logError(error, stackTrace);
+
+    if (state.isSuccess) {
+      showErrorEffect(failure);
+      return;
+    }
+
+    emitError(failure);
   }
 
   @override

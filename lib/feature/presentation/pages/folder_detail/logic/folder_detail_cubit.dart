@@ -4,7 +4,6 @@ import 'package:equatable/equatable.dart';
 import 'package:rxdart/rxdart.dart';
 import 'package:voice_notes/common/utils/date_grouper.dart';
 import 'package:voice_notes/core/state/async/initializable_async_cubits.dart';
-import 'package:voice_notes/core/state/effect/common_effects.dart';
 import 'package:voice_notes/feature/domain/entities/folder_entity.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
 import 'package:voice_notes/feature/domain/repositories/folder_repository.dart';
@@ -52,7 +51,7 @@ class FolderDetailCubit extends InitializableAsyncCubit<FolderDetailData> {
 
       emitSuccess(FolderDetailData(folder: folder, notes: notes));
     } catch (e, s) {
-      emitEffect(ShowErrorEffect(logError(e, s)));
+      handleEffectError(e, s);
     }
   }
 
@@ -66,7 +65,7 @@ class FolderDetailCubit extends InitializableAsyncCubit<FolderDetailData> {
 
       return true;
     } catch (e, s) {
-      emitEffect(ShowErrorEffect(logError(e, s)));
+      handleEffectError(e, s);
       return false;
     }
   }

@@ -1,7 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:voice_notes/core/state/async/initializable_async_cubits.dart';
 import 'package:voice_notes/core/state/editable/editable.dart';
-import 'package:voice_notes/core/state/effect/common_effects.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
 import 'package:voice_notes/feature/domain/entities/tag_entity.dart';
 import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
@@ -124,7 +123,7 @@ class NoteDetailCubit extends InitializableAsyncCubit<NoteDetailData> {
 
       return true;
     } catch (e, s) {
-      emitEffect(ShowErrorEffect(logError(e, s)));
+      handleEffectError(e, s);
       return false;
     }
   }
