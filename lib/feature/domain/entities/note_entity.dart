@@ -21,6 +21,21 @@ class NoteEntity extends Equatable {
   final DateTime createdAt;
   final DateTime updatedAt;
 
+  String get displayId {
+    final normalizedUuid = uuid.replaceAll('-', '').toUpperCase();
+    final shortPart = normalizedUuid.length <= 8
+        ? normalizedUuid
+        : normalizedUuid.substring(0, 8);
+
+    return 'VN-$shortPart';
+  }
+
+  String get titleOrDisplayId {
+    final trimmedText = text.trim();
+
+    return trimmedText.isEmpty ? displayId : trimmedText;
+  }
+
   const NoteEntity({
     required this.uuid,
     required this.text,

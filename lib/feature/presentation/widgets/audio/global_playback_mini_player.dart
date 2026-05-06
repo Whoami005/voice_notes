@@ -27,9 +27,17 @@ class _GlobalPlaybackMiniPlayerState extends State<GlobalPlaybackMiniPlayer> {
 
   String _getDisplayTitle(PlaybackSessionState session) {
     final title = (session.title ?? '').trim();
-    final displayTitle = title.isEmpty ? '---' : title;
+    if (title.isNotEmpty) return title;
 
-    return displayTitle;
+    final trackId = (session.trackId ?? '').trim();
+    if (trackId.isEmpty) return '---';
+
+    final normalizedTrackId = trackId.replaceAll('-', '').toUpperCase();
+    final shortPart = normalizedTrackId.length <= 8
+        ? normalizedTrackId
+        : normalizedTrackId.substring(0, 8);
+
+    return 'VN-$shortPart';
   }
 
   @override

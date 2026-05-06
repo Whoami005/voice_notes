@@ -95,7 +95,7 @@ class FolderPlaybackCubit extends Cubit<FolderPlaybackState> {
         note.uuid,
         CachedTrackState(
           absolutePath: absolutePath,
-          title: note.text.trim(),
+          title: note.titleOrDisplayId,
           folderId: note.folderId ?? _folderId,
           duration: audio.duration,
         ),

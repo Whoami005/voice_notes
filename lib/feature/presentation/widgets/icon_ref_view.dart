@@ -46,7 +46,7 @@ class IconRefView extends StatelessWidget {
           width: size,
           height: size,
           fit: photoFit,
-          errorBuilder: (_, __, ___) => _buildFallback(),
+          errorBuilder: (_, _, _) => _buildFallback(),
         ),
       ),
       null => _buildFallback(),

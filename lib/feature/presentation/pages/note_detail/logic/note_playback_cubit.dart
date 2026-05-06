@@ -50,7 +50,7 @@ class NotePlaybackCubit extends StatusCubit<NotePlaybackState> {
         _noteId,
         CachedTrackState(
           absolutePath: absolutePath,
-          title: note.text.trim(),
+          title: note.titleOrDisplayId,
           folderId: note.folderId ?? _folderId,
           duration: audio.duration,
         ),

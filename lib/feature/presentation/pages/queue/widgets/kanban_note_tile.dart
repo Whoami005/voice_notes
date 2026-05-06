@@ -33,10 +33,8 @@ class KanbanNoteTile extends StatelessWidget {
     final themeColors = context.themeColors;
 
     final title = note.text.trim().isEmpty
-        ? l10n.queueItemDefaultTitle(formatShortTimestamp(note.createdAt))
+        ? l10n.queueItemDefaultTitle(note.displayId)
         : truncate(note.text, 60);
-
-    final shortId = 'VN-${note.uuid.substring(0, 4).toUpperCase()}';
 
     return Padding(
       padding: const EdgeInsets.only(top: AppSizes.p6),
@@ -57,25 +55,15 @@ class KanbanNoteTile extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Row(
-              children: [
-                Text(
-                  shortId,
-                  style: AppTypography.caption.copyWith(
-                    color: themeColors.textTertiary,
-                    fontSize: 10,
-                    letterSpacing: 0.3,
-                  ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                formatShortTimestamp(note.createdAt),
+                style: AppTypography.caption.copyWith(
+                  color: themeColors.textTertiary,
+                  fontSize: 10,
                 ),
-                const Spacer(),
-                Text(
-                  formatShortTimestamp(note.createdAt),
-                  style: AppTypography.caption.copyWith(
-                    color: themeColors.textTertiary,
-                    fontSize: 10,
-                  ),
-                ),
-              ],
+              ),
             ),
             AppSpacer.p4,
             Row(
