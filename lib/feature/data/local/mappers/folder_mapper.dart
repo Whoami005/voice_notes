@@ -13,8 +13,7 @@ abstract final class FolderMapper {
       description: e.description,
       color: Color(e.colorValue),
       icon:
-          IconRefEntity.deserialize(e.iconRef) ??
-          MaterialIconRefEntity(Icons.folder.codePoint),
+          IconRefEntity.deserialize(e.iconRef) ?? MaterialIconRefEntity.folder,
       notesCount: e.notes.length,
       createdAt: e.createdAt.toLocal(),
       updatedAt: e.updatedAt.toLocal(),

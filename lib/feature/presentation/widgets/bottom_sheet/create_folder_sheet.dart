@@ -59,15 +59,15 @@ class CreateFolderSheet extends StatefulWidget {
 }
 
 class _CreateFolderSheetState extends State<CreateFolderSheet> {
-  static final List<IconRefEntity> _folderIcons = [
-    MaterialIconRefEntity(Icons.folder.codePoint),
-    MaterialIconRefEntity(Icons.work.codePoint),
-    MaterialIconRefEntity(Icons.book.codePoint),
-    MaterialIconRefEntity(Icons.star.codePoint),
-    MaterialIconRefEntity(Icons.favorite.codePoint),
-    MaterialIconRefEntity(Icons.music_note.codePoint),
-    MaterialIconRefEntity(Icons.camera_alt.codePoint),
-    MaterialIconRefEntity(Icons.code.codePoint),
+  static const List<IconRefEntity> _folderIcons = [
+    MaterialIconRefEntity.folder,
+    MaterialIconRefEntity.work,
+    MaterialIconRefEntity.book,
+    MaterialIconRefEntity.star,
+    MaterialIconRefEntity.favorite,
+    MaterialIconRefEntity.musicNote,
+    MaterialIconRefEntity.cameraAlt,
+    MaterialIconRefEntity.code,
   ];
 
   late final TextEditingController _nameController;

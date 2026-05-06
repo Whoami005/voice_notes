@@ -31,32 +31,95 @@ sealed class IconRefEntity extends Equatable {
   }
 
   static MaterialIconRefEntity? _parseMaterialIcon(String data) {
-    final codePoint = int.tryParse(data);
-    if (codePoint == null) return null;
-
-    return MaterialIconRefEntity(codePoint);
+    return MaterialIconRefEntity.deserialize(data);
   }
 }
 
-/// Material Design иконка (codePoint).
+/// Material Design иконка по стабильному ключу.
 class MaterialIconRefEntity extends IconRefEntity {
-  final int codePoint;
+  static const MaterialIconRefEntity folder = MaterialIconRefEntity._('folder');
+  static const MaterialIconRefEntity work = MaterialIconRefEntity._('work');
+  static const MaterialIconRefEntity book = MaterialIconRefEntity._('book');
+  static const MaterialIconRefEntity star = MaterialIconRefEntity._('star');
+  static const MaterialIconRefEntity favorite = MaterialIconRefEntity._(
+    'favorite',
+  );
+  static const MaterialIconRefEntity musicNote = MaterialIconRefEntity._(
+    'music_note',
+  );
+  static const MaterialIconRefEntity cameraAlt = MaterialIconRefEntity._(
+    'camera_alt',
+  );
+  static const MaterialIconRefEntity code = MaterialIconRefEntity._('code');
 
-  const MaterialIconRefEntity(this.codePoint);
+  static const List<MaterialIconRefEntity> values = [
+    folder,
+    work,
+    book,
+    star,
+    favorite,
+    musicNote,
+    cameraAlt,
+    code,
+  ];
 
-  /// Создаёт из Flutter IconData.
-  factory MaterialIconRefEntity.fromIconData(IconData icon) {
-    return MaterialIconRefEntity(icon.codePoint);
+  final String iconKey;
+
+  const MaterialIconRefEntity._(this.iconKey);
+
+  static MaterialIconRefEntity? deserialize(String value) {
+    final icon = _fromKey(value);
+    if (icon != null) return icon;
+
+    final codePoint = int.tryParse(value);
+    if (codePoint == null) return null;
+
+    return _fromLegacyCodePoint(codePoint);
   }
 
   @override
-  String serialize() => 'material:$codePoint';
+  String serialize() => 'material:$iconKey';
 
   @override
-  IconData toIconData() => IconData(codePoint, fontFamily: 'MaterialIcons');
+  IconData toIconData() => switch (iconKey) {
+    'folder' => Icons.folder,
+    'work' => Icons.work,
+    'book' => Icons.book,
+    'star' => Icons.star,
+    'favorite' => Icons.favorite,
+    'music_note' => Icons.music_note,
+    'camera_alt' => Icons.camera_alt,
+    'code' => Icons.code,
+    _ => Icons.folder,
+  };
 
   @override
-  List<Object?> get props => [codePoint];
+  List<Object?> get props => [iconKey];
+
+  static MaterialIconRefEntity? _fromKey(String key) => switch (key) {
+    'folder' => folder,
+    'work' => work,
+    'book' => book,
+    'star' => star,
+    'favorite' => favorite,
+    'music_note' => musicNote,
+    'camera_alt' => cameraAlt,
+    'code' => code,
+    _ => null,
+  };
+
+  static MaterialIconRefEntity? _fromLegacyCodePoint(int codePoint) {
+    if (codePoint == Icons.folder.codePoint) return folder;
+    if (codePoint == Icons.work.codePoint) return work;
+    if (codePoint == Icons.book.codePoint) return book;
+    if (codePoint == Icons.star.codePoint) return star;
+    if (codePoint == Icons.favorite.codePoint) return favorite;
+    if (codePoint == Icons.music_note.codePoint) return musicNote;
+    if (codePoint == Icons.camera_alt.codePoint) return cameraAlt;
+    if (codePoint == Icons.code.codePoint) return code;
+
+    return null;
+  }
 }
 
 // -----------------------------------------------------------------------------
