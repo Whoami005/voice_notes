@@ -43,46 +43,51 @@ class AppBottomSheet extends StatelessWidget {
     final textTheme = context.textTheme;
     final themeColors = context.themeColors;
 
-    return CustomScrollView(
-      shrinkWrap: true,
-      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-      slivers: [
-        SliverPadding(
-          padding: EdgeInsets.only(
-            left: AppSizes.screenPadding,
-            right: AppSizes.screenPadding,
-            bottom: context.bottomInset + AppSizes.screenPadding,
-          ),
-          sliver: SliverList.list(
-            children: [
-              if (title != null) ...[
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(title!, style: textTheme.headlineMedium),
-                    ),
-                    if (onClose != null)
-                      GestureDetector(
-                        onTap: onClose,
-                        behavior: HitTestBehavior.opaque,
-                        child: Padding(
-                          padding: const EdgeInsets.all(AppSizes.p8),
-                          child: Icon(
-                            Icons.close,
-                            size: AppSizes.iconLarge,
-                            color: themeColors.textSecondary,
+    return AnimatedPadding(
+      duration: kThemeAnimationDuration,
+      curve: Curves.easeOut,
+      padding: EdgeInsets.only(bottom: context.bottomKeyboardInsets),
+      child: CustomScrollView(
+        shrinkWrap: true,
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+        slivers: [
+          SliverPadding(
+            padding: EdgeInsets.only(
+              left: AppSizes.screenPadding,
+              right: AppSizes.screenPadding,
+              bottom: context.bottomInset + AppSizes.screenPadding,
+            ),
+            sliver: SliverList.list(
+              children: [
+                if (title != null) ...[
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(title!, style: textTheme.headlineMedium),
+                      ),
+                      if (onClose != null)
+                        GestureDetector(
+                          onTap: onClose,
+                          behavior: HitTestBehavior.opaque,
+                          child: Padding(
+                            padding: const EdgeInsets.all(AppSizes.p8),
+                            child: Icon(
+                              Icons.close,
+                              size: AppSizes.iconLarge,
+                              color: themeColors.textSecondary,
+                            ),
                           ),
                         ),
-                      ),
-                  ],
-                ),
-                AppSpacer.p16,
+                    ],
+                  ),
+                  AppSpacer.p16,
+                ],
+                child,
               ],
-              child,
-            ],
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
