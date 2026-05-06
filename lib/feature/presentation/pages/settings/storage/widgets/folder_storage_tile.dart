@@ -3,6 +3,7 @@ import 'package:voice_notes/common/utils/format_bytes.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/feature/domain/entities/folder_storage_stats.dart';
+import 'package:voice_notes/feature/presentation/widgets/folder_icon_badge.dart';
 
 /// Строка списка папок на главном экране Storage.
 ///
@@ -26,7 +27,6 @@ class FolderStorageTile extends StatelessWidget {
 
     final folder = stats.folder;
     final folderColor = folder?.color ?? themeColors.textTertiary;
-    final folderIcon = folder?.iconData ?? Icons.folder_off_outlined;
     final folderName = folder?.name ?? l10n.storageWithoutFolder;
 
     return InkWell(
@@ -39,14 +39,13 @@ class FolderStorageTile extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Container(
-              width: AppSizes.avatarSmall,
-              height: AppSizes.avatarSmall,
-              decoration: BoxDecoration(
-                color: folderColor.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
-              ),
-              child: Icon(folderIcon, color: folderColor),
+            FolderIconBadge(
+              icon: folder?.icon,
+              color: folderColor,
+              size: AppSizes.avatarSmall,
+              iconSize: AppSizes.iconMedium,
+              borderRadius: AppSizes.radiusMedium,
+              fallbackIcon: Icons.folder_off_outlined,
             ),
             const SizedBox(width: AppSizes.p12),
             Expanded(

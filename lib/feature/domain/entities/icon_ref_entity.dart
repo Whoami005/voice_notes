@@ -1,5 +1,4 @@
 import 'package:equatable/equatable.dart';
-import 'package:flutter/material.dart';
 
 /// Абстракция иконки для хранения в БД.
 /// Формат сериализации: "type:value"
@@ -8,10 +7,6 @@ sealed class IconRefEntity extends Equatable {
 
   /// Сериализует в строку для хранения в БД.
   String serialize();
-
-  /// Конвертирует в IconData для отображения.
-  /// Возвращает null для типов, не поддерживающих IconData (SVG, Asset).
-  IconData? toIconData();
 
   /// Десериализует строку из БД в IconRefEntity.
   static IconRefEntity? deserialize(String value) {
@@ -23,9 +18,8 @@ sealed class IconRefEntity extends Equatable {
 
     return switch (type) {
       'material' => _parseMaterialIcon(data),
-      // TODO(W): 'svg' => SvgIconRefEntity(data),
-      // TODO(W): 'asset' => AssetIconRefEntity(data),
-      // TODO(W): 'photo' => PhotoIconRefEntity(data),
+      'svg' => _parseSvgIcon(data),
+      'photo' => _parsePhotoIcon(data),
       _ => null,
     };
   }
@@ -33,24 +27,69 @@ sealed class IconRefEntity extends Equatable {
   static MaterialIconRefEntity? _parseMaterialIcon(String data) {
     return MaterialIconRefEntity.deserialize(data);
   }
+
+  static SvgIconRefEntity? _parseSvgIcon(String data) {
+    if (data.isEmpty) return null;
+
+    return SvgIconRefEntity(data);
+  }
+
+  static PhotoIconRefEntity? _parsePhotoIcon(String data) {
+    if (data.isEmpty) return null;
+
+    return PhotoIconRefEntity(data);
+  }
+}
+
+enum MaterialIconKey {
+  folder('folder'),
+  work('work'),
+  book('book'),
+  star('star'),
+  favorite('favorite'),
+  musicNote('music_note'),
+  cameraAlt('camera_alt'),
+  code('code');
+
+  final String storageKey;
+
+  const MaterialIconKey(this.storageKey);
+
+  static MaterialIconKey? fromStorage(String value) {
+    for (final key in MaterialIconKey.values) {
+      if (key.storageKey == value) return key;
+    }
+
+    return null;
+  }
 }
 
 /// Material Design иконка по стабильному ключу.
-class MaterialIconRefEntity extends IconRefEntity {
-  static const MaterialIconRefEntity folder = MaterialIconRefEntity._('folder');
-  static const MaterialIconRefEntity work = MaterialIconRefEntity._('work');
-  static const MaterialIconRefEntity book = MaterialIconRefEntity._('book');
-  static const MaterialIconRefEntity star = MaterialIconRefEntity._('star');
-  static const MaterialIconRefEntity favorite = MaterialIconRefEntity._(
-    'favorite',
+final class MaterialIconRefEntity extends IconRefEntity {
+  static const MaterialIconRefEntity folder = MaterialIconRefEntity(
+    MaterialIconKey.folder,
   );
-  static const MaterialIconRefEntity musicNote = MaterialIconRefEntity._(
-    'music_note',
+  static const MaterialIconRefEntity work = MaterialIconRefEntity(
+    MaterialIconKey.work,
   );
-  static const MaterialIconRefEntity cameraAlt = MaterialIconRefEntity._(
-    'camera_alt',
+  static const MaterialIconRefEntity book = MaterialIconRefEntity(
+    MaterialIconKey.book,
   );
-  static const MaterialIconRefEntity code = MaterialIconRefEntity._('code');
+  static const MaterialIconRefEntity star = MaterialIconRefEntity(
+    MaterialIconKey.star,
+  );
+  static const MaterialIconRefEntity favorite = MaterialIconRefEntity(
+    MaterialIconKey.favorite,
+  );
+  static const MaterialIconRefEntity musicNote = MaterialIconRefEntity(
+    MaterialIconKey.musicNote,
+  );
+  static const MaterialIconRefEntity cameraAlt = MaterialIconRefEntity(
+    MaterialIconKey.cameraAlt,
+  );
+  static const MaterialIconRefEntity code = MaterialIconRefEntity(
+    MaterialIconKey.code,
+  );
 
   static const List<MaterialIconRefEntity> values = [
     folder,
@@ -63,103 +102,58 @@ class MaterialIconRefEntity extends IconRefEntity {
     code,
   ];
 
-  final String iconKey;
+  final MaterialIconKey key;
 
-  const MaterialIconRefEntity._(this.iconKey);
+  const MaterialIconRefEntity(this.key);
 
   static MaterialIconRefEntity? deserialize(String value) {
-    final icon = _fromKey(value);
-    if (icon != null) return icon;
+    final key = MaterialIconKey.fromStorage(value);
+    if (key == null) return null;
 
-    final codePoint = int.tryParse(value);
-    if (codePoint == null) return null;
-
-    return _fromLegacyCodePoint(codePoint);
+    return _fromKey(key);
   }
 
   @override
-  String serialize() => 'material:$iconKey';
+  String serialize() => 'material:${key.storageKey}';
 
   @override
-  IconData toIconData() => switch (iconKey) {
-    'folder' => Icons.folder,
-    'work' => Icons.work,
-    'book' => Icons.book,
-    'star' => Icons.star,
-    'favorite' => Icons.favorite,
-    'music_note' => Icons.music_note,
-    'camera_alt' => Icons.camera_alt,
-    'code' => Icons.code,
-    _ => Icons.folder,
+  List<Object?> get props => [key];
+
+  static MaterialIconRefEntity _fromKey(MaterialIconKey key) => switch (key) {
+    MaterialIconKey.folder => folder,
+    MaterialIconKey.work => work,
+    MaterialIconKey.book => book,
+    MaterialIconKey.star => star,
+    MaterialIconKey.favorite => favorite,
+    MaterialIconKey.musicNote => musicNote,
+    MaterialIconKey.cameraAlt => cameraAlt,
+    MaterialIconKey.code => code,
   };
-
-  @override
-  List<Object?> get props => [iconKey];
-
-  static MaterialIconRefEntity? _fromKey(String key) => switch (key) {
-    'folder' => folder,
-    'work' => work,
-    'book' => book,
-    'star' => star,
-    'favorite' => favorite,
-    'music_note' => musicNote,
-    'camera_alt' => cameraAlt,
-    'code' => code,
-    _ => null,
-  };
-
-  static MaterialIconRefEntity? _fromLegacyCodePoint(int codePoint) {
-    if (codePoint == Icons.folder.codePoint) return folder;
-    if (codePoint == Icons.work.codePoint) return work;
-    if (codePoint == Icons.book.codePoint) return book;
-    if (codePoint == Icons.star.codePoint) return star;
-    if (codePoint == Icons.favorite.codePoint) return favorite;
-    if (codePoint == Icons.music_note.codePoint) return musicNote;
-    if (codePoint == Icons.camera_alt.codePoint) return cameraAlt;
-    if (codePoint == Icons.code.codePoint) return code;
-
-    return null;
-  }
 }
 
-// -----------------------------------------------------------------------------
-// TODO(W): Реализовать когда понадобится поддержка кастомных иконок
-// -----------------------------------------------------------------------------
+/// SVG иконка по asset-пути.
+final class SvgIconRefEntity extends IconRefEntity {
+  final String assetPath;
 
-// /// SVG иконка (путь к asset).
-// /// Требует пакет flutter_svg для рендеринга.
-// class SvgIconRefEntity extends IconRefEntity {
-//   final String path;
-//   const SvgIconRefEntity(this.path);
-//
-//   @override
-//   String serialize() => 'svg:$path';
-//
-//   @override
-//   IconData? toIconData() => null;
-// }
+  const SvgIconRefEntity(this.assetPath);
 
-// /// Растровое изображение (PNG/JPG) как иконка.
-// class AssetIconRefEntity extends IconRefEntity {
-//   final String path;
-//   const AssetIconRefEntity(this.path);
-//
-//   @override
-//   String serialize() => 'asset:$path';
-//
-//   @override
-//   IconData? toIconData() => null;
-// }
+  @override
+  String serialize() => 'svg:$assetPath';
 
-// /// Фото пользователя как иконка папки.
-// /// Хранит путь к файлу в локальном хранилище.
-// class PhotoIconRefEntity extends IconRefEntity {
-//   final String path;
-//   const PhotoIconRefEntity(this.path);
-//
-//   @override
-//   String serialize() => 'photo:$path';
-//
-//   @override
-//   IconData? toIconData() => null;
-// }
+  @override
+  List<Object?> get props => [assetPath];
+}
+
+/// Фото пользователя как иконка папки.
+/// Хранит путь к файлу в локальном хранилище.
+final class PhotoIconRefEntity extends IconRefEntity {
+  final String filePath;
+
+  const PhotoIconRefEntity(this.filePath);
+
+  @override
+  String serialize() => 'photo:$filePath';
+
+  @override
+  List<Object?> get props => [filePath];
+}

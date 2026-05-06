@@ -5,6 +5,7 @@ import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/state/async/async_state.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/logic/folder_detail_cubit.dart';
 import 'package:voice_notes/feature/presentation/widgets/base_preferred_app_bar.dart';
+import 'package:voice_notes/feature/presentation/widgets/folder_icon_badge.dart';
 import 'package:voice_notes/feature/presentation/widgets/menus/dropdown_menu.dart';
 
 class FolderDetailAppBar extends BasePreferredAppBar {
@@ -42,14 +43,12 @@ class _FolderDetailAppBarState extends State<FolderDetailAppBar> {
         spacing: AppSizes.p10,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color: folder.color.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(AppSizes.p8),
-            ),
-            child: Icon(folder.iconData, color: folder.color, size: 18),
+          FolderIconBadge(
+            icon: folder.icon,
+            color: folder.color,
+            size: AppSizes.p32,
+            iconSize: 18,
+            borderRadius: AppSizes.p8,
           ),
           Flexible(
             child: Text(

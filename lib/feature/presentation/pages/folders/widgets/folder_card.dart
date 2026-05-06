@@ -4,6 +4,7 @@ import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/feature/domain/entities/folder_entity.dart';
+import 'package:voice_notes/feature/presentation/widgets/folder_icon_badge.dart';
 import 'package:voice_notes/feature/presentation/widgets/highlighted_text.dart';
 import 'package:voice_notes/l10n/app_localizations.dart';
 
@@ -37,7 +38,13 @@ class FolderCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            _IconContainer(color: folder.color, icon: folder.iconData),
+            FolderIconBadge(
+              icon: folder.icon,
+              color: folder.color,
+              size: AppSizes.avatarLarge,
+              iconSize: AppSizes.iconLarge,
+              borderRadius: AppSizes.p14,
+            ),
             AppSpacer.p14,
             Expanded(
               child: _TextContent(
@@ -50,26 +57,6 @@ class FolderCard extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _IconContainer extends StatelessWidget {
-  final Color color;
-  final IconData icon;
-
-  const _IconContainer({required this.color, required this.icon});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: AppSizes.avatarLarge,
-      height: AppSizes.avatarLarge,
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Icon(icon, color: color, size: AppSizes.iconLarge),
     );
   }
 }

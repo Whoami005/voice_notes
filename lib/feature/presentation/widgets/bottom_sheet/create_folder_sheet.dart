@@ -6,6 +6,7 @@ import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/theme/app_colors.dart';
 import 'package:voice_notes/feature/domain/entities/icon_ref_entity.dart';
 import 'package:voice_notes/feature/presentation/widgets/bottom_sheet/app_bottom_sheet.dart';
+import 'package:voice_notes/feature/presentation/widgets/folder_icon_badge.dart';
 
 class CreateFolderResult {
   final String name;
@@ -206,18 +207,12 @@ class _PreviewCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Container(
-            width: AppSizes.avatarLarge,
-            height: AppSizes.avatarLarge,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(
-              icon.toIconData() ?? Icons.folder,
-              color: color,
-              size: AppSizes.iconLarge,
-            ),
+          FolderIconBadge(
+            icon: icon,
+            color: color,
+            size: AppSizes.avatarLarge,
+            iconSize: AppSizes.iconLarge,
+            borderRadius: AppSizes.p14,
           ),
           AppSpacer.p14,
           Expanded(
@@ -323,10 +318,13 @@ class _IconPicker extends StatelessWidget {
                   ? Border.all(color: selectedColor, width: 2)
                   : null,
             ),
-            child: Icon(
-              icon.toIconData() ?? Icons.folder,
+            child: FolderIconBadge(
+              icon: icon,
               color: isSelected ? selectedColor : themeColors.textSecondary,
-              size: AppSizes.iconLarge,
+              size: AppSizes.avatarLarge,
+              iconSize: AppSizes.iconLarge,
+              borderRadius: AppSizes.radiusMedium,
+              backgroundColor: Colors.transparent,
             ),
           ),
         );

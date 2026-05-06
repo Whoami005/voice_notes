@@ -4,6 +4,7 @@ import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/feature/domain/entities/folder_entity.dart';
+import 'package:voice_notes/feature/presentation/widgets/folder_icon_badge.dart';
 import 'package:voice_notes/l10n/app_localizations.dart';
 
 class FolderAboutCard extends StatelessWidget {
@@ -28,7 +29,13 @@ class FolderAboutCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _AboutIcon(color: folder.color, icon: folder.iconData),
+          FolderIconBadge(
+            icon: folder.icon,
+            color: folder.color,
+            size: AppSizes.avatarSmall,
+            iconSize: AppSizes.iconLarge,
+            borderRadius: AppSizes.radiusMedium,
+          ),
           AppSpacer.p12,
           Expanded(
             child: Column(
@@ -91,25 +98,5 @@ class FolderAboutCard extends StatelessWidget {
     } else {
       return DateFormat('d MMM', localeCode).format(dateTime);
     }
-  }
-}
-
-class _AboutIcon extends StatelessWidget {
-  final Color color;
-  final IconData icon;
-
-  const _AboutIcon({required this.color, required this.icon});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: AppSizes.avatarSmall,
-      height: AppSizes.avatarSmall,
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Icon(icon, color: color, size: AppSizes.iconLarge),
-    );
   }
 }

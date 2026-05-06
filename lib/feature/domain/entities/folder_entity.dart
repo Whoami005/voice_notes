@@ -23,9 +23,6 @@ class FolderEntity extends Equatable {
     this.description,
   });
 
-  /// Getter для UI совместимости с IconData.
-  IconData get iconData => icon.toIconData() ?? Icons.folder;
-
   @override
   List<Object?> get props => [
     uid,
