@@ -63,7 +63,7 @@ class NoteBubble extends StatelessWidget {
     return Align(
       alignment: Alignment.centerRight,
       child: GestureDetector(
-        onTap: note.isCompleted ? onTap : null,
+        onTap: onTap,
         child: Container(
           constraints: BoxConstraints(maxWidth: screenWidth * 0.85),
           padding: const EdgeInsets.symmetric(

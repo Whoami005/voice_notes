@@ -19,9 +19,7 @@ class BasePopScope extends StatelessWidget {
     return PopScope(
       canPop: isCanPop,
       onPopInvokedWithResult: (didPop, _) {
-        if (!didPop && !isCanPop) {
-          onPopInvokedWithResult?.call();
-        }
+        if (!didPop && !isCanPop) onPopInvokedWithResult?.call();
       },
       child: child,
     );
