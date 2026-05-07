@@ -36,8 +36,10 @@ extension NoteTranscriptionHelpTopicL10n on NoteTranscriptionHelpTopic {
   };
 
   String note(AppLocalizations l10n) => switch (this) {
-    NoteTranscriptionHelpTopic.recognitionMode => '',
-    NoteTranscriptionHelpTopic.speechDetection => '',
+    NoteTranscriptionHelpTopic.recognitionMode =>
+      l10n.noteInfoStrategySheetNote,
+    NoteTranscriptionHelpTopic.speechDetection =>
+      l10n.noteInfoSpeechDetectionSheetNote,
     NoteTranscriptionHelpTopic.fallbackMode =>
       l10n.noteInfoFallbackModeSheetNote,
     NoteTranscriptionHelpTopic.textNormalization =>

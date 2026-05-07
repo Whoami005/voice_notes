@@ -7,6 +7,7 @@ import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/l10n/localized_models.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
 import 'package:voice_notes/feature/presentation/pages/note_detail/widgets/note_info_card.dart';
+import 'package:voice_notes/feature/presentation/pages/note_detail/widgets/note_separated_column.dart';
 
 class NotePrimaryInfoCard extends StatelessWidget {
   final NoteEntity note;
@@ -92,16 +93,10 @@ class NotePrimaryInfoCard extends StatelessWidget {
     final rows = _buildRows(context);
 
     return NoteInfoCard(
-      child: Column(
+      child: NoteSeparatedColumn(
         children: [
-          for (var i = 0; i < rows.length; i++) ...[
-            _PrimaryInfoRow(
-              icon: rows[i].icon,
-              label: rows[i].label,
-              value: rows[i].value,
-            ),
-            if (i != rows.length - 1) const Divider(height: 1),
-          ],
+          for (final row in rows)
+            _PrimaryInfoRow(icon: row.icon, label: row.label, value: row.value),
         ],
       ),
     );

@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
+import 'package:voice_notes/core/extensions/list_extensions.dart';
 import 'package:voice_notes/core/l10n/asr_transcription_strategy_l10n.dart';
 import 'package:voice_notes/core/l10n/note_transcription_help_topic_l10n.dart';
 import 'package:voice_notes/feature/domain/entities/note_transcription_meta_entity.dart';
 import 'package:voice_notes/feature/presentation/pages/note_detail/widgets/note_info_chip.dart';
 import 'package:voice_notes/feature/presentation/pages/note_detail/widgets/note_transcription_explanation_sheet.dart';
-import 'package:voice_notes/feature/presentation/widgets/conditional/conditional_wrapper.dart';
 import 'package:voice_notes/l10n/app_localizations.dart';
 
 class NoteTechnicalInfoAccordion extends StatefulWidget {
@@ -122,16 +122,13 @@ class _NoteTechnicalInfoAccordionState
         ),
         subtitle: _isExpanded ? null : _NoteTechnicalSubtitle(rows: rows),
         children: [
-          for (var i = 0; i < rows.length; i++) ...[
-            if (i == 0) const Divider(height: 1),
+          for (final row in rows)
             _TechnicalInfoRow(
-              label: rows[i].label,
-              value: rows[i].value,
-              onTap: _buildTopicHandler(context, rows[i].topic),
+              label: row.label,
+              value: row.value,
+              onTap: _buildTopicHandler(context, row.topic),
             ),
-            if (i != rows.length - 1) const Divider(height: 1),
-          ],
-        ],
+        ].separatedBy(const Divider(height: 1), addLeading: true),
       ),
     );
   }
@@ -204,15 +201,9 @@ class _TechnicalInfoRow extends StatelessWidget {
     final themeColors = context.themeColors;
     final textTheme = context.textTheme;
 
-    return ConditionalWrapper(
-      condition: onTap != null,
-      onAddWrapper: (child) {
-        return GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: onTap,
-          child: child,
-        );
-      },
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: AppSizes.p8),
         child: Row(
@@ -220,7 +211,8 @@ class _TechnicalInfoRow extends StatelessWidget {
           children: [
             Expanded(
               child: Row(
-                spacing: AppSizes.p6,
+                spacing: AppSizes.p4,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Flexible(
                     child: Align(
@@ -235,21 +227,7 @@ class _TechnicalInfoRow extends StatelessWidget {
                       ),
                     ),
                   ),
-                  if (onTap != null)
-                    Container(
-                      width: AppSizes.iconSmall + AppSizes.p4,
-                      height: AppSizes.iconSmall + AppSizes.p4,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: themeColors.info.withValues(alpha: 0.12),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.info_outline,
-                        size: AppSizes.iconSmall,
-                        color: themeColors.info,
-                      ),
-                    ),
+                  if (onTap != null) const _TechnicalInfoIcon(),
                 ],
               ),
             ),
@@ -270,6 +248,30 @@ class _TechnicalInfoRow extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _TechnicalInfoIcon extends StatelessWidget {
+  const _TechnicalInfoIcon();
+
+  @override
+  Widget build(BuildContext context) {
+    final themeColors = context.themeColors;
+
+    return Container(
+      width: AppSizes.iconSmall + AppSizes.p4,
+      height: AppSizes.iconSmall + AppSizes.p4,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: themeColors.info.withValues(alpha: 0.12),
+        shape: BoxShape.circle,
+      ),
+      child: Icon(
+        Icons.info_outline,
+        size: AppSizes.iconSmall,
+        color: themeColors.info,
       ),
     );
   }
