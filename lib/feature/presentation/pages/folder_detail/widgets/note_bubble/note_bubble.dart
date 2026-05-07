@@ -14,6 +14,7 @@ import 'package:voice_notes/core/packages/transcription/asr_rtf_estimates.dart';
 import 'package:voice_notes/core/packages/transcription/transcription_queue_snapshot.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
 import 'package:voice_notes/feature/domain/enums/transcription_failure_reason.dart';
+import 'package:voice_notes/feature/presentation/pages/folder_detail/folder_detail_adaptive.dart';
 import 'package:voice_notes/feature/presentation/pages/queue/logic/transcription_queue_cubit.dart';
 import 'package:voice_notes/feature/presentation/widgets/audio/audio_inline_player.dart';
 import 'package:voice_notes/feature/presentation/widgets/chips/tag_chip.dart';
@@ -60,62 +61,75 @@ class NoteBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeColors = context.themeColors;
-    final screenWidth = context.screenSize.width;
 
-    return Align(
-      alignment: Alignment.centerRight,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          constraints: BoxConstraints(maxWidth: screenWidth * 0.85),
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSizes.p16,
-            vertical: AppSizes.p14,
-          ),
-          margin: margin,
-          decoration: BoxDecoration(
-            color: themeColors.bgSecondary,
-            borderRadius: BorderRadius.circular(AppSizes.bubbleRadius),
-            border: Border.all(
-              color: isPlaying
-                  ? themeColors.accentPrimary.withValues(alpha: 0.33)
-                  : themeColors.borderPrimary,
-            ),
-            boxShadow: isPlaying
-                ? [
-                    BoxShadow(
-                      color: themeColors.accentPrimary.withValues(alpha: 0.07),
-                      blurRadius: 16,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bubbleMaxWidth = FolderDetailAdaptive.noteBubbleMaxWidth(
+          constraints,
+        );
+
+        return Align(
+          alignment: Alignment.centerRight,
+          child: GestureDetector(
+            onTap: onTap,
+            child: Container(
+              constraints: BoxConstraints(maxWidth: bubbleMaxWidth),
+              padding: const EdgeInsets.symmetric(
+                horizontal: AppSizes.p16,
+                vertical: AppSizes.p14,
+              ),
+              margin: margin,
+              decoration: BoxDecoration(
+                color: themeColors.bgSecondary,
+                borderRadius: BorderRadius.circular(AppSizes.bubbleRadius),
+                border: Border.all(
+                  color: isPlaying
+                      ? themeColors.accentPrimary.withValues(alpha: 0.33)
+                      : themeColors.borderPrimary,
+                ),
+                boxShadow: isPlaying
+                    ? [
+                        BoxShadow(
+                          color: themeColors.accentPrimary.withValues(
+                            alpha: 0.07,
+                          ),
+                          blurRadius: 16,
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Column(
+                spacing: AppSizes.p8,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (note.origin.audio != null && trackState != null)
+                    AudioInlinePlayer(
+                      state: trackState!,
+                      onPlayPause: onPlayPause ?? () {},
+                      onSeek: onSeek ?? (_) {},
+                      waveformData: waveformData,
                     ),
-                  ]
-                : null,
-          ),
-          child: Column(
-            spacing: AppSizes.p8,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              if (note.origin.audio != null && trackState != null)
-                AudioInlinePlayer(
-                  state: trackState!,
-                  onPlayPause: onPlayPause ?? () {},
-                  onSeek: onSeek ?? (_) {},
-                  waveformData: waveformData,
-                ),
-              _StatusContent(note: note, onRetry: onRetry, onCancel: onCancel),
-              if (note.isCompleted && note.tags.isNotEmpty)
-                Wrap(
-                  spacing: AppSizes.p6,
-                  runSpacing: AppSizes.p6,
-                  children: List.generate(
-                    note.tags.length,
-                    (index) => TagChip(label: note.tags[index].name),
+                  _StatusContent(
+                    note: note,
+                    onRetry: onRetry,
+                    onCancel: onCancel,
                   ),
-                ),
-              _MetaInfo(note: note),
-            ],
+                  if (note.isCompleted && note.tags.isNotEmpty)
+                    Wrap(
+                      spacing: AppSizes.p6,
+                      runSpacing: AppSizes.p6,
+                      children: List.generate(
+                        note.tags.length,
+                        (index) => TagChip(label: note.tags[index].name),
+                      ),
+                    ),
+                  _MetaInfo(note: note),
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
+import 'package:voice_notes/feature/presentation/pages/folder_detail/folder_detail_adaptive.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/logic/recording_cubit.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/widgets/recording_input/recording_input.dart';
 
@@ -15,34 +16,42 @@ class FolderDetailRecordingBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<RecordingCubit, RecordingState>(
-      listener: _handleRecordingStateChange,
-      builder: (context, state) {
-        final cubit = context.read<RecordingCubit>();
+    return Align(
+      alignment: Alignment.bottomCenter,
+      child: BlocConsumer<RecordingCubit, RecordingState>(
+        listener: _handleRecordingStateChange,
+        builder: (context, state) {
+          final cubit = context.read<RecordingCubit>();
 
-        return Padding(
-          padding: EdgeInsets.only(
-            left: AppSizes.screenPadding,
-            right: AppSizes.screenPadding,
-            bottom:
-                context.bottomInset +
-                context.bottomKeyboardInsets +
-                AppSizes.p16,
-          ),
-          child: RecordingInput(
-            state: state.uiState,
-            recordingDuration: state.durationOrNull ?? Duration.zero,
-            amplitudes: switch (state) {
-              RecordingActiveState(:final amplitudes) => amplitudes,
-              _ => const [],
-            },
-            onStartRecording: cubit.startRecording,
-            onStopRecording: cubit.stopRecording,
-            onCancelRecording: cubit.cancelRecording,
-            onTextSubmit: cubit.createTextNote,
-          ),
-        );
-      },
+          return Padding(
+            padding: EdgeInsets.only(
+              left: AppSizes.screenPadding,
+              right: AppSizes.screenPadding,
+              bottom:
+                  context.bottomInset +
+                  context.bottomKeyboardInsets +
+                  AppSizes.p16,
+            ),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(
+                maxWidth: FolderDetailAdaptive.recordingBarMaxWidth,
+              ),
+              child: RecordingInput(
+                state: state.uiState,
+                recordingDuration: state.durationOrNull ?? Duration.zero,
+                amplitudes: switch (state) {
+                  RecordingActiveState(:final amplitudes) => amplitudes,
+                  _ => const [],
+                },
+                onStartRecording: cubit.startRecording,
+                onStopRecording: cubit.stopRecording,
+                onCancelRecording: cubit.cancelRecording,
+                onTextSubmit: cubit.createTextNote,
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 

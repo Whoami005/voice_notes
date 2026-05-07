@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:voice_notes/core/adaptive/adaptive.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/packages/app_router/app_route_wrapper.dart';
 import 'package:voice_notes/core/packages/app_router/routes/app_routes.dart';
@@ -13,6 +14,7 @@ import 'package:voice_notes/core/state/async/async_state_widgets.dart';
 import 'package:voice_notes/feature/domain/repositories/folder_repository.dart';
 import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/components/notes_list_section.dart';
+import 'package:voice_notes/feature/presentation/pages/folder_detail/folder_detail_adaptive.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/logic/folder_detail_cubit.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/logic/folder_playback_cubit.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/logic/recording_cubit.dart';
@@ -78,46 +80,6 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
   // String _searchQuery = '';
   // SearchFilter _activeFilter = SearchFilter.all;
 
-  @override
-  Widget build(BuildContext context) {
-    return AsyncStateScaffold<FolderDetailCubit, FolderDetailData>(
-      title: context.l10n.folderDetailTitle,
-      onSuccess: (context, _) {
-        return Scaffold(
-          extendBody: true,
-          appBar: FolderDetailAppBar(
-            isSearchVisible: _isSearchVisible,
-            onToggleSearch: _toggleSearch,
-            onEditFolder: _onEditFolder,
-            onDeleteFolder: _onDeleteFolder,
-          ),
-          bottomNavigationBar: const FolderDetailRecordingBar(),
-          body: const RefreshableWrapper<FolderDetailCubit>(
-            child: CustomScrollView(
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              slivers: [
-                AsrStatusBanner.sliver(),
-                // if (hasDescription)
-                //   SliverToBoxAdapter(
-                //     child: Padding(
-                //       padding: const EdgeInsets.fromLTRB(
-                //         AppSizes.screenPadding,
-                //         AppSizes.p12,
-                //         AppSizes.screenPadding,
-                //         AppSizes.p4,
-                //       ),
-                //       child: FolderAboutCard(folder: folder),
-                //     ),
-                //   ),
-                NotesListSection(),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
   void _toggleSearch() {
     // setState(() {
     //   _isSearchVisible = !_isSearchVisible;
@@ -148,5 +110,61 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
       final deleted = await context.read<FolderDetailCubit>().deleteFolder();
       if (deleted && mounted) context.pop();
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AsyncStateScaffold<FolderDetailCubit, FolderDetailData>(
+      title: context.l10n.folderDetailTitle,
+      onSuccess: (context, _) {
+        return Scaffold(
+          extendBody: true,
+          appBar: FolderDetailAppBar(
+            isSearchVisible: _isSearchVisible,
+            onToggleSearch: _toggleSearch,
+            onEditFolder: _onEditFolder,
+            onDeleteFolder: _onDeleteFolder,
+          ),
+          bottomNavigationBar: const FolderDetailRecordingBar(),
+          body: RefreshableWrapper<FolderDetailCubit>(
+            child: AdaptiveBranch(
+              compact: (_) => const _FolderDetailScrollView(),
+              medium: (_) => const AdaptiveContentWidth(
+                maxWidth: FolderDetailAdaptive.contentMaxWidth,
+                alignment: Alignment.topCenter,
+                child: _FolderDetailScrollView(),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _FolderDetailScrollView extends StatelessWidget {
+  const _FolderDetailScrollView();
+
+  @override
+  Widget build(BuildContext context) {
+    return const CustomScrollView(
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+      slivers: [
+        AsrStatusBanner.sliver(),
+        // if (hasDescription)
+        //   SliverToBoxAdapter(
+        //     child: Padding(
+        //       padding: const EdgeInsets.fromLTRB(
+        //         AppSizes.screenPadding,
+        //         AppSizes.p12,
+        //         AppSizes.screenPadding,
+        //         AppSizes.p4,
+        //       ),
+        //       child: FolderAboutCard(folder: folder),
+        //     ),
+        //   ),
+        NotesListSection(),
+      ],
+    );
   }
 }

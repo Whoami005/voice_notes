@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:voice_notes/core/adaptive/window/adaptive_content_width.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
@@ -28,6 +29,8 @@ import 'package:voice_notes/feature/presentation/widgets/dialogs/unsaved_changes
 class NoteDetailScreen extends StatelessWidget implements AppRouteWrapper {
   final String folderId;
   final String noteId;
+
+  static const double _contentMaxWidth = 760;
 
   const NoteDetailScreen({
     required this.folderId,
@@ -119,44 +122,48 @@ class NoteDetailScreen extends StatelessWidget implements AppRouteWrapper {
           onPopInvokedWithResult: () => _showUnsavedChangesDialog(context),
           child: Scaffold(
             appBar: const NoteDetailAppBar(),
-            body: ListView(
-              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-              padding: const EdgeInsets.all(AppSizes.screenPadding),
-              children: [
-                if (note.origin.audio != null) ...[
-                  AudioPlayerBar(note: note),
+            body: AdaptiveContentWidth(
+              maxWidth: _contentMaxWidth,
+              child: ListView(
+                keyboardDismissBehavior:
+                    ScrollViewKeyboardDismissBehavior.onDrag,
+                padding: const EdgeInsets.all(AppSizes.screenPadding),
+                children: [
+                  if (note.origin.audio != null) ...[
+                    AudioPlayerBar(note: note),
+                    AppSpacer.p24,
+                  ],
+                  SectionHeader(title: context.l10n.noteDetailSectionText),
+                  AppSpacer.p12,
+                  NoteTextSection(
+                    key: ValueKey(data.originalNote.uuid),
+                    text: note.text,
+                    isEditing: data.isEditing,
+                    onChanged: cubit.updateText,
+                  ),
                   AppSpacer.p24,
+                  SectionHeader(title: context.l10n.noteDetailSectionTags),
+                  AppSpacer.p12,
+                  NoteTagsSection(
+                    tags: note.tags,
+                    isEditing: data.isEditing,
+                    onAddTag: cubit.addTag,
+                    onRemoveTag: cubit.removeTag,
+                  ),
+                  AppSpacer.p24,
+                  SectionHeader(title: context.l10n.noteDetailSectionInfo),
+                  AppSpacer.p12,
+                  NoteInfoSection(note: note),
+                  AppSpacer.p24,
+                  SectionHeader(title: context.l10n.noteDetailSectionActions),
+                  AppSpacer.p12,
+                  NoteActionsSection(
+                    onCopy: () => _onCopy(context, data),
+                    onDelete: () => _onDelete(context),
+                  ),
+                  AppSpacer.p32,
                 ],
-                SectionHeader(title: context.l10n.noteDetailSectionText),
-                AppSpacer.p12,
-                NoteTextSection(
-                  key: ValueKey(data.originalNote.uuid),
-                  text: note.text,
-                  isEditing: data.isEditing,
-                  onChanged: cubit.updateText,
-                ),
-                AppSpacer.p24,
-                SectionHeader(title: context.l10n.noteDetailSectionTags),
-                AppSpacer.p12,
-                NoteTagsSection(
-                  tags: note.tags,
-                  isEditing: data.isEditing,
-                  onAddTag: cubit.addTag,
-                  onRemoveTag: cubit.removeTag,
-                ),
-                AppSpacer.p24,
-                SectionHeader(title: context.l10n.noteDetailSectionInfo),
-                AppSpacer.p12,
-                NoteInfoSection(note: note),
-                AppSpacer.p24,
-                SectionHeader(title: context.l10n.noteDetailSectionActions),
-                AppSpacer.p12,
-                NoteActionsSection(
-                  onCopy: () => _onCopy(context, data),
-                  onDelete: () => _onDelete(context),
-                ),
-                AppSpacer.p32,
-              ],
+              ),
             ),
           ),
         );
