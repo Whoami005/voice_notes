@@ -14,10 +14,10 @@ class _MetaInfo extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(_formatTime(note.createdAt), style: metaStyle),
+        Text(DateTimeFormatter.time(note.createdAt), style: metaStyle),
         if (sourceDuration != null) ...[
           const _Dot(),
-          Text(_formatDuration(sourceDuration), style: metaStyle),
+          Text(DurationFormatter.compact(sourceDuration), style: metaStyle),
         ],
         if (detectedLanguageCode.isNotEmpty) ...[
           const _Dot(),
@@ -25,20 +25,6 @@ class _MetaInfo extends StatelessWidget {
         ],
       ],
     );
-  }
-
-  String _formatTime(DateTime dateTime) {
-    final hour = dateTime.hour.toString().padLeft(2, '0');
-    final minute = dateTime.minute.toString().padLeft(2, '0');
-
-    return '$hour:$minute';
-  }
-
-  String _formatDuration(Duration duration) {
-    final minutes = duration.inMinutes;
-    final seconds = (duration.inSeconds % 60).toString().padLeft(2, '0');
-
-    return '$minutes:$seconds';
   }
 }
 

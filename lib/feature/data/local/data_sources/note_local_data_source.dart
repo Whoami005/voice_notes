@@ -4,11 +4,14 @@ import 'package:voice_notes/core/packages/db/object_box/dao/dao.dart';
 import 'package:voice_notes/core/packages/db/object_box/objectbox.g.dart';
 import 'package:voice_notes/core/packages/db/object_box/objectbox_database.dart';
 import 'package:voice_notes/feature/data/local/mappers/note_audio_mapper.dart';
+import 'package:voice_notes/feature/data/local/mappers/note_transcription_segment_mapper.dart';
 import 'package:voice_notes/feature/data/local/models/note_audio_object.dart';
 import 'package:voice_notes/feature/data/local/models/note_object.dart';
+import 'package:voice_notes/feature/data/local/models/note_transcription_segment_object.dart';
 import 'package:voice_notes/feature/data/local/models/tag_object.dart';
-import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
 import 'package:voice_notes/feature/domain/entities/note_audio_entity.dart';
+import 'package:voice_notes/feature/domain/entities/note_transcription_meta_entity.dart';
+import 'package:voice_notes/feature/domain/entities/note_transcription_segment_entity.dart';
 import 'package:voice_notes/feature/domain/enums/transcription_status.dart';
 
 abstract interface class NoteLocalDataSource {
@@ -94,9 +97,9 @@ abstract interface class NoteLocalDataSource {
   completeTranscription({
     required String uid,
     required String text,
-    required AsrModelIdEnum modelId,
+    required NoteTranscriptionMetaEntity transcription,
+    required List<NoteTranscriptionSegmentEntity> transcriptionSegments,
     required bool clearAudio,
-    String? detectedLanguageCode,
   });
 }
 
@@ -160,12 +163,18 @@ class NoteLocalDataSourceImpl implements NoteLocalDataSource {
       // для последующей очистки и id для remove.
       final audio = note.audio.target;
       final audioRelativePath = audio?.relativePath;
+      final segmentIds = [
+        for (final segment in note.transcriptionSegments.toList()) segment.id,
+      ];
 
       final folder = note.folder.target;
       _noteDao.remove(box, note.id);
       if (audio != null) {
         // ObjectBox не каскадит delete через ToOne — удаляем руками.
         box<NoteAudioObject>().remove(audio.id);
+      }
+      if (segmentIds.isNotEmpty) {
+        box<NoteTranscriptionSegmentObject>().removeMany(segmentIds);
       }
       _folderDao.touch(box, folder);
 
@@ -428,9 +437,9 @@ class NoteLocalDataSourceImpl implements NoteLocalDataSource {
   completeTranscription({
     required String uid,
     required String text,
-    required AsrModelIdEnum modelId,
+    required NoteTranscriptionMetaEntity transcription,
+    required List<NoteTranscriptionSegmentEntity> transcriptionSegments,
     required bool clearAudio,
-    String? detectedLanguageCode,
   }) async {
     return _db.runInTransactionAsync(
       (
@@ -438,8 +447,8 @@ class NoteLocalDataSourceImpl implements NoteLocalDataSource {
         ({
           String uid,
           String text,
-          AsrModelIdEnum modelId,
-          String? detectedLanguageCode,
+          NoteTranscriptionMetaEntity transcription,
+          List<NoteTranscriptionSegmentEntity> transcriptionSegments,
           bool clearAudio,
         })
         p,
@@ -450,12 +459,30 @@ class NoteLocalDataSourceImpl implements NoteLocalDataSource {
 
         note
           ..text = p.text
-          ..transcriptionModelId = p.modelId.value
-          ..transcriptionLanguageCode = p.detectedLanguageCode
-          ..transcribedAt = DateTime.now()
+          ..transcriptionModelId = p.transcription.modelId.value
+          ..transcriptionLanguageCode = p.transcription.languageCode
+          ..transcriptionTaskTypeValue = p.transcription.taskType.value
+          ..transcribedAt = p.transcription.transcribedAt
+          ..transcriptionProcessingTimeMs =
+              p.transcription.processingTime.inMilliseconds
+          ..transcriptionStrategyValue = p.transcription.strategyUsed.index
+          ..transcriptionUsedVad = p.transcription.usedVad
+          ..transcriptionFellBackFromVad = p.transcription.fellBackFromVad
+          ..transcriptionEmotionLabel = p.transcription.emotionLabel
+          ..transcriptionEventLabel = p.transcription.eventLabel
+          ..transcriptionUsedItn = p.transcription.usedItn
+          ..transcriptionUsedPunctuation = p.transcription.usedPunctuation
           ..statusValue = TranscriptionStatus.completed.value
           ..failureReasonValue = null
           ..updatedAt = DateTime.now();
+
+        final segmentBox = box<NoteTranscriptionSegmentObject>();
+        final previousSegmentIds = [
+          for (final segment in note.transcriptionSegments.toList()) segment.id,
+        ];
+        if (previousSegmentIds.isNotEmpty) {
+          segmentBox.removeMany(previousSegmentIds);
+        }
 
         String? audioRelativePath;
         int? removedAudioId;
@@ -469,6 +496,16 @@ class NoteLocalDataSourceImpl implements NoteLocalDataSource {
         }
 
         _noteDao.put(box, note, mode: PutMode.update);
+        if (p.transcriptionSegments.isNotEmpty) {
+          final segmentObjects = [
+            for (final segment in p.transcriptionSegments)
+              NoteTranscriptionSegmentMapper.toEntity(
+                entity: segment,
+                note: note,
+              ),
+          ];
+          segmentBox.putMany(segmentObjects);
+        }
         if (removedAudioId != null) {
           box<NoteAudioObject>().remove(removedAudioId);
         }
@@ -478,8 +515,8 @@ class NoteLocalDataSourceImpl implements NoteLocalDataSource {
       param: (
         uid: uid,
         text: text,
-        modelId: modelId,
-        detectedLanguageCode: detectedLanguageCode,
+        transcription: transcription,
+        transcriptionSegments: transcriptionSegments,
         clearAudio: clearAudio,
       ),
     );

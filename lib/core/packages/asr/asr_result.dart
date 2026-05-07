@@ -38,6 +38,18 @@ class AsrResult extends Equatable {
   /// Определённый язык (если поддерживается моделью)
   final String? detectedLanguage;
 
+  /// Определённая эмоция (если поддерживается моделью)
+  final String? emotionLabel;
+
+  /// Определённое событие (если поддерживается моделью)
+  final String? eventLabel;
+
+  /// Признак, что pipeline использовал ITN.
+  final bool? usedItn;
+
+  /// Признак, что pipeline использовал встроенную пунктуацию.
+  final bool? usedPunctuation;
+
   /// Время обработки
   final Duration processingTime;
 
@@ -61,6 +73,10 @@ class AsrResult extends Equatable {
     this.tokens = const [],
     this.timestamps = const [],
     this.detectedLanguage,
+    this.emotionLabel,
+    this.eventLabel,
+    this.usedItn,
+    this.usedPunctuation,
     this.processingTime = Duration.zero,
     this.isPartial = false,
     this.strategyUsed = AsrTranscriptionStrategy.singlePass,
@@ -78,6 +94,10 @@ class AsrResult extends Equatable {
     List<String>? tokens,
     List<double>? timestamps,
     String? detectedLanguage,
+    String? Function()? emotionLabel,
+    String? Function()? eventLabel,
+    bool? Function()? usedItn,
+    bool? Function()? usedPunctuation,
     Duration? processingTime,
     bool? isPartial,
     AsrTranscriptionStrategy? strategyUsed,
@@ -90,6 +110,12 @@ class AsrResult extends Equatable {
       tokens: tokens ?? this.tokens,
       timestamps: timestamps ?? this.timestamps,
       detectedLanguage: detectedLanguage ?? this.detectedLanguage,
+      emotionLabel: emotionLabel != null ? emotionLabel() : this.emotionLabel,
+      eventLabel: eventLabel != null ? eventLabel() : this.eventLabel,
+      usedItn: usedItn != null ? usedItn() : this.usedItn,
+      usedPunctuation: usedPunctuation != null
+          ? usedPunctuation()
+          : this.usedPunctuation,
       processingTime: processingTime ?? this.processingTime,
       isPartial: isPartial ?? this.isPartial,
       strategyUsed: strategyUsed ?? this.strategyUsed,
@@ -105,6 +131,10 @@ class AsrResult extends Equatable {
     tokens,
     timestamps,
     detectedLanguage,
+    emotionLabel,
+    eventLabel,
+    usedItn,
+    usedPunctuation,
     processingTime,
     isPartial,
     strategyUsed,

@@ -6,9 +6,10 @@ import 'package:voice_notes/core/packages/uuid/uuid_manager.dart';
 import 'package:voice_notes/feature/data/local/data_sources/note_local_data_source.dart';
 import 'package:voice_notes/feature/data/local/mappers/note_mapper.dart';
 import 'package:voice_notes/feature/data/local/models/note_object.dart';
-import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
 import 'package:voice_notes/feature/domain/entities/note_audio_entity.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
+import 'package:voice_notes/feature/domain/entities/note_transcription_meta_entity.dart';
+import 'package:voice_notes/feature/domain/entities/note_transcription_segment_entity.dart';
 import 'package:voice_notes/feature/domain/enums/note_origin_type.dart';
 import 'package:voice_notes/feature/domain/enums/transcription_failure_reason.dart';
 import 'package:voice_notes/feature/domain/enums/transcription_status.dart';
@@ -187,15 +188,15 @@ class NoteRepositoryImpl implements NoteRepository {
   Future<NoteEntity?> completeTranscription({
     required String uid,
     required String text,
-    required AsrModelIdEnum modelId,
+    required NoteTranscriptionMetaEntity transcription,
+    required List<NoteTranscriptionSegmentEntity> transcriptionSegments,
     required bool deleteAudio,
-    String? detectedLanguageCode,
   }) async {
     final result = await _noteDataSource.completeTranscription(
       uid: uid,
       text: text,
-      modelId: modelId,
-      detectedLanguageCode: detectedLanguageCode,
+      transcription: transcription,
+      transcriptionSegments: transcriptionSegments,
       clearAudio: deleteAudio,
     );
 

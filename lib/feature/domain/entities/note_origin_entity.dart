@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
 import 'package:voice_notes/feature/domain/entities/note_audio_entity.dart';
 import 'package:voice_notes/feature/domain/entities/note_transcription_meta_entity.dart';
+import 'package:voice_notes/feature/domain/entities/note_transcription_segment_entity.dart';
 import 'package:voice_notes/feature/domain/enums/note_origin_type.dart';
 
 sealed class NoteOriginEntity extends Equatable {
@@ -24,7 +25,12 @@ sealed class NoteOriginEntity extends Equatable {
 
   NoteTranscriptionMetaEntity? get transcription => audioOrNull?.transcription;
 
+  List<NoteTranscriptionSegmentEntity>? get transcriptionSegments =>
+      audioOrNull?.transcriptionSegments;
+
   AsrModelIdEnum? get transcriptionModelId => transcription?.modelId;
+
+  String? get languageCode => transcription?.languageCode;
 
   String? get detectedLanguageCode => transcription?.detectedLanguageCode;
 
@@ -44,14 +50,23 @@ class ManualNoteOriginEntity extends NoteOriginEntity {
 }
 
 class AudioNoteOriginEntity extends NoteOriginEntity {
+  @override
   final Duration sourceDuration;
+
+  @override
   final NoteAudioEntity? audio;
+
+  @override
   final NoteTranscriptionMetaEntity? transcription;
+
+  @override
+  final List<NoteTranscriptionSegmentEntity>? transcriptionSegments;
 
   const AudioNoteOriginEntity({
     required this.sourceDuration,
     this.audio,
     this.transcription,
+    this.transcriptionSegments,
   });
 
   @override
@@ -61,6 +76,7 @@ class AudioNoteOriginEntity extends NoteOriginEntity {
     Duration? sourceDuration,
     NoteAudioEntity? Function()? audio,
     NoteTranscriptionMetaEntity? Function()? transcription,
+    List<NoteTranscriptionSegmentEntity>? Function()? transcriptionSegments,
   }) {
     return AudioNoteOriginEntity(
       sourceDuration: sourceDuration ?? this.sourceDuration,
@@ -68,9 +84,18 @@ class AudioNoteOriginEntity extends NoteOriginEntity {
       transcription: transcription != null
           ? transcription()
           : this.transcription,
+      transcriptionSegments: transcriptionSegments != null
+          ? transcriptionSegments()
+          : this.transcriptionSegments,
     );
   }
 
   @override
-  List<Object?> get props => [type, sourceDuration, audio, transcription];
+  List<Object?> get props => [
+    type,
+    sourceDuration,
+    audio,
+    transcription,
+    transcriptionSegments,
+  ];
 }

@@ -62,7 +62,7 @@
     },
     {
       "id": "2:423521120091770121",
-      "lastPropertyId": "19:7819507367509518418",
+      "lastPropertyId": "28:642465397112949216",
       "name": "NoteObject",
       "properties": [
         {
@@ -149,6 +149,51 @@
           "id": "19:7819507367509518418",
           "name": "transcribedAt",
           "type": 12
+        },
+        {
+          "id": "20:76915171422424149",
+          "name": "transcriptionTaskTypeValue",
+          "type": 6
+        },
+        {
+          "id": "21:4124616427789830101",
+          "name": "transcriptionProcessingTimeMs",
+          "type": 6
+        },
+        {
+          "id": "22:1027387402882356877",
+          "name": "transcriptionStrategyValue",
+          "type": 6
+        },
+        {
+          "id": "23:2451472483528487281",
+          "name": "transcriptionUsedVad",
+          "type": 1
+        },
+        {
+          "id": "24:1086817230722776559",
+          "name": "transcriptionFellBackFromVad",
+          "type": 1
+        },
+        {
+          "id": "25:5338608176825088121",
+          "name": "transcriptionEmotionLabel",
+          "type": 9
+        },
+        {
+          "id": "26:3033018246150733674",
+          "name": "transcriptionEventLabel",
+          "type": 9
+        },
+        {
+          "id": "27:5837524586411868322",
+          "name": "transcriptionUsedItn",
+          "type": 1
+        },
+        {
+          "id": "28:642465397112949216",
+          "name": "transcriptionUsedPunctuation",
+          "type": 1
         }
       ],
       "relations": [
@@ -280,10 +325,69 @@
         }
       ],
       "relations": []
+    },
+    {
+      "id": "6:4797964184263632059",
+      "lastPropertyId": "9:3456150181757594633",
+      "name": "NoteTranscriptionSegmentObject",
+      "properties": [
+        {
+          "id": "1:8082808459479839842",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:8650442772235002008",
+          "name": "index",
+          "indexId": "16:4309950717671666257",
+          "type": 6,
+          "flags": 8
+        },
+        {
+          "id": "3:4512367934171585028",
+          "name": "text",
+          "type": 9
+        },
+        {
+          "id": "4:5346844403882458932",
+          "name": "startMs",
+          "type": 6
+        },
+        {
+          "id": "5:6828669090412699648",
+          "name": "endMs",
+          "type": 6
+        },
+        {
+          "id": "6:2760292357492183325",
+          "name": "languageCode",
+          "type": 9
+        },
+        {
+          "id": "7:1616652506504147375",
+          "name": "tokensJson",
+          "type": 9
+        },
+        {
+          "id": "8:7601196147729718633",
+          "name": "tokenTimestampsMsJson",
+          "type": 9
+        },
+        {
+          "id": "9:3456150181757594633",
+          "name": "noteId",
+          "indexId": "17:2758786152635896661",
+          "type": 11,
+          "flags": 520,
+          "relationTarget": "NoteObject"
+        }
+      ],
+      "relations": []
     }
   ],
-  "lastEntityId": "5:8204965707487121265",
-  "lastIndexId": "15:2964124524824995311",
+  "lastEntityId": "6:4797964184263632059",
+  "lastIndexId": "17:2758786152635896661",
   "lastRelationId": "1:3237763071504065953",
   "lastSequenceId": "0:0",
   "modelVersion": 5,

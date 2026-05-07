@@ -310,6 +310,10 @@ final class OfflineAsrEngine extends AsrEngine {
     final timestamps = <double>[];
     final segments = <AsrTranscriptionSegment>[];
     String? detectedLanguage;
+    final _LabelFrequencyAggregator emotionAggregator =
+        _LabelFrequencyAggregator();
+    final _LabelFrequencyAggregator eventAggregator =
+        _LabelFrequencyAggregator();
     String mergedText = '';
     int processedUnits = 0;
     final totalUnits = units.length;
@@ -335,6 +339,8 @@ final class OfflineAsrEngine extends AsrEngine {
         tokens.addAll(result.tokens);
         timestamps.addAll(shiftedTimestamps);
         detectedLanguage ??= result.detectedLanguage;
+        emotionAggregator.add(result.emotionLabel);
+        eventAggregator.add(result.eventLabel);
         mergedText = AsrTextMerge.merge(mergedText, segment.text);
       }
 
@@ -365,6 +371,8 @@ final class OfflineAsrEngine extends AsrEngine {
         tokens: tokens,
         timestamps: timestamps,
         detectedLanguage: detectedLanguage,
+        emotionLabel: emotionAggregator.resolve(),
+        eventLabel: eventAggregator.resolve(),
         processingTime: stopwatch.elapsed,
         strategyUsed: strategy,
         audioDuration: audioDuration,
@@ -394,6 +402,8 @@ final class OfflineAsrEngine extends AsrEngine {
         tokens: result.tokens,
         timestamps: result.timestamps,
         detectedLanguage: result.lang.isNotEmpty ? result.lang : null,
+        emotionLabel: result.emotion.isNotEmpty ? result.emotion : null,
+        eventLabel: result.event.isNotEmpty ? result.event : null,
         processingTime: stopwatch.elapsed,
       );
     } finally {
@@ -458,6 +468,45 @@ final class OfflineAsrEngine extends AsrEngine {
 
   @override
   void dispose() => _recognizer.free();
+}
+
+final class _LabelFrequencyAggregator {
+  final Map<String, int> _counts = <String, int>{};
+  final Map<String, String> _originalValues = <String, String>{};
+
+  void add(String? rawLabel) {
+    final String trimmedLabel = rawLabel?.trim() ?? '';
+    if (trimmedLabel.isEmpty) return;
+
+    final String normalizedLabel = trimmedLabel.toLowerCase();
+    _counts[normalizedLabel] = (_counts[normalizedLabel] ?? 0) + 1;
+    _originalValues.putIfAbsent(normalizedLabel, () => trimmedLabel);
+  }
+
+  String? resolve() {
+    if (_counts.isEmpty) return null;
+
+    String? winnerKey;
+    int winnerCount = 0;
+    bool hasTie = false;
+
+    for (final MapEntry<String, int> entry in _counts.entries) {
+      if (entry.value > winnerCount) {
+        winnerKey = entry.key;
+        winnerCount = entry.value;
+        hasTie = false;
+        continue;
+      }
+
+      if (entry.value == winnerCount) {
+        hasTie = true;
+      }
+    }
+
+    if (winnerKey == null || hasTie) return null;
+
+    return _originalValues[winnerKey];
+  }
 }
 
 final class StreamingAsrEngine extends AsrEngine {

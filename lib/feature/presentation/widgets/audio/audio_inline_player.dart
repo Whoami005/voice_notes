@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:voice_notes/common/utils/duration_formatter.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/packages/player/audio_playback_controller.dart';
@@ -51,7 +52,8 @@ class AudioInlinePlayer extends StatelessWidget {
             ),
           ),
           Text(
-            '${_formatDuration(state.position)} / ${_formatDuration(state.duration)}',
+            '${DurationFormatter.padded(state.position)} / '
+            '${DurationFormatter.padded(state.duration)}',
             style: textTheme.bodySmall?.copyWith(
               color: themeColors.textSecondary,
               fontFeatures: const [FontFeature.tabularFigures()],
@@ -61,11 +63,4 @@ class AudioInlinePlayer extends StatelessWidget {
       ),
     );
   }
-}
-
-String _formatDuration(Duration d) {
-  final minutes = d.inMinutes.toString().padLeft(2, '0');
-  final seconds = (d.inSeconds % 60).toString().padLeft(2, '0');
-
-  return '$minutes:$seconds';
 }

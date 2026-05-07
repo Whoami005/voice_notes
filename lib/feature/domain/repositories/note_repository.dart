@@ -1,6 +1,7 @@
-import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
 import 'package:voice_notes/feature/domain/entities/note_audio_entity.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
+import 'package:voice_notes/feature/domain/entities/note_transcription_meta_entity.dart';
+import 'package:voice_notes/feature/domain/entities/note_transcription_segment_entity.dart';
 import 'package:voice_notes/feature/domain/enums/transcription_failure_reason.dart';
 
 abstract interface class NoteRepository {
@@ -52,9 +53,9 @@ abstract interface class NoteRepository {
   Future<NoteEntity?> completeTranscription({
     required String uid,
     required String text,
-    required AsrModelIdEnum modelId,
+    required NoteTranscriptionMetaEntity transcription,
+    required List<NoteTranscriptionSegmentEntity> transcriptionSegments,
     required bool deleteAudio,
-    String? detectedLanguageCode,
   });
 
   Future<NoteEntity?> failTranscription({

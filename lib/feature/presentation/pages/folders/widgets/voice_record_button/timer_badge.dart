@@ -11,7 +11,7 @@ class _TimerBadge extends StatelessWidget {
     return _VoiceButtonBadge(
       colors: colors,
       child: Text(
-        _formatDuration(duration),
+        DurationFormatter.compact(duration),
         style: AppTypography.caption.copyWith(
           color: colors.timerText,
           fontWeight: FontWeight.w500,
@@ -19,12 +19,5 @@ class _TimerBadge extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  String _formatDuration(Duration duration) {
-    final minutes = duration.inMinutes;
-    final seconds = (duration.inSeconds % 60).toString().padLeft(2, '0');
-
-    return '$minutes:$seconds';
   }
 }

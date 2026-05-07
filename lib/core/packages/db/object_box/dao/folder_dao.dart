@@ -5,6 +5,7 @@ import 'package:voice_notes/core/packages/db/object_box/objectbox.g.dart'
 import 'package:voice_notes/feature/data/local/models/folder_object.dart';
 import 'package:voice_notes/feature/data/local/models/note_audio_object.dart';
 import 'package:voice_notes/feature/data/local/models/note_object.dart';
+import 'package:voice_notes/feature/data/local/models/note_transcription_segment_object.dart';
 
 /// DAO для работы с папками
 class FolderDao {
@@ -62,11 +63,15 @@ class FolderDao {
     final notes = folder.notes.toList();
     final noteIds = <int>[];
     final audioIds = <int>[];
+    final segmentIds = <int>[];
     final audioPaths = <String>[];
 
     for (final note in notes) {
       noteIds.add(note.id);
       final audio = note.audio.target;
+      segmentIds.addAll([
+        for (final segment in note.transcriptionSegments.toList()) segment.id,
+      ]);
 
       if (audio != null) {
         audioIds.add(audio.id);
@@ -75,6 +80,9 @@ class FolderDao {
     }
 
     if (audioIds.isNotEmpty) box<NoteAudioObject>().removeMany(audioIds);
+    if (segmentIds.isNotEmpty) {
+      box<NoteTranscriptionSegmentObject>().removeMany(segmentIds);
+    }
     box<NoteObject>().removeMany(noteIds);
     box<FolderObject>().remove(folder.id);
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:voice_notes/common/utils/duration_formatter.dart';
 import 'package:voice_notes/common/utils/format_bytes.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
@@ -83,7 +84,7 @@ class NoteAudioTile extends StatelessWidget {
                   ),
                   AppSpacer.p2,
                   Text(
-                    '${_formatDuration(stats.duration)} · '
+                    '${DurationFormatter.padded(stats.duration)} · '
                     '${BytesFormatter.format(stats.bytes)}',
                     style: textTheme.bodySmall?.copyWith(
                       color: themeColors.textTertiary,
@@ -96,11 +97,5 @@ class NoteAudioTile extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  String _formatDuration(Duration d) {
-    final minutes = d.inMinutes.toString().padLeft(2, '0');
-    final seconds = (d.inSeconds % 60).toString().padLeft(2, '0');
-    return '$minutes:$seconds';
   }
 }

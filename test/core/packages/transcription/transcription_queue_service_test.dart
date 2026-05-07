@@ -20,6 +20,8 @@ import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
 import 'package:voice_notes/feature/domain/entities/note_audio_entity.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
 import 'package:voice_notes/feature/domain/entities/note_origin_entity.dart';
+import 'package:voice_notes/feature/domain/entities/note_transcription_meta_entity.dart';
+import 'package:voice_notes/feature/domain/entities/note_transcription_segment_entity.dart';
 import 'package:voice_notes/feature/domain/enums/queue_runtime_reason.dart';
 import 'package:voice_notes/feature/domain/enums/transcription_failure_reason.dart';
 import 'package:voice_notes/feature/domain/enums/transcription_status.dart';
@@ -1214,9 +1216,9 @@ class _FakeNoteRepository implements NoteRepository {
   Future<NoteEntity?> completeTranscription({
     required String uid,
     required String text,
-    required AsrModelIdEnum modelId,
+    required NoteTranscriptionMetaEntity transcription,
+    required List<NoteTranscriptionSegmentEntity> transcriptionSegments,
     required bool deleteAudio,
-    String? detectedLanguageCode,
   }) async {
     completeCalls.add(uid);
     return _notes[uid];

@@ -15,7 +15,10 @@ import 'package:voice_notes/feature/data/local/preferences/recording_preferences
 import 'package:voice_notes/feature/data/local/preferences/transcription_queue_preferences.dart';
 import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
 import 'package:voice_notes/feature/domain/entities/note_audio_entity.dart';
+import 'package:voice_notes/feature/domain/entities/note_transcription_meta_entity.dart';
+import 'package:voice_notes/feature/domain/entities/note_transcription_segment_entity.dart';
 import 'package:voice_notes/feature/domain/enums/transcription_failure_reason.dart';
+import 'package:voice_notes/feature/domain/enums/transcription_task_type.dart';
 import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
 
 final class TranscriptionQueueProcessor {
@@ -142,11 +145,17 @@ final class TranscriptionQueueProcessor {
     QueuedTranscriptionTask task,
     AsrResult result,
   ) async {
+    final transcribedAt = DateTime.now();
+
     await _noteRepository.completeTranscription(
       uid: task.noteUid,
       text: result.text,
-      modelId: task.model.uuid,
-      detectedLanguageCode: result.detectedLanguage,
+      transcription: _buildTranscriptionMeta(
+        model: task.model,
+        result: result,
+        transcribedAt: transcribedAt,
+      ),
+      transcriptionSegments: _buildTranscriptionSegments(result),
       deleteAudio: !_preferences.keepOriginals,
     );
     _runtime.breaker.recordSuccess();
@@ -228,6 +237,55 @@ final class TranscriptionQueueProcessor {
     _runtime.lastProgress = progress;
     _runtime.lastProgressNoteUid = forNoteUid;
     _emitSnapshot();
+  }
+
+  NoteTranscriptionMetaEntity _buildTranscriptionMeta({
+    required AsrModelEntity model,
+    required AsrResult result,
+    required DateTime transcribedAt,
+  }) {
+    return NoteTranscriptionMetaEntity(
+      modelId: model.uuid,
+      languageCode: result.detectedLanguage,
+      taskType: TranscriptionTaskType.transcribe,
+      transcribedAt: transcribedAt,
+      processingTime: result.processingTime,
+      strategyUsed: result.strategyUsed,
+      usedVad: result.stats.usedVad,
+      fellBackFromVad: result.stats.fellBackFromVad,
+      emotionLabel: result.emotionLabel,
+      eventLabel: result.eventLabel,
+      usedItn: result.usedItn,
+      usedPunctuation: result.usedPunctuation,
+    );
+  }
+
+  List<NoteTranscriptionSegmentEntity> _buildTranscriptionSegments(
+    AsrResult result,
+  ) {
+    return [
+      for (var i = 0; i < result.segments.length; i++)
+        NoteTranscriptionSegmentEntity(
+          index: i,
+          text: result.segments[i].text,
+          start: result.segments[i].start,
+          end: result.segments[i].end,
+          languageCode: result.segments[i].detectedLanguage,
+          tokens: result.segments[i].tokens.isEmpty
+              ? null
+              : result.segments[i].tokens,
+          tokenTimestamps: result.segments[i].timestamps.isEmpty
+              ? null
+              : [
+                  for (final timestamp in result.segments[i].timestamps)
+                    _secondsToDuration(timestamp),
+                ],
+        ),
+    ];
+  }
+
+  Duration _secondsToDuration(double seconds) {
+    return Duration(milliseconds: (seconds * 1000).round());
   }
 
   Future<void> _failWithReason(
