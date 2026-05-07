@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:rxdart/rxdart.dart';
+import 'package:voice_notes/core/adaptive/window/adaptive_content_width.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
@@ -95,133 +96,136 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(vertical: AppSizes.screenPadding),
-      child: Column(
-        children: [
-          SettingsSection(
-            title: l10n.settingsSectionRecording,
-            children: [
-              SettingsRow(
-                icon: Icons.audiotrack_outlined,
-                title: l10n.settingsKeepOriginalsTitle,
-                subtitle: l10n.settingsKeepOriginalsSubtitle,
-                trailing: SettingsToggle(
-                  value: _keepOriginals,
-                  onChanged: _onKeepOriginalsChanged,
+      child: AdaptiveContentWidth(
+        maxWidth: 760,
+        child: Column(
+          children: [
+            SettingsSection(
+              title: l10n.settingsSectionRecording,
+              children: [
+                SettingsRow(
+                  icon: Icons.audiotrack_outlined,
+                  title: l10n.settingsKeepOriginalsTitle,
+                  subtitle: l10n.settingsKeepOriginalsSubtitle,
+                  trailing: SettingsToggle(
+                    value: _keepOriginals,
+                    onChanged: _onKeepOriginalsChanged,
+                  ),
+                  showDivider: false,
                 ),
-                showDivider: false,
-              ),
-            ],
-          ),
-          AppSpacer.p20,
-          SettingsSection(
-            title: l10n.settingsSectionTranscription,
-            children: [
-              SettingsRow(
-                icon: Icons.tag,
-                title: l10n.settingsAutoTags,
-                subtitle: l10n.settingsAutoTagsSubtitle,
-                trailing: SettingsToggle(
-                  value: _autoTags,
-                  onChanged: (value) => setState(() => _autoTags = value),
+              ],
+            ),
+            AppSpacer.p20,
+            SettingsSection(
+              title: l10n.settingsSectionTranscription,
+              children: [
+                SettingsRow(
+                  icon: Icons.tag,
+                  title: l10n.settingsAutoTags,
+                  subtitle: l10n.settingsAutoTagsSubtitle,
+                  trailing: SettingsToggle(
+                    value: _autoTags,
+                    onChanged: (value) => setState(() => _autoTags = value),
+                  ),
+                  isEnabled: false,
+                  showDivider: false,
                 ),
-                isEnabled: false,
-                showDivider: false,
-              ),
-            ],
-          ),
-          AppSpacer.p20,
-          SettingsSection(
-            title: l10n.settingsSectionInterface,
-            children: [
-              BlocSelector<ThemeCubit, ThemeState, AppThemeMode>(
-                selector: (state) => state.mode,
-                builder: (context, mode) {
-                  final themeName = mode == AppThemeMode.light
-                      ? l10n.settingsThemeLight
-                      : l10n.settingsThemeDark;
+              ],
+            ),
+            AppSpacer.p20,
+            SettingsSection(
+              title: l10n.settingsSectionInterface,
+              children: [
+                BlocSelector<ThemeCubit, ThemeState, AppThemeMode>(
+                  selector: (state) => state.mode,
+                  builder: (context, mode) {
+                    final themeName = mode == AppThemeMode.light
+                        ? l10n.settingsThemeLight
+                        : l10n.settingsThemeDark;
 
-                  return SettingsRow(
-                    icon: Icons.dark_mode_outlined,
-                    title: l10n.settingsTheme,
-                    trailing: SettingsChevron(value: themeName),
-                    onTap: _onThemeTap,
-                  );
-                },
-              ),
-              BlocSelector<LocaleCubit, LocaleState, Locale>(
-                selector: (state) => state.locale,
-                builder: (context, locale) {
-                  final appLanguage = _languageDisplayName(locale);
+                    return SettingsRow(
+                      icon: Icons.dark_mode_outlined,
+                      title: l10n.settingsTheme,
+                      trailing: SettingsChevron(value: themeName),
+                      onTap: _onThemeTap,
+                    );
+                  },
+                ),
+                BlocSelector<LocaleCubit, LocaleState, Locale>(
+                  selector: (state) => state.locale,
+                  builder: (context, locale) {
+                    final appLanguage = _languageDisplayName(locale);
 
-                  return SettingsRow(
-                    icon: Icons.translate,
-                    title: l10n.settingsAppLanguage,
-                    trailing: SettingsChevron(value: appLanguage),
-                    onTap: _onAppLanguageTap,
-                    showDivider: false,
-                  );
-                },
-              ),
-            ],
-          ),
-          AppSpacer.p20,
-          SettingsSection(
-            title: l10n.settingsSectionNotifications,
-            children: [
-              SettingsRow(
-                icon: Icons.notifications_outlined,
-                title: l10n.settingsSectionNotifications,
-                subtitle: l10n.settingsNotificationsSubtitle,
-                trailing: const SettingsToggle(value: false),
-                isEnabled: false,
-                showDivider: false,
-              ),
-            ],
-          ),
-          AppSpacer.p20,
-          SettingsSection(
-            title: l10n.queueSettingsSection,
-            children: [
-              StreamBuilder<int>(
-                stream: _queueBadgeStream(getIt<NoteRepository>()),
-                initialData: 0,
-                builder: (context, snapshot) {
-                  final count = snapshot.data ?? 0;
-                  final value = count > 0 ? '$count' : null;
+                    return SettingsRow(
+                      icon: Icons.translate,
+                      title: l10n.settingsAppLanguage,
+                      trailing: SettingsChevron(value: appLanguage),
+                      onTap: _onAppLanguageTap,
+                      showDivider: false,
+                    );
+                  },
+                ),
+              ],
+            ),
+            AppSpacer.p20,
+            SettingsSection(
+              title: l10n.settingsSectionNotifications,
+              children: [
+                SettingsRow(
+                  icon: Icons.notifications_outlined,
+                  title: l10n.settingsSectionNotifications,
+                  subtitle: l10n.settingsNotificationsSubtitle,
+                  trailing: const SettingsToggle(value: false),
+                  isEnabled: false,
+                  showDivider: false,
+                ),
+              ],
+            ),
+            AppSpacer.p20,
+            SettingsSection(
+              title: l10n.queueSettingsSection,
+              children: [
+                StreamBuilder<int>(
+                  stream: _queueBadgeStream(getIt<NoteRepository>()),
+                  initialData: 0,
+                  builder: (context, snapshot) {
+                    final count = snapshot.data ?? 0;
+                    final value = count > 0 ? '$count' : null;
 
-                  return SettingsRow(
-                    icon: Icons.queue_outlined,
-                    title: l10n.queueSettingsRowTitle,
-                    trailing: SettingsChevron(value: value),
-                    onTap: () => QueueManagementScreen.go(context),
-                    showDivider: false,
-                  );
-                },
-              ),
-            ],
-          ),
-          AppSpacer.p20,
-          SettingsSection(
-            title: l10n.settingsSectionData,
-            children: [
-              SettingsRow(
-                icon: Icons.storage_rounded,
-                title: l10n.settingsStorageEntryTitle,
-                trailing: const SettingsChevron(),
-                onTap: () => StorageScreen.go(context),
-              ),
-              SettingsRow(
-                icon: Icons.upload_outlined,
-                title: l10n.settingsExportData,
-                trailing: const SettingsChevron(),
-                onTap: _onExportTap,
-                isEnabled: false,
-                showDivider: false,
-              ),
-            ],
-          ),
-          AppSpacer.p40,
-        ],
+                    return SettingsRow(
+                      icon: Icons.queue_outlined,
+                      title: l10n.queueSettingsRowTitle,
+                      trailing: SettingsChevron(value: value),
+                      onTap: () => QueueManagementScreen.go(context),
+                      showDivider: false,
+                    );
+                  },
+                ),
+              ],
+            ),
+            AppSpacer.p20,
+            SettingsSection(
+              title: l10n.settingsSectionData,
+              children: [
+                SettingsRow(
+                  icon: Icons.storage_rounded,
+                  title: l10n.settingsStorageEntryTitle,
+                  trailing: const SettingsChevron(),
+                  onTap: () => StorageScreen.go(context),
+                ),
+                SettingsRow(
+                  icon: Icons.upload_outlined,
+                  title: l10n.settingsExportData,
+                  trailing: const SettingsChevron(),
+                  onTap: _onExportTap,
+                  isEnabled: false,
+                  showDivider: false,
+                ),
+              ],
+            ),
+            AppSpacer.p40,
+          ],
+        ),
       ),
     );
   }

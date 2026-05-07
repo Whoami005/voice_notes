@@ -71,6 +71,7 @@ class ModelCard extends StatelessWidget {
       child: Column(
         spacing: AppSizes.p12,
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Row(
             spacing: AppSizes.p12,
@@ -83,10 +84,10 @@ class ModelCard extends StatelessWidget {
           if (description != null)
             Text(
               description,
+              maxLines: 2,
               style: AppTypography.caption.copyWith(
                 color: themeColors.textSecondary,
               ),
-              maxLines: 2,
               overflow: TextOverflow.ellipsis,
             ),
           if (model.supportsStreaming) _ModelCapabilitiesSection(model: model),

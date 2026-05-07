@@ -1,31 +1,27 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:voice_notes/core/adaptive/window/adaptive_content_width.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/packages/app_router/routes/app_routes.dart';
-import 'package:voice_notes/core/packages/downloader/download_status.dart';
 import 'package:voice_notes/core/state/async/async_state.dart';
 import 'package:voice_notes/core/state/async/async_state_widgets.dart';
 import 'package:voice_notes/core/theme/app_typography.dart';
 import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/models/logic/models_cubit.dart';
-import 'package:voice_notes/feature/presentation/pages/settings/models/widgets/model_card/model_card.dart';
+import 'package:voice_notes/feature/presentation/pages/settings/models/widgets/models_settings_model_card.dart';
 import 'package:voice_notes/feature/presentation/widgets/dialogs/error_dialog.dart';
 
-class ModelsSettingsScreen extends StatefulWidget {
+class ModelsSettingsScreen extends StatelessWidget {
+  static const double _modelCardContentMaxWidth = 760;
+
   const ModelsSettingsScreen({super.key});
 
   static void go(BuildContext context) {
     context.go(AppRoutes.settings.models);
   }
 
-  @override
-  State<ModelsSettingsScreen> createState() => _ModelsSettingsScreenState();
-}
-
-class _ModelsSettingsScreenState extends State<ModelsSettingsScreen> {
   void _handleStateChanges(
     BuildContext context,
     AsyncState<ModelsState> baseState,
@@ -53,122 +49,109 @@ class _ModelsSettingsScreenState extends State<ModelsSettingsScreen> {
     );
   }
 
-  Future<void> _onDeleteModel(
-    BuildContext context,
-    AsrModelEntity model,
-  ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(context.l10n.deleteModelTitle),
-        content: Text(context.l10n.deleteModelMessage(model.name)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(context.l10n.dialogCancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(context.l10n.dialogDelete),
-          ),
-        ],
-      ),
-    );
-
-    if ((confirmed ?? false) && context.mounted) {
-      await context.read<ModelsCubit>().deleteModel(model.uuid.value);
-    }
-  }
-
-  Future<void> _onDownloadModel(
-    BuildContext context,
-    AsrModelEntity model,
-  ) async {
-    final cubit = context.read<ModelsCubit>();
-    final failure = await cubit.downloadModel(model);
-
-    if (failure != null && context.mounted) {
-      await ErrorDialog.showFromFailure(context, failure);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return AsyncStateBody<ModelsCubit, ModelsState>(
       buildAlways: true,
       listener: _handleStateChanges,
       onSuccess: (context, state) {
+        final l10n = context.l10n;
         final models = state.models;
 
-        if (models.isEmpty) return Center(child: Text(context.l10n.stateEmpty));
+        if (models.isEmpty) return Center(child: Text(l10n.stateEmpty));
 
-        final themeColors = context.themeColors;
         final activeModel = state.selectedModel;
-        final otherModels = models.where((model) => !model.isSelected);
+        final otherModels = [
+          for (final model in models)
+            if (!model.isSelected) model,
+        ];
 
-        return ListView(
+        return Padding(
           padding: const EdgeInsets.all(AppSizes.screenPadding),
-          children: [
-            if (activeModel != null) ...[
-              Text(
-                context.l10n.settingsActiveModel,
-                style: AppTypography.overline.copyWith(
-                  color: themeColors.textTertiary,
-                ),
-              ),
-              AppSpacer.p8,
-              _buildModelCard(context, state, activeModel),
-              AppSpacer.p24,
-            ],
-            Text(
-              context.l10n.settingsAvailableModels,
-              style: AppTypography.overline.copyWith(
-                color: themeColors.textTertiary,
-              ),
+          child: AdaptiveContentWidth(
+            maxWidth: _modelCardContentMaxWidth,
+            child: CustomScrollView(
+              slivers: [
+                if (activeModel != null)
+                  _ModelCardSectionSliver(
+                    title: l10n.settingsActiveModel,
+                    child: ModelsSettingsModelCard(
+                      state: state,
+                      model: activeModel,
+                    ),
+                  ),
+
+                if (otherModels.isNotEmpty)
+                  _AvailableModelsSection(models: otherModels, state: state),
+                const SliverToBoxAdapter(child: AppSpacer.p40),
+              ],
             ),
-            AppSpacer.p8,
-            for (final model in otherModels)
-              Padding(
-                padding: const EdgeInsets.only(bottom: AppSizes.p12),
-                child: _buildModelCard(context, state, model),
-              ),
-            AppSpacer.p40,
-          ],
+          ),
         );
       },
     );
   }
+}
 
-  Widget _buildModelCard(
-    BuildContext context,
-    ModelsState state,
-    AsrModelEntity model,
-  ) {
-    final cubit = context.read<ModelsCubit>();
-    final modelId = model.uuid.value;
-    final downloadProgress = state.getDownloadProgress(modelId);
+class _AvailableModelsSection extends StatelessWidget {
+  final List<AsrModelEntity> models;
+  final ModelsState state;
 
-    return ModelCard(
-      model: model,
-      downloadProgress: downloadProgress,
-      onUse: model.isDownloaded && !model.isSelected
-          ? () => cubit.selectModel(model)
-          : null,
-      onDownload: !model.isDownloaded && !state.isDownloading(modelId)
-          ? () => _onDownloadModel(context, model)
-          : null,
-      onDelete: model.isDownloaded
-          ? () => _onDeleteModel(context, model)
-          : null,
-      onPause: state.isDownloading(modelId)
-          ? () => cubit.pauseDownload(modelId)
-          : null,
-      onResume: downloadProgress?.status == DownloadStatus.paused
-          ? () => cubit.resumeDownload(modelId)
-          : null,
-      onCancel: state.isDownloading(modelId)
-          ? () => cubit.cancelDownload(modelId)
-          : null,
+  const _AvailableModelsSection({required this.models, required this.state});
+
+  @override
+  Widget build(BuildContext context) {
+    return SliverMainAxisGroup(
+      slivers: [
+        const SliverToBoxAdapter(child: AppSpacer.p24),
+        SliverToBoxAdapter(
+          child: _SectionTitle(title: context.l10n.settingsAvailableModels),
+        ),
+        const SliverToBoxAdapter(child: AppSpacer.p8),
+        SliverList.separated(
+          itemCount: models.length,
+          itemBuilder: (context, index) =>
+              ModelsSettingsModelCard(state: state, model: models[index]),
+          separatorBuilder: (_, _) => AppSpacer.p12,
+        ),
+      ],
+    );
+  }
+}
+
+class _ModelCardSectionSliver extends StatelessWidget {
+  final String title;
+  final Widget child;
+
+  const _ModelCardSectionSliver({required this.title, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return SliverToBoxAdapter(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        spacing: AppSizes.p8,
+        children: [
+          _SectionTitle(title: title),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionTitle extends StatelessWidget {
+  final String title;
+
+  const _SectionTitle({required this.title});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      title,
+      style: AppTypography.overline.copyWith(
+        color: context.themeColors.textTertiary,
+      ),
     );
   }
 }

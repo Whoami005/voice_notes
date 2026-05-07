@@ -68,6 +68,12 @@ class _SettingsShellScreenState extends State<SettingsShellScreen>
     super.dispose();
   }
 
+  // void _switchBranch(int index) {
+  //   if (index == widget.navigationShell.currentIndex) return;
+  //
+  //   widget.navigationShell.goBranch(index);
+  // }
+
   @override
   Widget build(BuildContext context) {
     final themeColors = context.themeColors;
@@ -94,3 +100,96 @@ class _SettingsShellScreenState extends State<SettingsShellScreen>
     );
   }
 }
+
+// class _SettingsDesktopSwitcher extends StatelessWidget {
+//   final int currentIndex;
+//   final ValueChanged<int> onSelected;
+//
+//   const _SettingsDesktopSwitcher({
+//     required this.currentIndex,
+//     required this.onSelected,
+//   });
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     final themeColors = context.themeColors;
+//     final labels = [
+//       context.l10n.settingsTabGeneral,
+//       context.l10n.settingsTabModels,
+//     ];
+//
+//     return Container(
+//       padding: const EdgeInsets.symmetric(
+//         horizontal: AppSizes.screenPadding,
+//         vertical: AppSizes.p4,
+//       ),
+//       constraints: const BoxConstraints(maxWidth: 320),
+//       decoration: BoxDecoration(
+//         color: themeColors.bgSecondary,
+//         borderRadius: BorderRadius.circular(AppSizes.radiusXL),
+//         border: Border.all(color: themeColors.borderPrimary),
+//       ),
+//       child: Padding(
+//         padding: const EdgeInsets.all(AppSizes.p6),
+//         child: Row(
+//           spacing: AppSizes.p8,
+//           children: [
+//             for (var index = 0; index < labels.length; index++)
+//               Expanded(
+//                 child: _SettingsDesktopSwitchButton(
+//                   label: labels[index],
+//                   isSelected: currentIndex == index,
+//                   onTap: () => onSelected(index),
+//                 ),
+//               ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+// }
+
+// class _SettingsDesktopSwitchButton extends StatelessWidget {
+//   final String label;
+//   final bool isSelected;
+//   final VoidCallback onTap;
+//
+//   const _SettingsDesktopSwitchButton({
+//     required this.label,
+//     required this.isSelected,
+//     required this.onTap,
+//   });
+//
+//   @override
+//   Widget build(BuildContext context) {
+//     final themeColors = context.themeColors;
+//     final backgroundColor = isSelected
+//         ? themeColors.accentPrimary.withValues(alpha: 0.14)
+//         : AppColors.transparent;
+//     final foregroundColor = isSelected
+//         ? themeColors.textPrimary
+//         : themeColors.textSecondary;
+//
+//     return AnimatedContainer(
+//       duration: const Duration(milliseconds: 180),
+//       decoration: BoxDecoration(
+//         color: backgroundColor,
+//         borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
+//       ),
+//       child: TextButton(
+//         onPressed: onTap,
+//         style: TextButton.styleFrom(
+//           foregroundColor: foregroundColor,
+//           shape: RoundedRectangleBorder(
+//             borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
+//           ),
+//           padding: const EdgeInsets.symmetric(
+//             horizontal: AppSizes.p16,
+//             vertical: AppSizes.p10,
+//           ),
+//         ),
+//         child: Text(label, textAlign: TextAlign.center),
+//       ),
+//     );
+//   }
+// }
