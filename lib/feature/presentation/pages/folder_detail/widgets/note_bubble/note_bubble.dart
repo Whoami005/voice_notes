@@ -92,7 +92,7 @@ class NoteBubble extends StatelessWidget {
             spacing: AppSizes.p8,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (note.audio != null && trackState != null)
+              if (note.origin.audio != null && trackState != null)
                 AudioInlinePlayer(
                   state: trackState!,
                   onPlayPause: onPlayPause ?? () {},

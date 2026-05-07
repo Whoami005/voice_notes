@@ -62,7 +62,7 @@
     },
     {
       "id": "2:423521120091770121",
-      "lastPropertyId": "14:4750715028724720631",
+      "lastPropertyId": "19:7819507367509518418",
       "name": "NoteObject",
       "properties": [
         {
@@ -98,26 +98,6 @@
           "flags": 8
         },
         {
-          "id": "6:4422751289875884364",
-          "name": "durationMs",
-          "type": 6
-        },
-        {
-          "id": "7:8859042518604950286",
-          "name": "modelName",
-          "type": 9
-        },
-        {
-          "id": "8:5185384857547220289",
-          "name": "language",
-          "type": 9
-        },
-        {
-          "id": "9:2435926658032764297",
-          "name": "wordCount",
-          "type": 6
-        },
-        {
           "id": "11:8617244475630794606",
           "name": "folderId",
           "indexId": "8:4174505568149422228",
@@ -144,6 +124,31 @@
           "id": "14:4750715028724720631",
           "name": "failureReasonValue",
           "type": 6
+        },
+        {
+          "id": "15:1559236132534132468",
+          "name": "originTypeValue",
+          "type": 6
+        },
+        {
+          "id": "16:7026183155187473187",
+          "name": "sourceDurationMs",
+          "type": 6
+        },
+        {
+          "id": "17:6366208855006510413",
+          "name": "transcriptionModelId",
+          "type": 9
+        },
+        {
+          "id": "18:6154735563904061009",
+          "name": "transcriptionLanguageCode",
+          "type": 9
+        },
+        {
+          "id": "19:7819507367509518418",
+          "name": "transcribedAt",
+          "type": 12
         }
       ],
       "relations": [
@@ -286,7 +291,11 @@
   "retiredEntityUids": [],
   "retiredIndexUids": [],
   "retiredPropertyUids": [
-    1654996073209143918
+    1654996073209143918,
+    4422751289875884364,
+    8859042518604950286,
+    5185384857547220289,
+    2435926658032764297
   ],
   "retiredRelationUids": [],
   "version": 1

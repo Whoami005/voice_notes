@@ -55,6 +55,9 @@
   "deleteNoteMessage": "This action cannot be undone.",
 
   "noteInfoDuration": "Duration",
+  "noteInfoSource": "Source",
+  "noteSourceManual": "Manual",
+  "noteSourceAudio": "Audio",
   "noteInfoLanguage": "Language",
   "noteInfoModel": "Model",
   "noteInfoWords": "Words",

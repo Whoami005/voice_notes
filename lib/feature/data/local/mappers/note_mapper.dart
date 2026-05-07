@@ -1,7 +1,12 @@
 import 'package:voice_notes/feature/data/local/mappers/note_audio_mapper.dart';
 import 'package:voice_notes/feature/data/local/mappers/tag_mapper.dart';
+import 'package:voice_notes/feature/data/local/models/note_audio_object.dart';
 import 'package:voice_notes/feature/data/local/models/note_object.dart';
+import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
+import 'package:voice_notes/feature/domain/entities/note_origin_entity.dart';
+import 'package:voice_notes/feature/domain/entities/note_transcription_meta_entity.dart';
+import 'package:voice_notes/feature/domain/enums/note_origin_type.dart';
 import 'package:voice_notes/feature/domain/enums/transcription_failure_reason.dart';
 import 'package:voice_notes/feature/domain/enums/transcription_status.dart';
 
@@ -13,12 +18,8 @@ abstract final class NoteMapper {
       uuid: e.uid,
       folderId: e.folder.target?.uid,
       text: e.text,
-      duration: Duration(milliseconds: e.durationMs),
-      modelName: e.modelName,
-      language: e.language,
-      wordCount: e.wordCount,
+      origin: _toOrigin(e, audioObj),
       tags: TagMapper.toDomainList(e.tags.toList()),
-      audio: audioObj != null ? NoteAudioMapper.toDomain(audioObj) : null,
       status: TranscriptionStatus.fromValue(e.statusValue),
       failureReason: e.failureReasonValue == null
           ? null
@@ -33,10 +34,11 @@ abstract final class NoteMapper {
       id: id,
       uid: n.uuid,
       text: n.text,
-      durationMs: n.duration.inMilliseconds,
-      modelName: n.modelName,
-      language: n.language,
-      wordCount: n.wordCount,
+      originTypeValue: n.origin.type.value,
+      sourceDurationMs: n.origin.sourceDuration?.inMilliseconds,
+      transcriptionModelId: n.origin.transcription?.modelId.value,
+      transcriptionLanguageCode: n.origin.transcription?.detectedLanguageCode,
+      transcribedAt: n.origin.transcription?.transcribedAt,
       statusValue: n.status.value,
       failureReasonValue: n.failureReason?.value,
       createdAt: n.createdAt,
@@ -56,15 +58,60 @@ abstract final class NoteMapper {
     entity
       ..text = note.text
       ..updatedAt = note.updatedAt
-      ..durationMs = note.duration.inMilliseconds
-      ..modelName = note.modelName
-      ..language = note.language
-      ..wordCount = note.wordCount
+      ..originTypeValue = note.origin.type.value
+      ..sourceDurationMs = note.origin.sourceDuration?.inMilliseconds
+      ..transcriptionModelId = note.origin.transcription?.modelId.value
+      ..transcriptionLanguageCode =
+          note.origin.transcription?.detectedLanguageCode
+      ..transcribedAt = note.origin.transcription?.transcribedAt
       ..statusValue = note.status.value
       ..failureReasonValue = note.failureReason?.value;
   }
 
   static List<NoteEntity> toDomainList(List<NoteObject> entities) {
     return [for (final e in entities) toDomain(e)];
+  }
+
+  static NoteOriginEntity _toOrigin(
+    NoteObject object,
+    NoteAudioObject? audioObject,
+  ) {
+    final originType = NoteOriginType.fromValue(object.originTypeValue);
+
+    return switch (originType) {
+      NoteOriginType.manual => const ManualNoteOriginEntity(),
+      NoteOriginType.audio => AudioNoteOriginEntity(
+        sourceDuration: Duration(
+          milliseconds: _requireSourceDurationMs(object.sourceDurationMs),
+        ),
+        audio: audioObject == null
+            ? null
+            : NoteAudioMapper.toDomain(audioObject),
+        transcription: _toTranscription(object),
+      ),
+    };
+  }
+
+  static NoteTranscriptionMetaEntity? _toTranscription(NoteObject object) {
+    final modelIdValue = object.transcriptionModelId;
+    final transcribedAt = object.transcribedAt;
+    if (modelIdValue == null || transcribedAt == null) return null;
+
+    final modelId = AsrModelIdEnum.fromValue(modelIdValue);
+    if (modelId == null) {
+      throw StateError('Unknown ASR model id: $modelIdValue');
+    }
+
+    return NoteTranscriptionMetaEntity(
+      modelId: modelId,
+      detectedLanguageCode: object.transcriptionLanguageCode,
+      transcribedAt: transcribedAt.toLocal(),
+    );
+  }
+
+  static int _requireSourceDurationMs(int? sourceDurationMs) {
+    if (sourceDurationMs != null) return sourceDurationMs;
+
+    throw StateError('Audio note origin requires sourceDurationMs');
   }
 }

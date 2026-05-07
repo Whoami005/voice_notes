@@ -4,6 +4,14 @@ import 'package:voice_notes/l10n/app_localizations.dart';
 class LocalizedModels {
   const LocalizedModels._();
 
+  static String name(AsrModelIdEnum uuid) {
+    for (final model in AsrModelEntity.availableModels) {
+      if (model.uuid == uuid) return model.name;
+    }
+
+    return uuid.value;
+  }
+
   static String? description(AsrModelIdEnum uuid, AppLocalizations l10n) {
     return _descriptions(l10n)[uuid];
   }

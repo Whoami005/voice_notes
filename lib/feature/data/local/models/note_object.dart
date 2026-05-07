@@ -21,10 +21,16 @@ class NoteObject {
   @Index()
   DateTime updatedAt;
 
-  int durationMs;
-  String modelName;
-  String language;
-  int wordCount;
+  int originTypeValue;
+
+  int? sourceDurationMs;
+
+  String? transcriptionModelId;
+
+  String? transcriptionLanguageCode;
+
+  @Property(type: PropertyType.dateNanoUtc)
+  DateTime? transcribedAt;
 
   @Index()
   int statusValue;
@@ -40,11 +46,12 @@ class NoteObject {
     required this.text,
     required this.createdAt,
     required this.updatedAt,
-    required this.durationMs,
-    required this.modelName,
-    required this.language,
-    required this.wordCount,
+    required this.originTypeValue,
     required this.statusValue,
+    this.sourceDurationMs,
+    this.transcriptionModelId,
+    this.transcriptionLanguageCode,
+    this.transcribedAt,
     this.failureReasonValue,
     this.id = 0,
   });

@@ -71,7 +71,7 @@ class _NoteListItem extends StatelessWidget {
       ),
       builder: (context, record) {
         final (isPlaying, trackState, waveformData) = record;
-        final audioExists = note.audio != null;
+        final audioExists = note.origin.audio != null;
 
         return ConditionalWrapper(
           condition: audioExists && waveformData == null,

@@ -215,22 +215,16 @@ class RecordingCubit extends BaseCubit<RecordingState> {
     if (folderId == null) return;
 
     try {
-      final wordCount = trimmedText.wordCount;
-
-      await _noteRepository.create(
+      await _noteRepository.createManualNote(
         text: trimmedText,
-        duration: Duration.zero,
         folderUid: folderId,
-        language: '',
-        modelName: 'TextInput',
-        wordCount: wordCount,
       );
 
       emit(
         RecordingSuccessState(
           text: trimmedText,
           duration: Duration.zero,
-          wordCount: wordCount,
+          wordCount: trimmedText.wordCount,
         ),
       );
 

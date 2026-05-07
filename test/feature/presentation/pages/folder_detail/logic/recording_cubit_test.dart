@@ -9,7 +9,6 @@ import 'package:voice_notes/core/packages/note_ingestion/note_ingestion_service.
 import 'package:voice_notes/core/packages/player/audio_playback_controller.dart';
 import 'package:voice_notes/core/packages/transcription/transcription_queue_controller.dart';
 import 'package:voice_notes/core/packages/transcription/transcription_queue_snapshot.dart';
-import 'package:voice_notes/feature/domain/entities/note_audio_entity.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
 import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/logic/recording_cubit.dart';
@@ -214,16 +213,11 @@ class _FakeNoteRepository implements NoteRepository {
   Stream<String> get onDeleted => const Stream.empty();
 
   @override
-  Future<NoteEntity> create({
+  Future<NoteEntity> createManualNote({
     required String text,
-    required Duration duration,
-    required String modelName,
-    required String language,
-    required int wordCount,
     String? uid,
     String? folderUid,
     List<String> tagNames = const [],
-    NoteAudioEntity? audio,
   }) {
     throw UnimplementedError();
   }

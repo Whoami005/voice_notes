@@ -57,7 +57,7 @@ class QueueQueuedSection extends StatelessWidget {
               statusColor: themeColors.info,
               footerHint: cancelRequested.contains(note.uuid)
                   ? l10n.queueItemCancelling
-                  : formatDuration(note.duration),
+                  : formatDuration(note.origin.sourceDurationOrZero),
               footerHintColor: cancelRequested.contains(note.uuid)
                   ? themeColors.warning
                   : themeColors.textSecondary,

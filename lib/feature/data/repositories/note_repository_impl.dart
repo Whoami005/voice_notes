@@ -6,8 +6,10 @@ import 'package:voice_notes/core/packages/uuid/uuid_manager.dart';
 import 'package:voice_notes/feature/data/local/data_sources/note_local_data_source.dart';
 import 'package:voice_notes/feature/data/local/mappers/note_mapper.dart';
 import 'package:voice_notes/feature/data/local/models/note_object.dart';
+import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
 import 'package:voice_notes/feature/domain/entities/note_audio_entity.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
+import 'package:voice_notes/feature/domain/enums/note_origin_type.dart';
 import 'package:voice_notes/feature/domain/enums/transcription_failure_reason.dart';
 import 'package:voice_notes/feature/domain/enums/transcription_status.dart';
 import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
@@ -77,16 +79,11 @@ class NoteRepositoryImpl implements NoteRepository {
   }
 
   @override
-  Future<NoteEntity> create({
+  Future<NoteEntity> createManualNote({
     required String text,
-    required Duration duration,
-    required String modelName,
-    required String language,
-    required int wordCount,
     String? uid,
     String? folderUid,
     List<String> tagNames = const [],
-    NoteAudioEntity? audio,
   }) async {
     final now = DateTime.now();
 
@@ -95,10 +92,7 @@ class NoteRepositoryImpl implements NoteRepository {
       text: text,
       createdAt: now,
       updatedAt: now,
-      durationMs: duration.inMilliseconds,
-      modelName: modelName,
-      language: language,
-      wordCount: wordCount,
+      originTypeValue: NoteOriginType.manual.value,
       statusValue: TranscriptionStatus.completed.value,
     );
 
@@ -106,17 +100,16 @@ class NoteRepositoryImpl implements NoteRepository {
       note: noteObject,
       folderUid: folderUid,
       tagNames: tagNames,
-      audio: audio,
     );
 
     return NoteMapper.toDomain(savedNote);
   }
 
   @override
-  Future<NoteEntity> createQueued({
+  Future<NoteEntity> createQueuedAudioNote({
     required String uid,
     required String folderUid,
-    required Duration duration,
+    required Duration sourceDuration,
     required NoteAudioEntity audio,
   }) async {
     final now = DateTime.now();
@@ -126,10 +119,8 @@ class NoteRepositoryImpl implements NoteRepository {
       text: '',
       createdAt: now,
       updatedAt: now,
-      durationMs: duration.inMilliseconds,
-      modelName: '',
-      language: '',
-      wordCount: 0,
+      originTypeValue: NoteOriginType.audio.value,
+      sourceDurationMs: sourceDuration.inMilliseconds,
       statusValue: TranscriptionStatus.queued.value,
     );
 
@@ -196,17 +187,15 @@ class NoteRepositoryImpl implements NoteRepository {
   Future<NoteEntity?> completeTranscription({
     required String uid,
     required String text,
-    required String language,
-    required String modelName,
-    required int wordCount,
+    required AsrModelIdEnum modelId,
     required bool deleteAudio,
+    String? detectedLanguageCode,
   }) async {
     final result = await _noteDataSource.completeTranscription(
       uid: uid,
       text: text,
-      language: language,
-      modelName: modelName,
-      wordCount: wordCount,
+      modelId: modelId,
+      detectedLanguageCode: detectedLanguageCode,
       clearAudio: deleteAudio,
     );
 

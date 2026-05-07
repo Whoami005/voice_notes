@@ -94,7 +94,7 @@ final _entities = <obx_int.ModelEntity>[
   obx_int.ModelEntity(
     id: const obx_int.IdUid(2, 423521120091770121),
     name: 'NoteObject',
-    lastPropertyId: const obx_int.IdUid(14, 4750715028724720631),
+    lastPropertyId: const obx_int.IdUid(19, 7819507367509518418),
     flags: 0,
     properties: <obx_int.ModelProperty>[
       obx_int.ModelProperty(
@@ -131,30 +131,6 @@ final _entities = <obx_int.ModelEntity>[
         indexId: const obx_int.IdUid(7, 1927893382180319695),
       ),
       obx_int.ModelProperty(
-        id: const obx_int.IdUid(6, 4422751289875884364),
-        name: 'durationMs',
-        type: 6,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(7, 8859042518604950286),
-        name: 'modelName',
-        type: 9,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(8, 5185384857547220289),
-        name: 'language',
-        type: 9,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
-        id: const obx_int.IdUid(9, 2435926658032764297),
-        name: 'wordCount',
-        type: 6,
-        flags: 0,
-      ),
-      obx_int.ModelProperty(
         id: const obx_int.IdUid(11, 8617244475630794606),
         name: 'folderId',
         type: 11,
@@ -183,6 +159,36 @@ final _entities = <obx_int.ModelEntity>[
         id: const obx_int.IdUid(14, 4750715028724720631),
         name: 'failureReasonValue',
         type: 6,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(15, 1559236132534132468),
+        name: 'originTypeValue',
+        type: 6,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(16, 7026183155187473187),
+        name: 'sourceDurationMs',
+        type: 6,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(17, 6366208855006510413),
+        name: 'transcriptionModelId',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(18, 6154735563904061009),
+        name: 'transcriptionLanguageCode',
+        type: 9,
+        flags: 0,
+      ),
+      obx_int.ModelProperty(
+        id: const obx_int.IdUid(19, 7819507367509518418),
+        name: 'transcribedAt',
+        type: 12,
         flags: 0,
       ),
     ],
@@ -389,7 +395,13 @@ obx_int.ModelDefinition getObjectBoxModel() {
     lastSequenceId: const obx_int.IdUid(0, 0),
     retiredEntityUids: const [],
     retiredIndexUids: const [],
-    retiredPropertyUids: const [1654996073209143918],
+    retiredPropertyUids: const [
+      1654996073209143918,
+      4422751289875884364,
+      8859042518604950286,
+      5185384857547220289,
+      2435926658032764297,
+    ],
     retiredRelationUids: const [],
     modelVersion: 5,
     modelVersionParserMinimum: 5,
@@ -502,28 +514,44 @@ obx_int.ModelDefinition getObjectBoxModel() {
       objectToFB: (NoteObject object, fb.Builder fbb) {
         final uidOffset = fbb.writeString(object.uid);
         final textOffset = fbb.writeString(object.text);
-        final modelNameOffset = fbb.writeString(object.modelName);
-        final languageOffset = fbb.writeString(object.language);
-        fbb.startTable(15);
+        final transcriptionModelIdOffset = object.transcriptionModelId == null
+            ? null
+            : fbb.writeString(object.transcriptionModelId!);
+        final transcriptionLanguageCodeOffset =
+            object.transcriptionLanguageCode == null
+            ? null
+            : fbb.writeString(object.transcriptionLanguageCode!);
+        fbb.startTable(20);
         fbb.addInt64(0, object.id);
         fbb.addOffset(1, uidOffset);
         fbb.addOffset(2, textOffset);
         fbb.addInt64(3, object.createdAt.microsecondsSinceEpoch * 1000);
         fbb.addInt64(4, object.updatedAt.microsecondsSinceEpoch * 1000);
-        fbb.addInt64(5, object.durationMs);
-        fbb.addOffset(6, modelNameOffset);
-        fbb.addOffset(7, languageOffset);
-        fbb.addInt64(8, object.wordCount);
         fbb.addInt64(10, object.folder.targetId);
         fbb.addInt64(11, object.audio.targetId);
         fbb.addInt64(12, object.statusValue);
         fbb.addInt64(13, object.failureReasonValue);
+        fbb.addInt64(14, object.originTypeValue);
+        fbb.addInt64(15, object.sourceDurationMs);
+        fbb.addOffset(16, transcriptionModelIdOffset);
+        fbb.addOffset(17, transcriptionLanguageCodeOffset);
+        fbb.addInt64(
+          18,
+          object.transcribedAt == null
+              ? null
+              : object.transcribedAt!.microsecondsSinceEpoch * 1000,
+        );
         fbb.finish(fbb.endTable());
         return object.id;
       },
       objectFromFB: (obx.Store store, ByteData fbData) {
         final buffer = fb.BufferContext(fbData);
         final rootOffset = buffer.derefObject(0);
+        final transcribedAtValue = const fb.Int64Reader().vTableGetNullable(
+          buffer,
+          rootOffset,
+          40,
+        );
         final uidParam = const fb.StringReader(
           asciiOptimization: true,
         ).vTableGet(buffer, rootOffset, 6, '');
@@ -540,22 +568,10 @@ obx_int.ModelDefinition getObjectBoxModel() {
               .round(),
           isUtc: true,
         );
-        final durationMsParam = const fb.Int64Reader().vTableGet(
+        final originTypeValueParam = const fb.Int64Reader().vTableGet(
           buffer,
           rootOffset,
-          14,
-          0,
-        );
-        final modelNameParam = const fb.StringReader(
-          asciiOptimization: true,
-        ).vTableGet(buffer, rootOffset, 16, '');
-        final languageParam = const fb.StringReader(
-          asciiOptimization: true,
-        ).vTableGet(buffer, rootOffset, 18, '');
-        final wordCountParam = const fb.Int64Reader().vTableGet(
-          buffer,
-          rootOffset,
-          20,
+          32,
           0,
         );
         final statusValueParam = const fb.Int64Reader().vTableGet(
@@ -564,6 +580,23 @@ obx_int.ModelDefinition getObjectBoxModel() {
           28,
           0,
         );
+        final sourceDurationMsParam = const fb.Int64Reader().vTableGetNullable(
+          buffer,
+          rootOffset,
+          34,
+        );
+        final transcriptionModelIdParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 36);
+        final transcriptionLanguageCodeParam = const fb.StringReader(
+          asciiOptimization: true,
+        ).vTableGetNullable(buffer, rootOffset, 38);
+        final transcribedAtParam = transcribedAtValue == null
+            ? null
+            : DateTime.fromMicrosecondsSinceEpoch(
+                (transcribedAtValue / 1000).round(),
+                isUtc: true,
+              );
         final failureReasonValueParam = const fb.Int64Reader()
             .vTableGetNullable(buffer, rootOffset, 30);
         final idParam = const fb.Int64Reader().vTableGet(
@@ -577,11 +610,12 @@ obx_int.ModelDefinition getObjectBoxModel() {
           text: textParam,
           createdAt: createdAtParam,
           updatedAt: updatedAtParam,
-          durationMs: durationMsParam,
-          modelName: modelNameParam,
-          language: languageParam,
-          wordCount: wordCountParam,
+          originTypeValue: originTypeValueParam,
           statusValue: statusValueParam,
+          sourceDurationMs: sourceDurationMsParam,
+          transcriptionModelId: transcriptionModelIdParam,
+          transcriptionLanguageCode: transcriptionLanguageCodeParam,
+          transcribedAt: transcribedAtParam,
           failureReasonValue: failureReasonValueParam,
           id: idParam,
         );
@@ -875,44 +909,49 @@ class NoteObject_ {
     _entities[1].properties[4],
   );
 
-  /// See [NoteObject.durationMs].
-  static final durationMs = obx.QueryIntegerProperty<NoteObject>(
-    _entities[1].properties[5],
-  );
-
-  /// See [NoteObject.modelName].
-  static final modelName = obx.QueryStringProperty<NoteObject>(
-    _entities[1].properties[6],
-  );
-
-  /// See [NoteObject.language].
-  static final language = obx.QueryStringProperty<NoteObject>(
-    _entities[1].properties[7],
-  );
-
-  /// See [NoteObject.wordCount].
-  static final wordCount = obx.QueryIntegerProperty<NoteObject>(
-    _entities[1].properties[8],
-  );
-
   /// See [NoteObject.folder].
   static final folder = obx.QueryRelationToOne<NoteObject, FolderObject>(
-    _entities[1].properties[9],
+    _entities[1].properties[5],
   );
 
   /// See [NoteObject.audio].
   static final audio = obx.QueryRelationToOne<NoteObject, NoteAudioObject>(
-    _entities[1].properties[10],
+    _entities[1].properties[6],
   );
 
   /// See [NoteObject.statusValue].
   static final statusValue = obx.QueryIntegerProperty<NoteObject>(
-    _entities[1].properties[11],
+    _entities[1].properties[7],
   );
 
   /// See [NoteObject.failureReasonValue].
   static final failureReasonValue = obx.QueryIntegerProperty<NoteObject>(
+    _entities[1].properties[8],
+  );
+
+  /// See [NoteObject.originTypeValue].
+  static final originTypeValue = obx.QueryIntegerProperty<NoteObject>(
+    _entities[1].properties[9],
+  );
+
+  /// See [NoteObject.sourceDurationMs].
+  static final sourceDurationMs = obx.QueryIntegerProperty<NoteObject>(
+    _entities[1].properties[10],
+  );
+
+  /// See [NoteObject.transcriptionModelId].
+  static final transcriptionModelId = obx.QueryStringProperty<NoteObject>(
+    _entities[1].properties[11],
+  );
+
+  /// See [NoteObject.transcriptionLanguageCode].
+  static final transcriptionLanguageCode = obx.QueryStringProperty<NoteObject>(
     _entities[1].properties[12],
+  );
+
+  /// See [NoteObject.transcribedAt].
+  static final transcribedAt = obx.QueryDateNanoProperty<NoteObject>(
+    _entities[1].properties[13],
   );
 
   /// see [NoteObject.tags]

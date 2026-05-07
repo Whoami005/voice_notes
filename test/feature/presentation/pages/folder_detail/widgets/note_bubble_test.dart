@@ -8,6 +8,7 @@ import 'package:voice_notes/core/packages/asr/asr_transcribe_progress.dart';
 import 'package:voice_notes/core/packages/transcription/transcription_queue_snapshot.dart';
 import 'package:voice_notes/core/theme/app_theme.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
+import 'package:voice_notes/feature/domain/entities/note_origin_entity.dart';
 import 'package:voice_notes/feature/domain/enums/transcription_status.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/widgets/note_bubble/note_bubble.dart';
 import 'package:voice_notes/feature/presentation/pages/queue/logic/transcription_queue_cubit.dart';
@@ -75,12 +76,11 @@ void main() {
     return NoteEntity(
       uuid: uuid,
       text: '',
+      origin: const AudioNoteOriginEntity(
+        sourceDuration: Duration(seconds: 10),
+      ),
       createdAt: DateTime(2026),
       updatedAt: DateTime(2026),
-      duration: const Duration(seconds: 10),
-      modelName: '',
-      language: '',
-      wordCount: 0,
       status: status,
     );
   }

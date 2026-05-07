@@ -7,6 +7,7 @@ import 'package:voice_notes/feature/data/local/mappers/note_audio_mapper.dart';
 import 'package:voice_notes/feature/data/local/models/note_audio_object.dart';
 import 'package:voice_notes/feature/data/local/models/note_object.dart';
 import 'package:voice_notes/feature/data/local/models/tag_object.dart';
+import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
 import 'package:voice_notes/feature/domain/entities/note_audio_entity.dart';
 import 'package:voice_notes/feature/domain/enums/transcription_status.dart';
 
@@ -93,10 +94,9 @@ abstract interface class NoteLocalDataSource {
   completeTranscription({
     required String uid,
     required String text,
-    required String language,
-    required String modelName,
-    required int wordCount,
+    required AsrModelIdEnum modelId,
     required bool clearAudio,
+    String? detectedLanguageCode,
   });
 }
 
@@ -428,10 +428,9 @@ class NoteLocalDataSourceImpl implements NoteLocalDataSource {
   completeTranscription({
     required String uid,
     required String text,
-    required String language,
-    required String modelName,
-    required int wordCount,
+    required AsrModelIdEnum modelId,
     required bool clearAudio,
+    String? detectedLanguageCode,
   }) async {
     return _db.runInTransactionAsync(
       (
@@ -439,9 +438,8 @@ class NoteLocalDataSourceImpl implements NoteLocalDataSource {
         ({
           String uid,
           String text,
-          String language,
-          String modelName,
-          int wordCount,
+          AsrModelIdEnum modelId,
+          String? detectedLanguageCode,
           bool clearAudio,
         })
         p,
@@ -452,9 +450,9 @@ class NoteLocalDataSourceImpl implements NoteLocalDataSource {
 
         note
           ..text = p.text
-          ..language = p.language
-          ..modelName = p.modelName
-          ..wordCount = p.wordCount
+          ..transcriptionModelId = p.modelId.value
+          ..transcriptionLanguageCode = p.detectedLanguageCode
+          ..transcribedAt = DateTime.now()
           ..statusValue = TranscriptionStatus.completed.value
           ..failureReasonValue = null
           ..updatedAt = DateTime.now();
@@ -480,9 +478,8 @@ class NoteLocalDataSourceImpl implements NoteLocalDataSource {
       param: (
         uid: uid,
         text: text,
-        language: language,
-        modelName: modelName,
-        wordCount: wordCount,
+        modelId: modelId,
+        detectedLanguageCode: detectedLanguageCode,
         clearAudio: clearAudio,
       ),
     );

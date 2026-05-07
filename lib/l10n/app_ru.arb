@@ -117,6 +117,12 @@
 
   "noteInfoDuration": "Длительность",
   "@noteInfoDuration": { "description": "Note info: duration label" },
+  "noteInfoSource": "Источник",
+  "@noteInfoSource": { "description": "Note info: source label" },
+  "noteSourceManual": "Вручную",
+  "@noteSourceManual": { "description": "Note source: manual text note" },
+  "noteSourceAudio": "Аудио",
+  "@noteSourceAudio": { "description": "Note source: audio note" },
   "noteInfoLanguage": "Язык",
   "@noteInfoLanguage": { "description": "Note info: language label" },
   "noteInfoModel": "Модель",

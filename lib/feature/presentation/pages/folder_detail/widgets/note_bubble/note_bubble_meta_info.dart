@@ -8,16 +8,20 @@ class _MetaInfo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final metaStyle = context.textTheme.labelSmall;
+    final sourceDuration = note.origin.sourceDuration;
+    final detectedLanguageCode = note.origin.detectedLanguageCode?.trim() ?? '';
 
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(_formatTime(note.createdAt), style: metaStyle),
-        const _Dot(),
-        Text(_formatDuration(note.duration), style: metaStyle),
-        if (note.language.isNotEmpty) ...[
+        if (sourceDuration != null) ...[
           const _Dot(),
-          Text(note.language, style: metaStyle),
+          Text(_formatDuration(sourceDuration), style: metaStyle),
+        ],
+        if (detectedLanguageCode.isNotEmpty) ...[
+          const _Dot(),
+          Text(detectedLanguageCode, style: metaStyle),
         ],
       ],
     );

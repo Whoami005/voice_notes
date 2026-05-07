@@ -19,6 +19,7 @@ import 'package:voice_notes/feature/data/local/preferences/transcription_queue_p
 import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
 import 'package:voice_notes/feature/domain/entities/note_audio_entity.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
+import 'package:voice_notes/feature/domain/entities/note_origin_entity.dart';
 import 'package:voice_notes/feature/domain/enums/queue_runtime_reason.dart';
 import 'package:voice_notes/feature/domain/enums/transcription_failure_reason.dart';
 import 'package:voice_notes/feature/domain/enums/transcription_status.dart';
@@ -1072,14 +1073,13 @@ NoteEntity _makeNote(
   return NoteEntity(
     uuid: uid,
     text: '',
+    origin: AudioNoteOriginEntity(
+      sourceDuration: const Duration(seconds: 10),
+      audio: audio,
+    ),
     createdAt: DateTime(2026),
     updatedAt: DateTime(2026),
-    duration: const Duration(seconds: 10),
-    modelName: '',
-    language: '',
-    wordCount: 0,
     status: status,
-    audio: audio,
   );
 }
 
@@ -1214,10 +1214,9 @@ class _FakeNoteRepository implements NoteRepository {
   Future<NoteEntity?> completeTranscription({
     required String uid,
     required String text,
-    required String language,
-    required String modelName,
-    required int wordCount,
+    required AsrModelIdEnum modelId,
     required bool deleteAudio,
+    String? detectedLanguageCode,
   }) async {
     completeCalls.add(uid);
     return _notes[uid];
@@ -1232,14 +1231,10 @@ class _FakeNoteRepository implements NoteRepository {
     return NoteEntity(
       uuid: n.uuid,
       text: n.text,
+      origin: n.origin,
       createdAt: n.createdAt,
       updatedAt: n.updatedAt,
-      duration: n.duration,
-      modelName: n.modelName,
-      language: n.language,
-      wordCount: n.wordCount,
       status: status,
-      audio: n.audio,
       folderId: n.folderId,
       tags: n.tags,
       failureReason: n.failureReason,

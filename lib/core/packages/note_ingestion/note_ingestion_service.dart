@@ -67,10 +67,10 @@ class NoteIngestionService {
         duration: duration,
       );
 
-      await _noteRepository.createQueued(
+      await _noteRepository.createQueuedAudioNote(
         uid: uuid,
         folderUid: folderUid,
-        duration: duration,
+        sourceDuration: duration,
         audio: audio,
       );
       // Файл НЕ удаляется в happy path — он становится оригиналом заметки.

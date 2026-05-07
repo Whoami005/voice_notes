@@ -6,6 +6,7 @@ import 'package:voice_notes/core/packages/player/audio_playback_controller.dart'
 import 'package:voice_notes/core/packages/player/audio_player_service.dart';
 import 'package:voice_notes/feature/domain/entities/note_audio_entity.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
+import 'package:voice_notes/feature/domain/entities/note_origin_entity.dart';
 import 'package:voice_notes/feature/domain/enums/transcription_status.dart';
 import 'package:voice_notes/feature/presentation/pages/note_detail/logic/note_playback_cubit.dart';
 
@@ -49,7 +50,7 @@ void main() {
 
         expect(cubit.state.status.isSuccess, isTrue);
         expect(cubit.state.playbackStatus, PlaybackStatus.init);
-        expect(cubit.state.duration, _note.audio!.duration);
+        expect(cubit.state.duration, _note.origin.audio!.duration);
         expect(cubit.state.speed, controller.session.speed);
       },
     );
@@ -71,19 +72,18 @@ final NoteEntity _note = NoteEntity(
   uuid: 'track',
   folderId: 'folder',
   text: 'Track title',
+  origin: const AudioNoteOriginEntity(
+    sourceDuration: Duration(seconds: 5),
+    audio: NoteAudioEntity(
+      relativePath: 'audio/recordings/track.wav',
+      sizeBytes: 1,
+      sampleRate: 16000,
+      duration: Duration(seconds: 5),
+    ),
+  ),
   createdAt: DateTime(2026),
   updatedAt: DateTime(2026),
-  duration: const Duration(seconds: 5),
-  modelName: 'model',
-  language: 'ru',
-  wordCount: 1,
   status: TranscriptionStatus.completed,
-  audio: const NoteAudioEntity(
-    relativePath: 'audio/recordings/track.wav',
-    sizeBytes: 1,
-    sampleRate: 16000,
-    duration: Duration(seconds: 5),
-  ),
 );
 
 class _FakeAudioPlaybackController implements AudioPlaybackController {

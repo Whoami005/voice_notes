@@ -6,6 +6,7 @@ import 'package:voice_notes/core/packages/player/audio_playback_controller.dart'
 import 'package:voice_notes/core/packages/player/audio_player_service.dart';
 import 'package:voice_notes/feature/domain/entities/note_audio_entity.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
+import 'package:voice_notes/feature/domain/entities/note_origin_entity.dart';
 import 'package:voice_notes/feature/domain/enums/transcription_status.dart';
 import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/logic/folder_playback_cubit.dart';
@@ -181,18 +182,17 @@ NoteEntity _buildNote(String uuid) {
   return NoteEntity(
     uuid: uuid,
     text: 'note',
+    origin: const AudioNoteOriginEntity(
+      sourceDuration: Duration(seconds: 5),
+      audio: NoteAudioEntity(
+        relativePath: 'audio/recordings/track.wav',
+        sizeBytes: 1,
+        sampleRate: 16000,
+        duration: Duration(seconds: 5),
+      ),
+    ),
     createdAt: now,
     updatedAt: now,
-    duration: const Duration(seconds: 5),
-    modelName: 'model',
-    language: 'ru',
-    wordCount: 1,
     status: TranscriptionStatus.completed,
-    audio: const NoteAudioEntity(
-      relativePath: 'audio/recordings/track.wav',
-      sizeBytes: 1,
-      sampleRate: 16000,
-      duration: Duration(seconds: 5),
-    ),
   );
 }

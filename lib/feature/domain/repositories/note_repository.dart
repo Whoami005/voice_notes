@@ -1,3 +1,4 @@
+import 'package:voice_notes/feature/domain/entities/asr_model_entity.dart';
 import 'package:voice_notes/feature/domain/entities/note_audio_entity.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
 import 'package:voice_notes/feature/domain/enums/transcription_failure_reason.dart';
@@ -22,24 +23,19 @@ abstract interface class NoteRepository {
   /// Заметки в статусе `cancelled`, updatedAt DESC.
   Future<List<NoteEntity>> getCancelled();
 
-  Future<NoteEntity> create({
+  Future<NoteEntity> createManualNote({
     required String text,
-    required Duration duration,
-    required String modelName,
-    required String language,
-    required int wordCount,
     String? uid,
     String? folderUid,
     List<String> tagNames = const [],
-    NoteAudioEntity? audio,
   });
 
   /// Создаёт заметку сразу в статусе queued: после остановки записи она
   /// видна в списке, очередь транскрибации довыполнит её в фоне.
-  Future<NoteEntity> createQueued({
+  Future<NoteEntity> createQueuedAudioNote({
     required String uid,
     required String folderUid,
-    required Duration duration,
+    required Duration sourceDuration,
     required NoteAudioEntity audio,
   });
 
@@ -56,10 +52,9 @@ abstract interface class NoteRepository {
   Future<NoteEntity?> completeTranscription({
     required String uid,
     required String text,
-    required String language,
-    required String modelName,
-    required int wordCount,
+    required AsrModelIdEnum modelId,
     required bool deleteAudio,
+    String? detectedLanguageCode,
   });
 
   Future<NoteEntity?> failTranscription({

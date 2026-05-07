@@ -37,7 +37,7 @@ class FolderPlaybackCubit extends Cubit<FolderPlaybackState> {
   }
 
   Future<void> ensureWaveformLoaded(NoteEntity note) async {
-    if (note.audio == null) return;
+    if (note.origin.audio == null) return;
     if (state.waveforms.containsKey(note.uuid)) return;
     if (_loadingWaveformIds.contains(note.uuid)) return;
 
@@ -83,7 +83,7 @@ class FolderPlaybackCubit extends Cubit<FolderPlaybackState> {
   }
 
   Future<void> _ensureTrackRegistered(NoteEntity note) async {
-    final audio = note.audio;
+    final audio = note.origin.audio;
     if (audio == null) return;
 
     try {

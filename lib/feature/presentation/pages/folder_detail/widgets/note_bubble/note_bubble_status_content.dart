@@ -110,7 +110,7 @@ class _StatusContent extends StatelessWidget {
     if (modelType == null) return l10n.noteStatusTranscribing;
 
     final eta = AsrRtfEstimates.estimate(
-      note.duration,
+      note.origin.sourceDurationOrZero,
       modelId: asrState.model?.uuid,
       modelType: modelType,
     );

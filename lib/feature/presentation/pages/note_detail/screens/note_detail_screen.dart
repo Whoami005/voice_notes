@@ -123,7 +123,7 @@ class NoteDetailScreen extends StatelessWidget implements AppRouteWrapper {
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
               padding: const EdgeInsets.all(AppSizes.screenPadding),
               children: [
-                if (note.audio != null) ...[
+                if (note.origin.audio != null) ...[
                   AudioPlayerBar(note: note),
                   AppSpacer.p24,
                 ],

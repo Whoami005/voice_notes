@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:developer' as developer;
 
-import 'package:voice_notes/core/extensions/string_extensions.dart';
 import 'package:voice_notes/core/packages/asr/asr_cancel_token.dart';
 import 'package:voice_notes/core/packages/asr/asr_exception.dart';
 import 'package:voice_notes/core/packages/asr/asr_result.dart';
@@ -81,7 +80,7 @@ final class TranscriptionQueueProcessor {
 
     if (await _consumeAbort(noteUid)) return null;
 
-    final audio = note.audio;
+    final audio = note.origin.audio;
     if (audio == null) {
       await _failWithReason(
         noteUid,
@@ -146,9 +145,8 @@ final class TranscriptionQueueProcessor {
     await _noteRepository.completeTranscription(
       uid: task.noteUid,
       text: result.text,
-      language: result.detectedLanguage ?? '',
-      modelName: task.model.name,
-      wordCount: result.text.wordCount,
+      modelId: task.model.uuid,
+      detectedLanguageCode: result.detectedLanguage,
       deleteAudio: !_preferences.keepOriginals,
     );
     _runtime.breaker.recordSuccess();

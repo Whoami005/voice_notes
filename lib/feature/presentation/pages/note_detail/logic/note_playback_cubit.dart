@@ -37,7 +37,7 @@ class NotePlaybackCubit extends StatusCubit<NotePlaybackState> {
   static const List<double> availableSpeeds = [0.75, 1.0, 1.25, 1.5, 2.0];
 
   Future<void> loadNote(NoteEntity note) async {
-    final audio = note.audio;
+    final audio = note.origin.audio;
     if (audio == null) return;
 
     emitLoading();

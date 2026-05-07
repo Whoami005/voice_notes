@@ -22,7 +22,7 @@ class PendingPlaceholder extends StatelessWidget {
         child: CustomScrollView(
           physics: const ClampingScrollPhysics(),
           slivers: [
-            if (note.audio != null)
+            if (note.origin.audio != null)
               SliverToBoxAdapter(child: AudioPlayerBar(note: note)),
             SliverFillRemaining(
               hasScrollBody: false,
