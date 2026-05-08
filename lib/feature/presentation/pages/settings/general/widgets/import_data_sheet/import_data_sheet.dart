@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
+import 'package:voice_notes/core/l10n/import_data_sheet_error_l10n.dart';
 import 'package:voice_notes/core/l10n/locale_cubit.dart';
 import 'package:voice_notes/core/packages/app_router/routes/app_routes.dart';
 import 'package:voice_notes/core/packages/backup/app_data_backup_models.dart';
@@ -61,23 +62,22 @@ class _ImportDataSheetState extends State<ImportDataSheet> {
 
     if (confirmed != true || !context.mounted) return;
 
-    try {
-      final result = await context.read<ImportDataSheetCubit>().submitImport();
+    final result = await context.read<ImportDataSheetCubit>().submitImport();
+    if (result == null || !context.mounted) return;
 
-      await _restoreSettings(result.settings);
+    await _restoreSettings(result.settings);
 
-      if (!context.mounted) return;
+    if (!context.mounted) return;
 
-      AppToast.success(context, message: l10n.settingsImportSuccess);
-      if (result.hasWarnings) {
-        AppToast.warning(
-          context,
-          message: l10n.settingsImportSuccessWithWarnings(result.warningsCount),
-        );
-      }
+    AppToast.success(context, message: l10n.settingsImportSuccess);
+    if (result.hasWarnings) {
+      AppToast.warning(
+        context,
+        message: l10n.settingsImportSuccessWithWarnings(result.warningsCount),
+      );
+    }
 
-      Navigator.of(context).pop();
-    } catch (_) {}
+    Navigator.of(context).pop();
   }
 
   Future<void> _restoreSettings(AppDataBackupSettings settings) async {
@@ -117,8 +117,8 @@ class _ImportDataSheetState extends State<ImportDataSheet> {
     return EffectListener<ImportDataSheetCubit, ImportDataSheetEffect>(
       listener: (context, effect) {
         switch (effect) {
-          case ShowImportErrorEffect(:final message):
-            AppToast.error(context, message: message);
+          case ShowImportErrorEffect(:final error):
+            AppToast.error(context, message: error.message(context.l10n));
         }
       },
       child: BlocBuilder<ImportDataSheetCubit, ImportDataSheetState>(

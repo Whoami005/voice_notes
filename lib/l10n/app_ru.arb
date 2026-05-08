@@ -352,6 +352,34 @@
     "description": "Toast after successful import with warnings",
     "placeholders": { "count": { "type": "int" } }
   },
+  "settingsImportErrorFileNotSelected": "Сначала выберите файл резервной копии",
+  "@settingsImportErrorFileNotSelected": {
+    "description": "Import error when no backup file is selected"
+  },
+  "settingsImportErrorPreviewNotReady": "Сначала выберите резервную копию и дождитесь её предпросмотра",
+  "@settingsImportErrorPreviewNotReady": {
+    "description": "Import error when backup preview is not ready"
+  },
+  "settingsImportErrorOperationInProgress": "Дождитесь завершения текущей операции",
+  "@settingsImportErrorOperationInProgress": {
+    "description": "Import error when another import action is already running"
+  },
+  "settingsImportErrorQueueBusy": "Импорт недоступен, пока очередь транскрибации не пуста",
+  "@settingsImportErrorQueueBusy": {
+    "description": "Import error when transcription queue has active items"
+  },
+  "settingsImportErrorDataProcessing": "Ошибка обработки данных",
+  "@settingsImportErrorDataProcessing": {
+    "description": "Import error when backup data cannot be processed"
+  },
+  "settingsImportErrorInspectFailed": "Не удалось прочитать резервную копию",
+  "@settingsImportErrorInspectFailed": {
+    "description": "Import error when backup inspection fails"
+  },
+  "settingsImportErrorImportFailed": "Не удалось импортировать резервную копию",
+  "@settingsImportErrorImportFailed": {
+    "description": "Import error when backup import fails"
+  },
   "settingsExportDescription": "Будет создан .zip-архив с заметками, папками, тегами и настройками приложения.",
   "@settingsExportDescription": { "description": "Export sheet description" },
   "settingsExportNotesCount": "{count, plural, one{{count} заметка} few{{count} заметки} many{{count} заметок} other{{count} заметок}}",

@@ -250,45 +250,44 @@ void main() {
       },
     );
 
-    testWidgets(
-      'clears stale preview when inspecting a new backup fails',
-      (tester) async {
-        importService
-          ..preview = _previewFor(fileName: backupFile.name)
-          ..inspectImpl = (file) async {
-            if (file.path == brokenBackupFile.path) {
-              throw const app_exc.FormatException.json('broken backup');
-            }
+    testWidgets('clears stale preview when inspecting a new backup fails', (
+      tester,
+    ) async {
+      importService
+        ..preview = _previewFor(fileName: backupFile.name)
+        ..inspectImpl = (file) async {
+          if (file.path == brokenBackupFile.path) {
+            throw const app_exc.FormatException.json('broken backup');
+          }
 
-            return _previewFor(fileName: file.name);
-          };
+          return _previewFor(fileName: file.name);
+        };
 
-        await openImportSheet(tester);
+      await openImportSheet(tester);
 
-        await tester.tap(find.byKey(const Key('import-sheet-choose-file')));
-        await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('import-sheet-choose-file')));
+      await tester.pumpAndSettle();
 
-        expect(find.text('Предпросмотр резервной копии'), findsOneWidget);
-        expect(find.text(backupFile.name), findsWidgets);
+      expect(find.text('Предпросмотр резервной копии'), findsOneWidget);
+      expect(find.text(backupFile.name), findsWidgets);
 
-        filePickerService.result = brokenBackupFile;
+      filePickerService.result = brokenBackupFile;
 
-        await tester.tap(find.byKey(const Key('import-sheet-choose-file')));
-        await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('import-sheet-choose-file')));
+      await tester.pumpAndSettle();
 
-        final submit = tester.widget<FilledButton>(
-          find.byKey(const Key('import-sheet-submit')),
-        );
+      final submit = tester.widget<FilledButton>(
+        find.byKey(const Key('import-sheet-submit')),
+      );
 
-        expect(find.text('Предпросмотр резервной копии'), findsNothing);
-        expect(find.text(backupFile.name), findsNothing);
-        expect(find.textContaining('Ошибка обработки данных'), findsOneWidget);
-        expect(submit.onPressed, isNull);
-        expect(importService.importedFiles, isEmpty);
+      expect(find.text('Предпросмотр резервной копии'), findsNothing);
+      expect(find.text(backupFile.name), findsNothing);
+      expect(find.textContaining('Ошибка обработки данных'), findsOneWidget);
+      expect(submit.onPressed, isNull);
+      expect(importService.importedFiles, isEmpty);
 
-        await tester.pump(const Duration(seconds: 5));
-      },
-    );
+      await tester.pump(const Duration(seconds: 5));
+    });
 
     testWidgets(
       'shows error toast and keeps import sheet open when import fails',
@@ -312,7 +311,10 @@ void main() {
         await tester.pumpAndSettle();
 
         expect(find.byKey(const Key('import-sheet-submit')), findsOneWidget);
-        expect(find.text('Bad state: boom'), findsOneWidget);
+        expect(
+          find.text('Не удалось импортировать резервную копию'),
+          findsOneWidget,
+        );
 
         await tester.pump(const Duration(seconds: 5));
       },

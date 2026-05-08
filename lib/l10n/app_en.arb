@@ -185,6 +185,34 @@
   "@settingsImportSuccessWithWarnings": {
     "placeholders": { "count": { "type": "int" } }
   },
+  "settingsImportErrorFileNotSelected": "Choose a backup file first",
+  "@settingsImportErrorFileNotSelected": {
+    "description": "Import error when no backup file is selected"
+  },
+  "settingsImportErrorPreviewNotReady": "Select a backup and wait for the preview before importing",
+  "@settingsImportErrorPreviewNotReady": {
+    "description": "Import error when backup preview is not ready"
+  },
+  "settingsImportErrorOperationInProgress": "Wait until the current operation finishes",
+  "@settingsImportErrorOperationInProgress": {
+    "description": "Import error when another import action is already running"
+  },
+  "settingsImportErrorQueueBusy": "Import is unavailable while the transcription queue is not empty",
+  "@settingsImportErrorQueueBusy": {
+    "description": "Import error when transcription queue has active items"
+  },
+  "settingsImportErrorDataProcessing": "Data processing error",
+  "@settingsImportErrorDataProcessing": {
+    "description": "Import error when backup data cannot be processed"
+  },
+  "settingsImportErrorInspectFailed": "Unable to read the backup file",
+  "@settingsImportErrorInspectFailed": {
+    "description": "Import error when backup inspection fails"
+  },
+  "settingsImportErrorImportFailed": "Unable to import the backup",
+  "@settingsImportErrorImportFailed": {
+    "description": "Import error when backup import fails"
+  },
   "settingsExportDescription": "A .zip archive will include notes, folders, tags, and app settings.",
   "settingsExportNotesCount": "{count, plural, one{{count} note} other{{count} notes}}",
   "@settingsExportNotesCount": {

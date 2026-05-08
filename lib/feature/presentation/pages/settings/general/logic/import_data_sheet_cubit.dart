@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:cross_file/cross_file.dart';
 import 'package:equatable/equatable.dart';
-import 'package:voice_notes/core/error/app_exception.dart';
 import 'package:voice_notes/core/error/app_failure.dart';
 import 'package:voice_notes/core/packages/import/app_data_import_models.dart';
 import 'package:voice_notes/core/packages/import/app_data_import_service.dart';
@@ -83,30 +82,33 @@ class ImportDataSheetCubit
       );
 
       final failure = logError(error, stackTrace);
-      emitEffect(ShowImportErrorEffect(failure.message));
+      emitEffect(
+        ShowImportErrorEffect(
+          _mapFailureToError(
+            failure,
+            fallback: ImportDataSheetError.inspectFailed,
+          ),
+        ),
+      );
     }
   }
 
-  Future<AppDataImportResult> submitImport() async {
+  Future<AppDataImportResult?> submitImport() async {
     final file = state.selectedFile;
     if (file == null) {
-      const failure = CustomException.empty('backup file');
-      emitEffect(ShowImportErrorEffect(AppFailure.from(failure).message));
-      throw failure;
+      return _rejectImport(ImportDataSheetError.fileNotSelected);
     }
 
     if (state.isQueueBusy) {
-      const failure = CustomException(
-        'Импорт недоступен, пока очередь транскрибации не пуста',
-      );
-      emitEffect(ShowImportErrorEffect(failure.message));
-      throw failure;
+      return _rejectImport(ImportDataSheetError.queueBusy);
     }
 
-    if (!state.canSubmit) {
-      const failure = CustomException('Импорт уже выполняется');
-      emitEffect(ShowImportErrorEffect(AppFailure.from(failure).message));
-      throw failure;
+    if (state.isPicking || state.isInspecting || state.isImporting) {
+      return _rejectImport(ImportDataSheetError.operationInProgress);
+    }
+
+    if (state.preview == null) {
+      return _rejectImport(ImportDataSheetError.previewNotReady);
     }
 
     safeEmit(state.copyWith(isImporting: true));
@@ -119,9 +121,31 @@ class ImportDataSheetCubit
       safeEmit(state.copyWith(isImporting: false));
 
       final failure = logError(error, stackTrace);
-      emitEffect(ShowImportErrorEffect(failure.message));
-      rethrow;
+      emitEffect(
+        ShowImportErrorEffect(
+          _mapFailureToError(
+            failure,
+            fallback: ImportDataSheetError.importFailed,
+          ),
+        ),
+      );
+      return null;
     }
+  }
+
+  AppDataImportResult? _rejectImport(ImportDataSheetError error) {
+    emitEffect(ShowImportErrorEffect(error));
+    return null;
+  }
+
+  ImportDataSheetError _mapFailureToError(
+    AppFailure failure, {
+    required ImportDataSheetError fallback,
+  }) {
+    return switch (failure) {
+      FormatFailure() => ImportDataSheetError.dataProcessingFailed,
+      _ => fallback,
+    };
   }
 
   @override

@@ -4,8 +4,18 @@ sealed class ImportDataSheetEffect implements BaseEffect {
   const ImportDataSheetEffect();
 }
 
-final class ShowImportErrorEffect extends ImportDataSheetEffect {
-  final String message;
+enum ImportDataSheetError {
+  fileNotSelected,
+  previewNotReady,
+  operationInProgress,
+  queueBusy,
+  dataProcessingFailed,
+  inspectFailed,
+  importFailed,
+}
 
-  const ShowImportErrorEffect(this.message);
+final class ShowImportErrorEffect extends ImportDataSheetEffect {
+  final ImportDataSheetError error;
+
+  const ShowImportErrorEffect(this.error);
 }
