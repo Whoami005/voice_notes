@@ -4,6 +4,14 @@ import 'package:flutter/services.dart';
 import 'package:voice_notes/core/packages/path/asr_model_paths.dart';
 
 class AsrVadAssetInstaller {
+  final Future<ByteData> Function(String assetKey) _assetLoader;
+  final Future<String> Function() _destinationPathProvider;
+  final Future<void> Function() _ensureDirectoriesExist;
+  final Future<String?> Function() _findInstalledModelPath;
+
+  static const String assetPath = 'assets/models/silero_vad.onnx';
+  static const String vadModelFileName = AsrModelPaths.vadModelFileName;
+
   AsrVadAssetInstaller({
     Future<ByteData> Function(String assetKey)? assetLoader,
     Future<String> Function()? destinationPathProvider,
@@ -16,14 +24,6 @@ class AsrVadAssetInstaller {
            ensureDirectoriesExist ?? AsrModelPaths.ensureDirectoriesExist,
        _findInstalledModelPath =
            findInstalledModelPath ?? (AsrModelPaths.findVadModelPath);
-
-  static const String assetPath = 'assets/models/silero_vad.onnx';
-  static const String vadModelFileName = AsrModelPaths.vadModelFileName;
-
-  final Future<ByteData> Function(String assetKey) _assetLoader;
-  final Future<String> Function() _destinationPathProvider;
-  final Future<void> Function() _ensureDirectoriesExist;
-  final Future<String?> Function() _findInstalledModelPath;
 
   Future<String?> resolveModelPath() async {
     final existingPath = await _findInstalledModelPath();

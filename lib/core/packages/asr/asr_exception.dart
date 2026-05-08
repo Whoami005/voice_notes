@@ -1,3 +1,5 @@
+// ignore_for_file: comment_references
+
 /// Базовое исключение для ASR операций
 sealed class AsrException implements Exception {
   final String message;

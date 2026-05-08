@@ -13,6 +13,8 @@ import 'package:get_it/get_it.dart' as _i174;
 import 'package:injectable/injectable.dart' as _i526;
 import 'package:shared_preferences/shared_preferences.dart' as _i460;
 
+import '../../../feature/data/local/data_sources/app_data_restore_local_data_source.dart'
+    as _i856;
 import '../../../feature/data/local/data_sources/folder_local_data_source.dart'
     as _i377;
 import '../../../feature/data/local/data_sources/model_local_data_source.dart'
@@ -49,6 +51,8 @@ import '../db/transaction_manager.dart' as _i138;
 import '../downloader/download_manager.dart' as _i551;
 import '../export/app_data_export_service.dart' as _i370;
 import '../export/app_data_share_service.dart' as _i1023;
+import '../import/app_data_import_service.dart' as _i395;
+import '../import/backup_file_picker_service.dart' as _i560;
 import '../note_ingestion/note_ingestion_service.dart' as _i165;
 import '../player/audio_playback_controller.dart' as _i99;
 import '../player/controller/just_audio_playback_controller.dart' as _i451;
@@ -89,6 +93,9 @@ extension GetItInjectableX on _i174.GetIt {
       preResolve: true,
       dispose: (i) => i.close(),
     );
+    gh.singleton<_i560.BackupFilePickerService>(
+      () => _i560.BackupFilePickerServiceImpl(),
+    );
     gh.singleton<_i233.AsrService>(() => _i699.SherpaAsrService());
     gh.singleton<_i790.NoteAudioLocalDataSource>(
       () => _i790.NoteAudioLocalDataSourceImpl(gh<_i88.DatabaseClient>()),
@@ -102,6 +109,9 @@ extension GetItInjectableX on _i174.GetIt {
     );
     gh.singleton<_i377.FolderLocalDataSource>(
       () => _i377.FolderLocalDataSourceImpl(gh<_i88.DatabaseClient>()),
+    );
+    gh.singleton<_i856.AppDataRestoreLocalDataSource>(
+      () => _i856.AppDataRestoreLocalDataSourceImpl(gh<_i88.DatabaseClient>()),
     );
     gh.singleton<_i798.NoteLocalDataSource>(
       () => _i798.NoteLocalDataSourceImpl(gh<_i88.DatabaseClient>()),
@@ -168,6 +178,18 @@ extension GetItInjectableX on _i174.GetIt {
     gh.singleton<_i165.NoteIngestionService>(
       () => _i165.NoteIngestionService(
         noteRepository: gh<_i1032.NoteRepository>(),
+      ),
+    );
+    gh.singleton<_i395.AppDataImportService>(
+      () => _i395.AppDataImportServiceImpl(
+        folderRepository: gh<_i500.FolderRepository>(),
+        tagRepository: gh<_i484.TagRepository>(),
+        noteRepository: gh<_i1032.NoteRepository>(),
+        recordingPreferences: gh<_i403.RecordingPreferences>(),
+        sharedPreferences: gh<_i460.SharedPreferences>(),
+        queueController: gh<_i971.TranscriptionQueueController>(),
+        audioPlaybackController: gh<_i99.AudioPlaybackController>(),
+        restoreLocalDataSource: gh<_i856.AppDataRestoreLocalDataSource>(),
       ),
     );
     return this;

@@ -18,6 +18,7 @@ import 'package:voice_notes/feature/domain/entities/note_entity.dart';
 import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
 import 'package:voice_notes/feature/presentation/pages/queue/screens/queue_management_screen.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/general/widgets/export_data_sheet.dart';
+import 'package:voice_notes/feature/presentation/pages/settings/general/widgets/import_data_sheet/import_data_sheet.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/general/widgets/settings_row.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/general/widgets/settings_section.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/storage/screens/storage_screen.dart';
@@ -81,6 +82,10 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
       exportService: getIt<AppDataExportService>(),
       shareService: getIt<AppDataShareService>(),
     );
+  }
+
+  Future<void> _onImportTap() async {
+    await ImportDataSheet.show(context);
   }
 
   /// Количество заметок во всех «активных» состояниях пайплайна:
@@ -225,6 +230,12 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
                   title: l10n.settingsExportData,
                   trailing: const SettingsChevron(),
                   onTap: _onExportTap,
+                ),
+                SettingsRow(
+                  icon: Icons.download_outlined,
+                  title: l10n.settingsImportData,
+                  trailing: const SettingsChevron(),
+                  onTap: _onImportTap,
                   showDivider: false,
                 ),
               ],

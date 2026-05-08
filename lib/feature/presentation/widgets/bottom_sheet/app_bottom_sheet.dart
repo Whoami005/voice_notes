@@ -6,6 +6,7 @@ import 'package:voice_notes/core/extensions/context_extensions.dart';
 class AppBottomSheet extends StatelessWidget {
   final String? title;
   final Widget child;
+  final bool isSliver;
   final VoidCallback? onClose;
 
   const AppBottomSheet({
@@ -13,7 +14,14 @@ class AppBottomSheet extends StatelessWidget {
     super.key,
     this.title,
     this.onClose,
-  });
+  }) : isSliver = false;
+
+  const AppBottomSheet.sliver({
+    required this.child,
+    super.key,
+    this.title,
+    this.onClose,
+  }) : isSliver = true;
 
   static Future<T?> show<T>({
     required BuildContext context,
@@ -38,6 +46,29 @@ class AppBottomSheet extends StatelessWidget {
     );
   }
 
+  static Future<T?> showSliver<T>({
+    required BuildContext context,
+    required Widget sliver,
+    String? title,
+    VoidCallback? onClose,
+    bool isDismissible = true,
+    bool enableDrag = true,
+    bool isScrollControlled = true,
+    bool useSafeArea = true,
+    bool useRootNavigator = false,
+  }) {
+    return showModalBottomSheet<T>(
+      context: context,
+      isDismissible: isDismissible,
+      enableDrag: enableDrag,
+      isScrollControlled: isScrollControlled,
+      useSafeArea: useSafeArea,
+      useRootNavigator: useRootNavigator,
+      builder: (context) =>
+          AppBottomSheet.sliver(title: title, onClose: onClose, child: sliver),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final textTheme = context.textTheme;
@@ -57,32 +88,34 @@ class AppBottomSheet extends StatelessWidget {
               right: AppSizes.screenPadding,
               bottom: context.bottomInset + AppSizes.screenPadding,
             ),
-            sliver: SliverList.list(
-              children: [
+            sliver: SliverMainAxisGroup(
+              slivers: [
                 if (title != null) ...[
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(title!, style: textTheme.headlineMedium),
-                      ),
-                      if (onClose != null)
-                        GestureDetector(
-                          onTap: onClose,
-                          behavior: HitTestBehavior.opaque,
-                          child: Padding(
-                            padding: const EdgeInsets.all(AppSizes.p8),
-                            child: Icon(
-                              Icons.close,
-                              size: AppSizes.iconLarge,
-                              color: themeColors.textSecondary,
+                  SliverToBoxAdapter(
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(title!, style: textTheme.headlineMedium),
+                        ),
+                        if (onClose != null)
+                          GestureDetector(
+                            onTap: onClose,
+                            behavior: HitTestBehavior.opaque,
+                            child: Padding(
+                              padding: const EdgeInsets.all(AppSizes.p8),
+                              child: Icon(
+                                Icons.close,
+                                size: AppSizes.iconLarge,
+                                color: themeColors.textSecondary,
+                              ),
                             ),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
-                  AppSpacer.p16,
+                  const SliverToBoxAdapter(child: AppSpacer.p16),
                 ],
-                child,
+                if (isSliver) child else SliverToBoxAdapter(child: child),
               ],
             ),
           ),

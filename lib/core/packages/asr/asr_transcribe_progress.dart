@@ -1,3 +1,5 @@
+// ignore_for_file: comment_references
+
 import 'package:equatable/equatable.dart';
 import 'package:voice_notes/core/packages/asr/asr_transcription_strategy.dart';
 

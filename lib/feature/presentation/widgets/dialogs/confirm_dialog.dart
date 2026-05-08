@@ -107,21 +107,31 @@ class ConfirmDialog extends StatelessWidget {
               ),
               AppSpacer.p24,
               Row(
+                spacing: AppSizes.p8,
                 children: [
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () => Navigator.of(context).pop(false),
-                      child: Text(effectiveCancelText),
+                      child: Text(
+                        effectiveCancelText,
+                        maxLines: 1,
+                        textAlign: TextAlign.center,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ),
-                  AppSpacer.p12,
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () => Navigator.of(context).pop(true),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: effectiveConfirmColor,
                       ),
-                      child: Text(effectiveConfirmText),
+                      child: Text(
+                        effectiveConfirmText,
+                        maxLines: 1,
+                        textAlign: TextAlign.center,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ),
                 ],

@@ -142,7 +142,49 @@
 
   "settingsSectionData": "Data",
   "settingsExportData": "Export data",
+  "settingsImportData": "Import data",
   "settingsExportSheetTitle": "Backup export",
+  "settingsImportSheetTitle": "Backup import",
+  "settingsImportDescription": "Pick a .zip backup and restore notes, folders, tags, and app settings.",
+  "settingsImportWarning": "This will replace your current notes, folders, and tags. ASR model files are not changed.",
+  "settingsImportChooseFile": "Choose backup file",
+  "settingsImportChooseFileAgain": "Choose another file",
+  "settingsImportFileTitle": "Backup file",
+  "settingsImportFileSubtitle": "Select a .zip backup created by this app",
+  "settingsImportFileSelected": "Selected: {fileName}",
+  "@settingsImportFileSelected": {
+    "placeholders": { "fileName": { "type": "String" } }
+  },
+  "settingsImportPreviewTitle": "Backup preview",
+  "settingsImportPreviewFile": "File",
+  "settingsImportPreviewExportedAt": "Exported at",
+  "settingsImportPreviewNotes": "Notes",
+  "settingsImportPreviewFolders": "Folders",
+  "settingsImportPreviewTags": "Tags",
+  "settingsImportPreviewAudio": "Audio",
+  "settingsImportPreviewAudioIncluded": "{count} files included",
+  "@settingsImportPreviewAudioIncluded": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "settingsImportPreviewAudioNotIncluded": "Audio files are not included",
+  "settingsImportPreviewWarnings": "{count, plural, one{{count} warning} other{{count} warnings}}",
+  "@settingsImportPreviewWarnings": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "settingsImportQueueWarning": "There are {count} active queue items. Finish or cancel them first.",
+  "@settingsImportQueueWarning": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "settingsImportOpenQueue": "Open queue",
+  "settingsImportConfirmTitle": "Import backup?",
+  "settingsImportConfirmMessage": "This will replace the current local data with the contents of the selected backup.",
+  "settingsImportConfirmImport": "Import",
+  "settingsImportAction": "Import backup",
+  "settingsImportSuccess": "Backup imported",
+  "settingsImportSuccessWithWarnings": "Backup imported with {count} warnings",
+  "@settingsImportSuccessWithWarnings": {
+    "placeholders": { "count": { "type": "int" } }
+  },
   "settingsExportDescription": "A .zip archive will include notes, folders, tags, and app settings.",
   "settingsExportNotesCount": "{count, plural, one{{count} note} other{{count} notes}}",
   "@settingsExportNotesCount": {

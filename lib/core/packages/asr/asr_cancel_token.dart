@@ -1,3 +1,5 @@
+// ignore_for_file: comment_references
+
 import 'dart:async';
 
 /// Кооперативный cancel-токен для долгих ASR-операций.
