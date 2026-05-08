@@ -10,11 +10,14 @@ import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/l10n/locale_cubit.dart';
 import 'package:voice_notes/core/packages/app_router/routes/app_routes.dart';
 import 'package:voice_notes/core/packages/di/injection.dart';
+import 'package:voice_notes/core/packages/export/app_data_export_service.dart';
+import 'package:voice_notes/core/packages/export/app_data_share_service.dart';
 import 'package:voice_notes/core/theme/theme_cubit.dart';
 import 'package:voice_notes/feature/data/local/preferences/recording_preferences.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
 import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
 import 'package:voice_notes/feature/presentation/pages/queue/screens/queue_management_screen.dart';
+import 'package:voice_notes/feature/presentation/pages/settings/general/widgets/export_data_sheet.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/general/widgets/settings_row.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/general/widgets/settings_section.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/storage/screens/storage_screen.dart';
@@ -72,8 +75,12 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
     );
   }
 
-  void _onExportTap() {
-    // TODO(W): Export data
+  Future<void> _onExportTap() async {
+    await ExportDataSheet.show(
+      context,
+      exportService: getIt<AppDataExportService>(),
+      shareService: getIt<AppDataShareService>(),
+    );
   }
 
   /// Количество заметок во всех «активных» состояниях пайплайна:
@@ -218,7 +225,6 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
                   title: l10n.settingsExportData,
                   trailing: const SettingsChevron(),
                   onTap: _onExportTap,
-                  isEnabled: false,
                   showDivider: false,
                 ),
               ],

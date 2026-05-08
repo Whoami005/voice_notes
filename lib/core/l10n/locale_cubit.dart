@@ -25,9 +25,11 @@ class LocaleCubit extends BaseCubit<LocaleState> {
 
   LocaleCubit({required SharedPreferences prefs})
     : _prefs = prefs,
-      super(LocaleState(locale: _readLocale(prefs)));
+      super(LocaleState(locale: readLocale(prefs)));
 
-  static Locale _readLocale(SharedPreferences prefs) {
+  static String get prefsKey => _key;
+
+  static Locale readLocale(SharedPreferences prefs) {
     final code = prefs.getString(_key);
 
     if (code != null) {

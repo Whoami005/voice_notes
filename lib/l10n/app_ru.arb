@@ -281,6 +281,35 @@
   "@settingsSectionData": { "description": "Settings section: data" },
   "settingsExportData": "Экспорт данных",
   "@settingsExportData": { "description": "Settings: export data" },
+  "settingsExportSheetTitle": "Резервная копия",
+  "@settingsExportSheetTitle": { "description": "Export sheet title" },
+  "settingsExportDescription": "Будет создан .zip-архив с заметками, папками, тегами и настройками приложения.",
+  "@settingsExportDescription": { "description": "Export sheet description" },
+  "settingsExportNotesCount": "{count, plural, one{{count} заметка} few{{count} заметки} many{{count} заметок} other{{count} заметок}}",
+  "@settingsExportNotesCount": {
+    "description": "Export sheet summary: notes count",
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "settingsExportAudioSummary": "Оригиналы: {countLabel}, {size}",
+  "@settingsExportAudioSummary": {
+    "description": "Export sheet summary: audio info",
+    "placeholders": {
+      "countLabel": { "type": "String" },
+      "size": { "type": "String" }
+    }
+  },
+  "settingsExportNoAudio": "Сохранённых оригинальных аудиофайлов нет",
+  "@settingsExportNoAudio": { "description": "Export sheet summary when no audio is stored" },
+  "settingsExportIncludeAudioTitle": "Добавить оригинальные аудиофайлы",
+  "@settingsExportIncludeAudioTitle": { "description": "Export sheet toggle title" },
+  "settingsExportIncludeAudioSubtitle": "Архив станет заметно больше, но восстановление будет полнее",
+  "@settingsExportIncludeAudioSubtitle": { "description": "Export sheet toggle subtitle" },
+  "settingsExportPrivacyWarning": "Архив не шифруется. Он может содержать чувствительный текст заметок и оригинальные голосовые записи.",
+  "@settingsExportPrivacyWarning": { "description": "Export privacy warning" },
+  "settingsExportCreateBackup": "Создать резервную копию",
+  "@settingsExportCreateBackup": { "description": "Export create backup button" },
+  "settingsExportSuccess": "Резервная копия готова",
+  "@settingsExportSuccess": { "description": "Toast after export creation" },
   "settingsClearCache": "Очистка кэша",
   "@settingsClearCache": { "description": "Settings: clear cache" },
   "settingsClearCacheSubtitle": "Освободить место на устройстве",

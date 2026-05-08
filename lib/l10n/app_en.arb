@@ -142,6 +142,25 @@
 
   "settingsSectionData": "Data",
   "settingsExportData": "Export data",
+  "settingsExportSheetTitle": "Backup export",
+  "settingsExportDescription": "A .zip archive will include notes, folders, tags, and app settings.",
+  "settingsExportNotesCount": "{count, plural, one{{count} note} other{{count} notes}}",
+  "@settingsExportNotesCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "settingsExportAudioSummary": "Originals: {countLabel}, {size}",
+  "@settingsExportAudioSummary": {
+    "placeholders": {
+      "countLabel": { "type": "String" },
+      "size": { "type": "String" }
+    }
+  },
+  "settingsExportNoAudio": "No stored original audio files",
+  "settingsExportIncludeAudioTitle": "Include original audio files",
+  "settingsExportIncludeAudioSubtitle": "The archive will be noticeably larger, but the backup will be more complete",
+  "settingsExportPrivacyWarning": "This archive is not encrypted. It may contain sensitive note text and original voice recordings.",
+  "settingsExportCreateBackup": "Create backup",
+  "settingsExportSuccess": "Backup is ready",
   "settingsClearCache": "Clear cache",
   "settingsClearCacheSubtitle": "Free up device storage",
 

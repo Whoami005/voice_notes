@@ -35,9 +35,11 @@ class ThemeCubit extends BaseCubit<ThemeState> {
 
   ThemeCubit({required SharedPreferences prefs})
     : _prefs = prefs,
-      super(ThemeState(mode: _readMode(prefs)));
+      super(ThemeState(mode: readMode(prefs)));
 
-  static AppThemeMode _readMode(SharedPreferences prefs) {
+  static String get prefsKey => _key;
+
+  static AppThemeMode readMode(SharedPreferences prefs) {
     final savedTheme = prefs.getString(_key);
 
     if (savedTheme != null) {
