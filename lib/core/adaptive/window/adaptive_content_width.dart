@@ -9,7 +9,7 @@ class AdaptiveContentWidth extends StatelessWidget {
   const AdaptiveContentWidth({
     required this.child,
     this.padding = EdgeInsets.zero,
-    this.maxWidth = 960,
+    this.maxWidth = 760,
     super.key,
     this.alignment = Alignment.center,
   });

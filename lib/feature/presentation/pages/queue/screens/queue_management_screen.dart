@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:voice_notes/core/adaptive/window/adaptive_content_width.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
@@ -44,20 +45,22 @@ class QueueManagementScreen extends StatelessWidget implements AppRouteWrapper {
         backgroundColor: themeColors.bgPrimary,
         title: Text(context.l10n.queueScreenTitle),
       ),
-      body: ListView(
-        padding: const EdgeInsets.symmetric(
-          vertical: AppSizes.p16,
-          horizontal: AppSizes.screenPadding,
+      body: AdaptiveContentWidth(
+        child: ListView(
+          padding: const EdgeInsets.symmetric(
+            vertical: AppSizes.p16,
+            horizontal: AppSizes.screenPadding,
+          ),
+          children: const [
+            QueueStatusCard(),
+            QueueWarningBanner(),
+            QueueProcessingSection(),
+            QueueQueuedSection(),
+            QueueFailedSection(),
+            QueueCancelledSection(),
+            AppSpacer.p40,
+          ],
         ),
-        children: const [
-          QueueStatusCard(),
-          QueueWarningBanner(),
-          QueueProcessingSection(),
-          QueueQueuedSection(),
-          QueueFailedSection(),
-          QueueCancelledSection(),
-          AppSpacer.p40,
-        ],
       ),
     );
   }

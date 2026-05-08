@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import 'package:voice_notes/common/utils/format_bytes.dart';
+import 'package:voice_notes/core/adaptive/window/adaptive_content_width.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
@@ -69,7 +70,7 @@ class StorageScreen extends StatelessWidget implements AppRouteWrapper {
         onEmpty: (_, _) => const _EmptyState(),
         onSuccess: (context, state) {
           return RefreshableWrapper<StorageCubit>(
-            child: Padding(
+            child: AdaptiveContentWidth(
               padding: const EdgeInsets.all(AppSizes.screenPadding),
               child: CustomScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),

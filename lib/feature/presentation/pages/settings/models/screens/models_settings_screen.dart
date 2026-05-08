@@ -14,8 +14,6 @@ import 'package:voice_notes/feature/presentation/pages/settings/models/widgets/m
 import 'package:voice_notes/feature/presentation/widgets/dialogs/error_dialog.dart';
 
 class ModelsSettingsScreen extends StatelessWidget {
-  static const double _modelCardContentMaxWidth = 760;
-
   const ModelsSettingsScreen({super.key});
 
   static void go(BuildContext context) {
@@ -64,7 +62,6 @@ class ModelsSettingsScreen extends StatelessWidget {
         final otherModels = state.otherModels;
 
         return AdaptiveContentWidth(
-          maxWidth: _modelCardContentMaxWidth,
           padding: const EdgeInsets.symmetric(
             horizontal: AppSizes.screenPadding,
           ),

@@ -30,8 +30,6 @@ class NoteDetailScreen extends StatelessWidget implements AppRouteWrapper {
   final String folderId;
   final String noteId;
 
-  static const double _contentMaxWidth = 760;
-
   const NoteDetailScreen({
     required this.folderId,
     required this.noteId,
@@ -123,7 +121,6 @@ class NoteDetailScreen extends StatelessWidget implements AppRouteWrapper {
           child: Scaffold(
             appBar: const NoteDetailAppBar(),
             body: AdaptiveContentWidth(
-              maxWidth: _contentMaxWidth,
               child: ListView(
                 keyboardDismissBehavior:
                     ScrollViewKeyboardDismissBehavior.onDrag,

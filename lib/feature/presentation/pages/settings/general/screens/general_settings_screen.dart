@@ -109,7 +109,6 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(vertical: AppSizes.screenPadding),
       child: AdaptiveContentWidth(
-        maxWidth: 760,
         child: Column(
           children: [
             SettingsSection(
