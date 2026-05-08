@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/l10n/import_data_sheet_error_l10n.dart';
 import 'package:voice_notes/core/l10n/locale_cubit.dart';
-import 'package:voice_notes/core/packages/app_router/routes/app_routes.dart';
 import 'package:voice_notes/core/packages/backup/app_data_backup_models.dart';
 import 'package:voice_notes/core/packages/di/injection.dart';
 import 'package:voice_notes/core/packages/import/app_data_import_service.dart';
@@ -14,6 +12,7 @@ import 'package:voice_notes/core/packages/transcription/transcription_queue_cont
 import 'package:voice_notes/core/state/effect/effect_listener.dart';
 import 'package:voice_notes/core/theme/theme_cubit.dart';
 import 'package:voice_notes/feature/data/local/preferences/recording_preferences.dart';
+import 'package:voice_notes/feature/presentation/pages/queue/screens/queue_management_screen.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/general/logic/import_data_sheet_cubit.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/general/widgets/import_data_sheet/src/import_data_sheet_cards.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/general/widgets/import_data_sheet/src/import_data_sheet_preview_card.dart';
@@ -108,6 +107,7 @@ class _ImportDataSheetState extends State<ImportDataSheet> {
 
   Future<void> _restoreRecordingSettings(bool keepOriginals) async {
     try {
+      // TODO(K): подумать над переносом setKeepOriginals в кубит
       await getIt<RecordingPreferences>().setKeepOriginals(keepOriginals);
     } catch (_) {}
   }
@@ -138,7 +138,8 @@ class _ImportDataSheetState extends State<ImportDataSheet> {
                 ImportQueueWarningCard(
                   count: state.activeQueueCount,
                   onOpenQueue: () {
-                    context.push(AppRoutes.settings.queue);
+                    Navigator.pop(context);
+                    QueueManagementScreen.go(context);
                   },
                 ),
                 AppSpacer.p16,

@@ -11,5 +11,13 @@ enum QueueRuntimeReason {
   none,
   awaitingModel,
   interruptedPreviousRun,
-  breakerTripped,
+  breakerTripped;
+
+  bool get isNone => this == none;
+
+  bool get isAwaitingModel => this == awaitingModel;
+
+  bool get isInterruptedPreviousRun => this == interruptedPreviousRun;
+
+  bool get isBreakerTripped => this == breakerTripped;
 }

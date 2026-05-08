@@ -14,6 +14,12 @@ class ModelsState extends Equatable {
   AsrModelEntity? get selectedModel =>
       models.firstWhereOrNull((model) => model.isSelected);
 
+  /// Не выбранные модели
+  List<AsrModelEntity> get otherModels => [
+    for (final model in models)
+      if (!model.isSelected) model,
+  ];
+
   /// Скачанные модели
   List<AsrModelEntity> get downloadedModels => [
     for (final model in models)

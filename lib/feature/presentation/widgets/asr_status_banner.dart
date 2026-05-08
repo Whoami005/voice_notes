@@ -7,7 +7,6 @@ import 'package:voice_notes/core/packages/transcription/transcription_queue_snap
 import 'package:voice_notes/core/state/status/status_state.dart';
 import 'package:voice_notes/core/theme/app_colors.dart';
 import 'package:voice_notes/core/theme/app_typography.dart';
-import 'package:voice_notes/feature/domain/enums/queue_runtime_reason.dart';
 import 'package:voice_notes/feature/presentation/pages/queue/logic/transcription_queue_cubit.dart';
 import 'package:voice_notes/feature/presentation/pages/queue/screens/queue_management_screen.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/models/screens/models_settings_screen.dart';
@@ -46,8 +45,7 @@ class AsrStatusBanner extends StatelessWidget {
             return const _QueueBootstrapErrorBanner();
           }
 
-          if (queueState.runtimeReason ==
-              QueueRuntimeReason.interruptedPreviousRun) {
+          if (queueState.runtimeReason.isInterruptedPreviousRun) {
             return const _QueueInterruptedBanner();
           }
 

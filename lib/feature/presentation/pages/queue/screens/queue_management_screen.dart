@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
@@ -21,7 +20,7 @@ class QueueManagementScreen extends StatelessWidget implements AppRouteWrapper {
   const QueueManagementScreen({super.key});
 
   static void go(BuildContext context) {
-    context.push(AppRoutes.settings.queue);
+    context.router.go(AppRoutes.settings.queue);
   }
 
   @override

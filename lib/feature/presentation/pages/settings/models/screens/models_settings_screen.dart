@@ -61,31 +61,28 @@ class ModelsSettingsScreen extends StatelessWidget {
         if (models.isEmpty) return Center(child: Text(l10n.stateEmpty));
 
         final activeModel = state.selectedModel;
-        final otherModels = [
-          for (final model in models)
-            if (!model.isSelected) model,
-        ];
+        final otherModels = state.otherModels;
 
-        return Padding(
-          padding: const EdgeInsets.all(AppSizes.screenPadding),
-          child: AdaptiveContentWidth(
-            maxWidth: _modelCardContentMaxWidth,
-            child: CustomScrollView(
-              slivers: [
-                if (activeModel != null)
-                  _ModelCardSectionSliver(
-                    title: l10n.settingsActiveModel,
-                    child: ModelsSettingsModelCard(
-                      state: state,
-                      model: activeModel,
-                    ),
+        return AdaptiveContentWidth(
+          maxWidth: _modelCardContentMaxWidth,
+          padding: const EdgeInsets.symmetric(
+            horizontal: AppSizes.screenPadding,
+          ),
+          child: CustomScrollView(
+            slivers: [
+              if (activeModel != null)
+                _ModelCardSectionSliver(
+                  title: l10n.settingsActiveModel,
+                  child: ModelsSettingsModelCard(
+                    state: state,
+                    model: activeModel,
                   ),
+                ),
 
-                if (otherModels.isNotEmpty)
-                  _AvailableModelsSection(models: otherModels, state: state),
-                const SliverToBoxAdapter(child: AppSpacer.p40),
-              ],
-            ),
+              if (otherModels.isNotEmpty)
+                _AvailableModelsSection(models: otherModels, state: state),
+              const SliverToBoxAdapter(child: AppSpacer.p40),
+            ],
           ),
         );
       },
