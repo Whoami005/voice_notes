@@ -1,3 +1,5 @@
+// ignore_for_file: comment_references
+
 /// Статус воспроизведения плеера.
 enum PlaybackStatus {
   /// Начальное состояние — источник не загружен.

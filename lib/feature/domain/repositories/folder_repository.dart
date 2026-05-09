@@ -22,8 +22,9 @@ abstract interface class FolderRepository {
   /// Обновить существующую папку
   Future<FolderEntity> update(FolderEntity folder);
 
-  /// Удалить папку по UID
-  Future<void> delete(String uid);
+  // Disabled intentionally: direct folder delete without cascading notes/audio
+  // is unsafe for the current data model. Use deleteWithNotes instead.
+  // Future<void> delete(String uid);
 
   /// Удалить папку вместе со всеми заметками (каскадное удаление)
   Future<void> deleteWithNotes(String uid);

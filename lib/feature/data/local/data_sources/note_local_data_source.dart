@@ -8,7 +8,6 @@ import 'package:voice_notes/feature/data/local/mappers/note_transcription_segmen
 import 'package:voice_notes/feature/data/local/models/note_audio_object.dart';
 import 'package:voice_notes/feature/data/local/models/note_object.dart';
 import 'package:voice_notes/feature/data/local/models/note_transcription_segment_object.dart';
-import 'package:voice_notes/feature/data/local/models/tag_object.dart';
 import 'package:voice_notes/feature/domain/entities/note_audio_entity.dart';
 import 'package:voice_notes/feature/domain/entities/note_transcription_meta_entity.dart';
 import 'package:voice_notes/feature/domain/entities/note_transcription_segment_entity.dart';
@@ -276,12 +275,7 @@ class NoteLocalDataSourceImpl implements NoteLocalDataSource {
       if (targetFolder != null) note.folder.target = targetFolder;
 
       if (p.tags.isNotEmpty) {
-        final now = DateTime.now();
-        final tags = [
-          for (final name in p.tags)
-            TagObject(name: name.toLowerCase().trim(), createdAt: now),
-        ];
-        _tagDao.putMany(box, tags);
+        final tags = _tagDao.getOrCreateMany(box, p.tags);
         note.tags.addAll(tags);
       }
 
@@ -465,7 +459,7 @@ class NoteLocalDataSourceImpl implements NoteLocalDataSource {
           ..transcribedAt = p.transcription.transcribedAt
           ..transcriptionProcessingTimeMs =
               p.transcription.processingTime.inMilliseconds
-          ..transcriptionStrategyValue = p.transcription.strategyUsed.index
+          ..transcriptionStrategyValue = p.transcription.strategyUsed.value
           ..transcriptionUsedVad = p.transcription.usedVad
           ..transcriptionFellBackFromVad = p.transcription.fellBackFromVad
           ..transcriptionEmotionLabel = p.transcription.emotionLabel

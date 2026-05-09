@@ -12,6 +12,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voice_notes/core/error/app_exception.dart';
 import 'package:voice_notes/core/l10n/locale_cubit.dart';
 import 'package:voice_notes/core/packages/asr/asr_result.dart';
+import 'package:voice_notes/core/packages/asr/asr_transcription_strategy.dart';
 import 'package:voice_notes/core/packages/backup/app_data_backup_codec.dart';
 import 'package:voice_notes/core/packages/backup/app_data_backup_models.dart';
 import 'package:voice_notes/core/packages/import/app_data_import_models.dart';
@@ -192,6 +193,10 @@ void main() {
       expect(
         importedNote.transcriptionTaskTypeValue,
         TranscriptionTaskType.transcribe.value,
+      );
+      expect(
+        importedNote.transcriptionStrategyValue,
+        AsrTranscriptionStrategy.chunkedVad.value,
       );
 
       final manualNote = call.notes.firstWhere(

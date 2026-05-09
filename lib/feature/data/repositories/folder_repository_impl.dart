@@ -67,8 +67,10 @@ class FolderRepositoryImpl implements FolderRepository {
     return FolderMapper.toDomain(newObj);
   }
 
-  @override
-  Future<void> delete(String uid) => _dataSource.delete(uid);
+  // Disabled intentionally: direct folder delete without cascading notes/audio
+  // leaves too much room for accidental misuse. Keep deleteWithNotes as the
+  // only supported path.
+  // Future<void> delete(String uid) => _dataSource.delete(uid);
 
   @override
   Future<void> deleteWithNotes(String uid) async {

@@ -352,7 +352,7 @@ class AppDataBackupNote extends Equatable {
           ? null
           : DateTime.parse(origin.transcription!.transcribedAt).toLocal(),
       transcriptionProcessingTimeMs: origin.transcription?.processingTimeMs,
-      transcriptionStrategyValue: origin.transcription?.strategyUsedIndex,
+      transcriptionStrategyValue: origin.transcription?.strategyUsedValue,
       transcriptionUsedVad: origin.transcription?.usedVad,
       transcriptionFellBackFromVad: origin.transcription?.fellBackFromVad,
       transcriptionEmotionLabel: origin.transcription?.emotionLabel,
@@ -656,9 +656,9 @@ class AppDataBackupTranscription extends Equatable {
       .firstWhere((type) => type.name == taskType)
       .value;
 
-  int get strategyUsedIndex => AsrTranscriptionStrategy.values
+  int get strategyUsedValue => AsrTranscriptionStrategy.values
       .firstWhere((strategy) => strategy.name == strategyUsed)
-      .index;
+      .value;
 
   @override
   List<Object?> get props => [

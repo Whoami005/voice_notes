@@ -1,9 +1,23 @@
+// DB-persisted enum. Int values are part of the DB schema.
+// Never reorder existing entries; only append new variants at the end.
 enum AsrTranscriptionStrategy {
-  auto,
-  streaming,
-  singlePass,
-  chunked,
-  chunkedVad;
+  auto(0),
+  streaming(1),
+  singlePass(2),
+  chunked(3),
+  chunkedVad(4);
+
+  const AsrTranscriptionStrategy(this.value);
+
+  final int value;
+
+  static AsrTranscriptionStrategy fromValue(int value) {
+    for (final strategy in values) {
+      if (strategy.value == value) return strategy;
+    }
+
+    throw StateError('Unknown transcription strategy: $value');
+  }
 
   bool get supportsInteractiveProgress => switch (this) {
     AsrTranscriptionStrategy.streaming ||

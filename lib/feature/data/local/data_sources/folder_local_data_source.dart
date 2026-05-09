@@ -19,8 +19,9 @@ abstract interface class FolderLocalDataSource {
   /// Обновить существующую папку
   Future<FolderObject> update(FolderObject folder);
 
-  /// Удалить папку по UID
-  Future<void> delete(String uid);
+  // Disabled intentionally: direct folder delete without cascading notes/audio
+  // is unsafe for the current data model. Use deleteWithNotes instead.
+  // Future<void> delete(String uid);
 
   /// Удалить папку вместе со всеми заметками и связанными аудиофайлами.
   ///
@@ -66,11 +67,13 @@ class FolderLocalDataSourceImpl implements FolderLocalDataSource {
     return _folderDao.put(_db.box, folder, mode: PutMode.update);
   }
 
-  @override
-  Future<void> delete(String uid) async {
-    final folder = _folderDao.findByUid(_db.box, uid);
-    if (folder != null) _folderDao.remove(_db.box, folder.id);
-  }
+  // Disabled intentionally: direct folder delete without cascading notes/audio
+  // leaves too much room for accidental misuse. Keep deleteWithNotes as the
+  // only supported path.
+  // Future<void> delete(String uid) async {
+  //   final folder = _folderDao.findByUid(_db.box, uid);
+  //   if (folder != null) _folderDao.remove(_db.box, folder.id);
+  // }
 
   @override
   Future<List<String>> deleteWithNotes(String uid) async {

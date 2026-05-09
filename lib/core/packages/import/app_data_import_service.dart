@@ -42,7 +42,7 @@ abstract interface class AppDataImportService {
 @Singleton(as: AppDataImportService)
 class AppDataImportServiceImpl implements AppDataImportService {
   static const _expectedApp = 'voice_notes';
-  static const _expectedSchemaVersion = 1;
+  static const _currentSchemaVersion = 1;
 
   final FolderRepository _folderRepository;
   final TagRepository _tagRepository;
@@ -174,7 +174,14 @@ class AppDataImportServiceImpl implements AppDataImportService {
 
     _validateBundle(bundle);
 
-    return bundle;
+    return _BackupBundle(
+      archive: bundle.archive,
+      manifest: bundle.manifest,
+      backup: _upgradeBackupToCurrent(
+        schemaVersion: bundle.manifest.schemaVersion,
+        backup: bundle.backup,
+      ),
+    );
   }
 
   void _validateBundle(_BackupBundle bundle) {
@@ -182,16 +189,31 @@ class AppDataImportServiceImpl implements AppDataImportService {
     if (manifest.app != _expectedApp) {
       throw CustomException('Неподдерживаемый backup: ${manifest.app}');
     }
-    if (manifest.schemaVersion != _expectedSchemaVersion) {
-      throw CustomException(
-        'Неподдерживаемая версия backup: ${manifest.schemaVersion}',
-      );
+
+    final schemaVersion = manifest.schemaVersion;
+    if (schemaVersion < 1 || schemaVersion > _currentSchemaVersion) {
+      throw CustomException('Неподдерживаемая версия backup: $schemaVersion');
     }
-    if (bundle.backup.folders.length != manifest.counts.folders ||
-        bundle.backup.tags.length != manifest.counts.tags ||
-        bundle.backup.notes.length != manifest.counts.notes) {
+
+    final backup = bundle.backup;
+    final counts = manifest.counts;
+    if (backup.folders.length != counts.folders ||
+        backup.tags.length != counts.tags ||
+        backup.notes.length != counts.notes) {
       throw const FormatException.json('Backup counts mismatch');
     }
+  }
+
+  AppDataBackupPayload _upgradeBackupToCurrent({
+    required int schemaVersion,
+    required AppDataBackupPayload backup,
+  }) {
+    return switch (schemaVersion) {
+      1 => backup,
+      _ => throw CustomException(
+        'Неподдерживаемая версия backup: $schemaVersion',
+      ),
+    };
   }
 
   List<AppDataImportWarning> _previewWarnings(

@@ -46,7 +46,7 @@ abstract final class NoteMapper {
       transcriptionTaskTypeValue: n.origin.transcription?.taskType.value,
       transcriptionProcessingTimeMs:
           n.origin.transcription?.processingTime.inMilliseconds,
-      transcriptionStrategyValue: n.origin.transcription?.strategyUsed.index,
+      transcriptionStrategyValue: n.origin.transcription?.strategyUsed.value,
       transcriptionUsedVad: n.origin.transcription?.usedVad,
       transcriptionFellBackFromVad: n.origin.transcription?.fellBackFromVad,
       transcriptionEmotionLabel: n.origin.transcription?.emotionLabel,
@@ -81,7 +81,7 @@ abstract final class NoteMapper {
       ..transcriptionProcessingTimeMs =
           note.origin.transcription?.processingTime.inMilliseconds
       ..transcriptionStrategyValue =
-          note.origin.transcription?.strategyUsed.index
+          note.origin.transcription?.strategyUsed.value
       ..transcriptionUsedVad = note.origin.transcription?.usedVad
       ..transcriptionFellBackFromVad =
           note.origin.transcription?.fellBackFromVad
@@ -188,7 +188,7 @@ abstract final class NoteMapper {
     int? strategyValue,
   ) {
     if (strategyValue != null) {
-      return AsrTranscriptionStrategy.values[strategyValue];
+      return AsrTranscriptionStrategy.fromValue(strategyValue);
     }
 
     throw StateError('Transcribed audio note requires transcriptionStrategy');

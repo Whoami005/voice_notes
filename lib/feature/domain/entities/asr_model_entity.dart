@@ -2,7 +2,10 @@ import 'package:equatable/equatable.dart';
 import 'package:voice_notes/core/packages/asr/asr_model_files.dart';
 import 'package:voice_notes/core/packages/asr/asr_transcription_plan.dart';
 
-/// Идентификатор модели ASR
+/// Идентификатор модели ASR.
+///
+/// Значения [value] сериализуются в БД и backup-файлы как `modelId`.
+/// Менять или переиспользовать существующие строки нельзя.
 enum AsrModelIdEnum {
   whisperTinyEn('whisper-tiny-en'),
   whisperSmall('whisper-small'),
