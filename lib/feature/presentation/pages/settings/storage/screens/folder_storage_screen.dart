@@ -6,7 +6,9 @@ import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/packages/app_router/app_route_wrapper.dart';
+import 'package:voice_notes/core/packages/app_router/routes/app_pane_route_presentation.dart';
 import 'package:voice_notes/core/packages/app_router/routes/app_routes.dart';
+import 'package:voice_notes/core/packages/app_router/routes/settings_route_presentation.dart';
 import 'package:voice_notes/core/packages/di/injection.dart';
 import 'package:voice_notes/core/state/status/status_state_widgets.dart';
 import 'package:voice_notes/feature/domain/repositories/storage_stats_repository.dart';
@@ -38,13 +40,19 @@ class FolderStorageScreen extends StatelessWidget implements AppRouteWrapper {
 
   @override
   Widget build(BuildContext context) {
-    final themeColors = context.themeColors;
     final textTheme = context.textTheme;
     final l10n = context.l10n;
+    final presentation = SettingsRoutePresentation.fromContext(context);
+    final themeColors = context.themeColors;
+    final backgroundColor = presentation.backgroundColor(context);
 
     return Scaffold(
-      backgroundColor: themeColors.bgPrimary,
-      appBar: AppBar(backgroundColor: themeColors.bgPrimary),
+      backgroundColor: backgroundColor,
+      appBar: AppBar(
+        backgroundColor: backgroundColor,
+        leading: presentation.buildLeading(context),
+        automaticallyImplyLeading: presentation.automaticallyImplyLeading,
+      ),
       body: StatusStateBody<FolderStorageCubit, FolderStorageState>(
         buildAlways: true,
         onSuccess: (context, state) {

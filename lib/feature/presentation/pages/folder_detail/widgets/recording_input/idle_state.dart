@@ -1,12 +1,14 @@
 part of 'recording_input.dart';
 
 class _IdleState extends StatefulWidget {
+  final bool useWorkspaceLayout;
   final VoidCallback? onStartRecording;
   final VoidCallback? onUploadFile;
   final TextEditingController? textController;
   final ValueChanged<String>? onTextSubmit;
 
   const _IdleState({
+    required this.useWorkspaceLayout,
     this.onStartRecording,
     this.onUploadFile,
     this.textController,
@@ -59,18 +61,22 @@ class _IdleStateState extends State<_IdleState> {
     final themeColors = context.themeColors;
     final textTheme = context.textTheme;
     final screenHeight = context.screenSize.height;
+    final isWorkspace = widget.useWorkspaceLayout;
+    final minHeight = isWorkspace
+        ? AppSizes.workspaceComposerHeight
+        : AppSizes.recordingBarHeight;
+    final maxHeight = screenHeight * _idleMaxHeightFraction;
 
     return ConstrainedBox(
-      constraints: BoxConstraints(
-        minHeight: AppSizes.recordingBarHeight,
-        maxHeight: screenHeight * _idleMaxHeightFraction,
-      ),
+      constraints: BoxConstraints(minHeight: minHeight, maxHeight: maxHeight),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(AppSizes.recordingBarRadius),
+        borderRadius: isWorkspace
+            ? BorderRadius.zero
+            : BorderRadius.circular(AppSizes.recordingBarRadius),
         child: BackdropFilter(
           filter: ImageFilter.blur(
-            sigmaX: AppSizes.blurXL,
-            sigmaY: AppSizes.blurXL,
+            sigmaX: isWorkspace ? AppSizes.blurModerate : AppSizes.blurXL,
+            sigmaY: isWorkspace ? AppSizes.blurModerate : AppSizes.blurXL,
           ),
           child: Container(
             padding: const EdgeInsets.only(
@@ -79,13 +85,21 @@ class _IdleStateState extends State<_IdleState> {
               right: AppSizes.p10,
             ),
             decoration: BoxDecoration(
-              color: themeColors.bgSecondary.withValues(alpha: 0.7),
-              border: Border.all(color: themeColors.borderPrimary),
-              borderRadius: BorderRadius.circular(AppSizes.recordingBarRadius),
+              color: isWorkspace
+                  ? themeColors.workspacePane.withValues(alpha: 0.96)
+                  : themeColors.bgSecondary.withValues(alpha: 0.7),
+              border: Border.all(
+                color: isWorkspace
+                    ? themeColors.workspaceBorderSoft
+                    : themeColors.borderPrimary,
+              ),
+              borderRadius: isWorkspace
+                  ? BorderRadius.zero
+                  : BorderRadius.circular(AppSizes.recordingBarRadius),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
-              spacing: AppSizes.p8,
+              spacing: isWorkspace ? AppSizes.p10 : AppSizes.p8,
               children: [
                 if (widget.onUploadFile != null)
                   _GhostIconButton(

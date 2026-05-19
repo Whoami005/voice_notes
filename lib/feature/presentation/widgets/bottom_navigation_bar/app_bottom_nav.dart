@@ -1,16 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
-import 'package:voice_notes/feature/presentation/widgets/bottom_navigation_bar/app_nav_destination.dart';
+import 'package:voice_notes/core/packages/app_router/main_branch_navigation.dart';
+import 'package:voice_notes/feature/presentation/widgets/bottom_navigation_bar/'
+    'app_nav_destination.dart';
 
 class AppBottomNav extends StatelessWidget {
-  final int currentIndex;
-  final ValueChanged<int> onTap;
+  final AppMainBranch currentBranch;
 
-  const AppBottomNav({
-    required this.currentIndex,
-    required this.onTap,
-    super.key,
-  });
+  const AppBottomNav({required this.currentBranch, super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -23,8 +20,8 @@ class AppBottomNav extends StatelessWidget {
         border: Border(top: BorderSide(color: themeColors.borderPrimary)),
       ),
       child: BottomNavigationBar(
-        currentIndex: currentIndex,
-        onTap: onTap,
+        currentIndex: currentBranch.branchIndex,
+        onTap: (index) => context.goMainBranch(AppMainBranch.fromIndex(index)),
         items: [
           for (final destination in AppNavDestination.items)
             BottomNavigationBarItem(

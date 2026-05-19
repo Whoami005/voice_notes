@@ -19,7 +19,9 @@ import 'package:voice_notes/feature/presentation/widgets/lists/bloc_sliver_list_
 ///
 /// Contains all folder action logic: navigation, create, edit, delete.
 class FoldersListSection extends StatelessWidget {
-  const FoldersListSection({super.key});
+  final bool useWorkspaceStyle;
+
+  const FoldersListSection({super.key, this.useWorkspaceStyle = false});
 
   @override
   Widget build(BuildContext context) {
@@ -46,6 +48,7 @@ class FoldersListSection extends StatelessWidget {
       separatorBuilder: (_, _) => AppSpacer.p12,
       itemBuilder: (context, folder, index) => FolderCard(
         folder: folder,
+        useWorkspaceStyle: useWorkspaceStyle,
         onTap: () => _onFolderTap(context, folder),
         onLongPress: () => _onFolderLongPress(context, folder),
       ),

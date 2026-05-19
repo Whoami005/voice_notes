@@ -1,12 +1,14 @@
 part of 'recording_input.dart';
 
 class _RecordingState extends StatefulWidget {
+  final bool useWorkspaceLayout;
   final Duration duration;
   final List<double> amplitudes;
   final VoidCallback? onStopRecording;
   final VoidCallback? onCancelRecording;
 
   const _RecordingState({
+    required this.useWorkspaceLayout,
     required this.duration,
     required this.amplitudes,
     this.onStopRecording,
@@ -93,12 +95,15 @@ class _RecordingStateState extends State<_RecordingState>
     final themeColors = context.themeColors;
     final textTheme = context.textTheme;
     final l10n = context.l10n;
+    final isWorkspace = widget.useWorkspaceLayout;
 
     return Stack(
       clipBehavior: Clip.none,
       children: [
         SizedBox(
-          height: AppSizes.recordingBarHeight,
+          height: isWorkspace
+              ? AppSizes.workspaceComposerHeight
+              : AppSizes.recordingBarHeight,
           child: LayoutBuilder(
             builder: (context, constraints) {
               final capsuleWidth = constraints.maxWidth;
@@ -120,7 +125,7 @@ class _RecordingStateState extends State<_RecordingState>
                       child: Container(
                         decoration: BoxDecoration(
                           color: themeColors.recordingPulse.withValues(
-                            alpha: 0.18,
+                            alpha: isWorkspace ? 0.12 : 0.18,
                           ),
                           border: Border.all(
                             color: themeColors.recordingPulse.withValues(
@@ -128,7 +133,9 @@ class _RecordingStateState extends State<_RecordingState>
                             ),
                           ),
                           borderRadius: BorderRadius.circular(
-                            AppSizes.recordingBarRadius,
+                            isWorkspace
+                                ? AppSizes.workspacePaneRadius
+                                : AppSizes.recordingBarRadius,
                           ),
                         ),
                         alignment: Alignment.center,
@@ -163,12 +170,18 @@ class _RecordingStateState extends State<_RecordingState>
                         },
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(
-                            AppSizes.recordingBarRadius,
+                            isWorkspace
+                                ? AppSizes.workspacePaneRadius
+                                : AppSizes.recordingBarRadius,
                           ),
                           child: BackdropFilter(
                             filter: ImageFilter.blur(
-                              sigmaX: AppSizes.blurXL,
-                              sigmaY: AppSizes.blurXL,
+                              sigmaX: isWorkspace
+                                  ? AppSizes.blurModerate
+                                  : AppSizes.blurXL,
+                              sigmaY: isWorkspace
+                                  ? AppSizes.blurModerate
+                                  : AppSizes.blurXL,
                             ),
                             child: Container(
                               padding: const EdgeInsets.fromLTRB(
@@ -178,28 +191,40 @@ class _RecordingStateState extends State<_RecordingState>
                                 AppSizes.p8,
                               ),
                               decoration: BoxDecoration(
-                                color: themeColors.recordingBg.withValues(
-                                  alpha: 0.85,
-                                ),
+                                color: isWorkspace
+                                    ? themeColors.workspacePane.withValues(
+                                        alpha: 0.96,
+                                      )
+                                    : themeColors.recordingBg.withValues(
+                                        alpha: 0.85,
+                                      ),
                                 border: Border.all(
                                   color: themeColors.recordingPulse.withValues(
                                     alpha: 0.25,
                                   ),
                                 ),
                                 borderRadius: BorderRadius.circular(
-                                  AppSizes.recordingBarRadius,
+                                  isWorkspace
+                                      ? AppSizes.workspacePaneRadius
+                                      : AppSizes.recordingBarRadius,
                                 ),
                                 boxShadow: [
                                   BoxShadow(
                                     color: themeColors.recordingPulse
-                                        .withValues(alpha: 0.15),
-                                    blurRadius: _capsuleShadowBlur,
+                                        .withValues(
+                                          alpha: isWorkspace ? 0.1 : 0.15,
+                                        ),
+                                    blurRadius: isWorkspace
+                                        ? _capsuleShadowBlur - 4
+                                        : _capsuleShadowBlur,
                                     spreadRadius: _capsuleShadowSpread,
                                   ),
                                 ],
                               ),
                               child: Row(
-                                spacing: AppSizes.p10,
+                                spacing: isWorkspace
+                                    ? AppSizes.p8
+                                    : AppSizes.p10,
                                 children: [
                                   _CancelXButton(
                                     color: themeColors.textSecondary,
@@ -241,36 +266,37 @@ class _RecordingStateState extends State<_RecordingState>
             },
           ),
         ),
-        Positioned(
-          left: 0,
-          right: 0,
-          bottom: -_hintOverhang,
-          child: IgnorePointer(
-            child: Center(
-              child: AnimatedOpacity(
-                opacity: _hintVisible ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 300),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  spacing: AppSizes.p4,
-                  children: [
-                    Icon(
-                      Icons.chevron_left,
-                      size: _hintIconSize,
-                      color: themeColors.textTertiary,
-                    ),
-                    Text(
-                      l10n.recordingSwipeToCancel,
-                      style: textTheme.bodySmall?.copyWith(
+        if (!isWorkspace)
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: -_hintOverhang,
+            child: IgnorePointer(
+              child: Center(
+                child: AnimatedOpacity(
+                  opacity: _hintVisible ? 1.0 : 0.0,
+                  duration: const Duration(milliseconds: 300),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    spacing: AppSizes.p4,
+                    children: [
+                      Icon(
+                        Icons.chevron_left,
+                        size: _hintIconSize,
                         color: themeColors.textTertiary,
                       ),
-                    ),
-                  ],
+                      Text(
+                        l10n.recordingSwipeToCancel,
+                        style: textTheme.bodySmall?.copyWith(
+                          color: themeColors.textTertiary,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
       ],
     );
   }

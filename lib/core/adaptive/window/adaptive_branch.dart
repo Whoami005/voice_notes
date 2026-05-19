@@ -19,9 +19,9 @@ class AdaptiveBranch extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final windowSize = context.windowSize;
+    final windowWidthSize = context.windowWidthSize;
 
-    return windowSize.whenBuilder(
+    return windowWidthSize.whenBuilder(
       () => compact(context),
       medium: medium == null ? null : () => medium!(context),
       expanded: expanded == null ? null : () => expanded!(context),

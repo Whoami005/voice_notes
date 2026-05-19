@@ -27,7 +27,7 @@ class AppNavDestination {
     ),
   ];
 
-  static String _notesLabel(AppLocalizations l10n) => l10n.navNotes;
+  static String _notesLabel(AppLocalizations l10n) => l10n.foldersSectionTitle;
 
   static String _settingsLabel(AppLocalizations l10n) => l10n.navSettings;
 }

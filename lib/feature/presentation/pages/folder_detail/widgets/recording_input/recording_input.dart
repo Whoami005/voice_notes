@@ -23,6 +23,7 @@ part 'send_circle.dart';
 /// Снаружи импортируется только сам `RecordingInput`.
 class RecordingInput extends StatelessWidget {
   final RecordingInputState state;
+  final bool useWorkspaceLayout;
   final Duration recordingDuration;
   final List<double> amplitudes;
   final String? transcribingText;
@@ -36,6 +37,7 @@ class RecordingInput extends StatelessWidget {
 
   const RecordingInput({
     required this.state,
+    this.useWorkspaceLayout = false,
     this.recordingDuration = Duration.zero,
     this.amplitudes = const [],
     this.transcribingText,
@@ -52,12 +54,14 @@ class RecordingInput extends StatelessWidget {
   Widget build(BuildContext context) {
     return switch (state) {
       RecordingInputState.idle => _IdleState(
+        useWorkspaceLayout: useWorkspaceLayout,
         onStartRecording: onStartRecording,
         onUploadFile: onUploadFile,
         textController: textController,
         onTextSubmit: onTextSubmit,
       ),
       RecordingInputState.recording => _RecordingState(
+        useWorkspaceLayout: useWorkspaceLayout,
         duration: recordingDuration,
         amplitudes: amplitudes,
         onStopRecording: onStopRecording,

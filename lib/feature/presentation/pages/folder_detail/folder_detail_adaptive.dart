@@ -10,8 +10,10 @@ abstract final class FolderDetailAdaptive {
   static const ConstraintBreakpoints _noteBubbleBreakpoints =
       ConstraintBreakpoints(smallMaxWidth: 480, mediumMaxWidth: 760);
 
-  static bool useCenteredContent(AppWindowSizeEnum size) =>
-      AppAdaptivePolicy.useCenteredContent(size);
+  static bool useCenteredContent(AppWindowClass windowClass) {
+    return windowClass.widthSize.isMediumOrLarger &&
+        windowClass.heightSize.isMediumOrLarger;
+  }
 
   static double noteBubbleMaxWidth(BoxConstraints constraints) {
     if (!constraints.hasBoundedWidth) return 720;

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
+import 'package:voice_notes/core/packages/app_router/routes/folders_route_presentation.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/folder_detail_adaptive.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/logic/recording_cubit.dart';
 import 'package:voice_notes/feature/presentation/pages/folder_detail/widgets/recording_input/recording_input.dart';
@@ -16,42 +17,47 @@ class FolderDetailRecordingBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.bottomCenter,
-      child: BlocConsumer<RecordingCubit, RecordingState>(
-        listener: _handleRecordingStateChange,
-        builder: (context, state) {
-          final cubit = context.read<RecordingCubit>();
+    final isWorkspace = FoldersRoutePresentation.fromContext(
+      context,
+    ).isWorkspaceActive;
 
-          return Padding(
-            padding: EdgeInsets.only(
-              left: AppSizes.screenPadding,
-              right: AppSizes.screenPadding,
-              bottom:
-                  context.bottomInset +
-                  context.bottomKeyboardInsets +
-                  AppSizes.p16,
+    return BlocConsumer<RecordingCubit, RecordingState>(
+      listener: _handleRecordingStateChange,
+      builder: (context, state) {
+        final cubit = context.read<RecordingCubit>();
+
+        return Padding(
+          padding: EdgeInsets.only(
+            left: isWorkspace ? AppSizes.p0 : AppSizes.screenPadding,
+            right: isWorkspace ? AppSizes.p0 : AppSizes.screenPadding,
+            bottom: isWorkspace
+                ? AppSizes.p0
+                : context.bottomInset +
+                      context.bottomKeyboardInsets +
+                      AppSizes.p16,
+          ),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: isWorkspace
+                  ? double.infinity
+                  : FolderDetailAdaptive.recordingBarMaxWidth,
             ),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxWidth: FolderDetailAdaptive.recordingBarMaxWidth,
-              ),
-              child: RecordingInput(
-                state: state.uiState,
-                recordingDuration: state.durationOrNull ?? Duration.zero,
-                amplitudes: switch (state) {
-                  RecordingActiveState(:final amplitudes) => amplitudes,
-                  _ => const [],
-                },
-                onStartRecording: cubit.startRecording,
-                onStopRecording: cubit.stopRecording,
-                onCancelRecording: cubit.cancelRecording,
-                onTextSubmit: cubit.createTextNote,
-              ),
+            child: RecordingInput(
+              state: state.uiState,
+              useWorkspaceLayout: isWorkspace,
+              recordingDuration: state.durationOrNull ?? Duration.zero,
+              amplitudes: switch (state) {
+                RecordingActiveState(:final amplitudes) => amplitudes,
+                _ => const [],
+              },
+              onStartRecording: cubit.startRecording,
+              onStopRecording: cubit.stopRecording,
+              onCancelRecording: cubit.cancelRecording,
+              onTextSubmit: cubit.createTextNote,
             ),
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 

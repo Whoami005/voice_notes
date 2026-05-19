@@ -14,6 +14,12 @@ class AppColorsExtension extends ThemeExtension<AppColorsExtension> {
   final Color accentSecondary;
   final Color accentMuted;
   final Color accentGlow;
+  final Color workspaceShell;
+  final Color workspacePane;
+  final Color workspaceInset;
+  final Color workspaceSelection;
+  final Color workspaceSelectionSoft;
+  final Color workspaceBorderSoft;
   final Color borderPrimary;
   final Color borderSecondary;
   final Color success;
@@ -37,6 +43,12 @@ class AppColorsExtension extends ThemeExtension<AppColorsExtension> {
     required this.accentSecondary,
     required this.accentMuted,
     required this.accentGlow,
+    required this.workspaceShell,
+    required this.workspacePane,
+    required this.workspaceInset,
+    required this.workspaceSelection,
+    required this.workspaceSelectionSoft,
+    required this.workspaceBorderSoft,
     required this.borderPrimary,
     required this.borderSecondary,
     required this.success,
@@ -64,6 +76,12 @@ class AppColorsExtension extends ThemeExtension<AppColorsExtension> {
       accentSecondary: c.accentSecondary,
       accentMuted: c.accentMuted,
       accentGlow: c.accentGlow,
+      workspaceShell: c.workspaceShell,
+      workspacePane: c.workspacePane,
+      workspaceInset: c.workspaceInset,
+      workspaceSelection: c.workspaceSelection,
+      workspaceSelectionSoft: c.workspaceSelectionSoft,
+      workspaceBorderSoft: c.workspaceBorderSoft,
       borderPrimary: c.borderPrimary,
       borderSecondary: c.borderSecondary,
       success: c.success,
@@ -92,6 +110,12 @@ class AppColorsExtension extends ThemeExtension<AppColorsExtension> {
       accentSecondary: c.accentSecondary,
       accentMuted: c.accentMuted,
       accentGlow: c.accentGlow,
+      workspaceShell: c.workspaceShell,
+      workspacePane: c.workspacePane,
+      workspaceInset: c.workspaceInset,
+      workspaceSelection: c.workspaceSelection,
+      workspaceSelectionSoft: c.workspaceSelectionSoft,
+      workspaceBorderSoft: c.workspaceBorderSoft,
       borderPrimary: c.borderPrimary,
       borderSecondary: c.borderSecondary,
       success: c.success,
@@ -118,6 +142,12 @@ class AppColorsExtension extends ThemeExtension<AppColorsExtension> {
     Color? accentSecondary,
     Color? accentMuted,
     Color? accentGlow,
+    Color? workspaceShell,
+    Color? workspacePane,
+    Color? workspaceInset,
+    Color? workspaceSelection,
+    Color? workspaceSelectionSoft,
+    Color? workspaceBorderSoft,
     Color? borderPrimary,
     Color? borderSecondary,
     Color? success,
@@ -141,6 +171,13 @@ class AppColorsExtension extends ThemeExtension<AppColorsExtension> {
       accentSecondary: accentSecondary ?? this.accentSecondary,
       accentMuted: accentMuted ?? this.accentMuted,
       accentGlow: accentGlow ?? this.accentGlow,
+      workspaceShell: workspaceShell ?? this.workspaceShell,
+      workspacePane: workspacePane ?? this.workspacePane,
+      workspaceInset: workspaceInset ?? this.workspaceInset,
+      workspaceSelection: workspaceSelection ?? this.workspaceSelection,
+      workspaceSelectionSoft:
+          workspaceSelectionSoft ?? this.workspaceSelectionSoft,
+      workspaceBorderSoft: workspaceBorderSoft ?? this.workspaceBorderSoft,
       borderPrimary: borderPrimary ?? this.borderPrimary,
       borderSecondary: borderSecondary ?? this.borderSecondary,
       success: success ?? this.success,
@@ -172,6 +209,24 @@ class AppColorsExtension extends ThemeExtension<AppColorsExtension> {
       accentSecondary: Color.lerp(accentSecondary, other.accentSecondary, t)!,
       accentMuted: Color.lerp(accentMuted, other.accentMuted, t)!,
       accentGlow: Color.lerp(accentGlow, other.accentGlow, t)!,
+      workspaceShell: Color.lerp(workspaceShell, other.workspaceShell, t)!,
+      workspacePane: Color.lerp(workspacePane, other.workspacePane, t)!,
+      workspaceInset: Color.lerp(workspaceInset, other.workspaceInset, t)!,
+      workspaceSelection: Color.lerp(
+        workspaceSelection,
+        other.workspaceSelection,
+        t,
+      )!,
+      workspaceSelectionSoft: Color.lerp(
+        workspaceSelectionSoft,
+        other.workspaceSelectionSoft,
+        t,
+      )!,
+      workspaceBorderSoft: Color.lerp(
+        workspaceBorderSoft,
+        other.workspaceBorderSoft,
+        t,
+      )!,
       borderPrimary: Color.lerp(borderPrimary, other.borderPrimary, t)!,
       borderSecondary: Color.lerp(borderSecondary, other.borderSecondary, t)!,
       success: Color.lerp(success, other.success, t)!,

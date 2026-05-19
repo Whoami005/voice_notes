@@ -10,8 +10,5 @@ final class AppInitializationFailure extends AppInitializationResult {
   final Object error;
   final StackTrace? stackTrace;
 
-  const AppInitializationFailure({
-    required this.error,
-    this.stackTrace,
-  });
+  const AppInitializationFailure({required this.error, this.stackTrace});
 }

@@ -12,6 +12,7 @@ class SettingsRow extends StatelessWidget {
   final VoidCallback? onTap;
   final bool showDivider;
   final bool isEnabled;
+  final bool isSelected;
 
   const SettingsRow({
     required this.icon,
@@ -22,65 +23,78 @@ class SettingsRow extends StatelessWidget {
     this.onTap,
     this.showDivider = true,
     this.isEnabled = true,
+    this.isSelected = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final themeColors = context.themeColors;
     final opacity = isEnabled ? 1.0 : 0.5;
+    final backgroundColor = isSelected
+        ? themeColors.workspaceSelectionSoft
+        : Colors.transparent;
+    final iconColor = isSelected
+        ? themeColors.accentPrimary
+        : themeColors.textSecondary;
+    final titleColor = isSelected
+        ? themeColors.accentPrimary
+        : themeColors.textPrimary;
 
     return Opacity(
       opacity: opacity,
-      child: GestureDetector(
-        onTap: isEnabled ? onTap : null,
-        behavior: HitTestBehavior.translucent,
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(AppSizes.p16),
-              child: Row(
-                children: [
-                  Icon(
-                    icon,
-                    size: AppSizes.iconMedium,
-                    color: themeColors.textSecondary,
-                  ),
-                  AppSpacer.p14,
-                  Expanded(
-                    child: Column(
-                      spacing: AppSizes.p2,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          title,
-                          style: AppTypography.body.copyWith(
-                            color: themeColors.textPrimary,
-                          ),
-                        ),
-                        if (subtitle != null)
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        decoration: BoxDecoration(
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
+        ),
+        child: GestureDetector(
+          onTap: isEnabled ? onTap : null,
+          behavior: HitTestBehavior.translucent,
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(AppSizes.p16),
+                child: Row(
+                  children: [
+                    Icon(icon, size: AppSizes.iconMedium, color: iconColor),
+                    AppSpacer.p14,
+                    Expanded(
+                      child: Column(
+                        spacing: AppSizes.p2,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
                           Text(
-                            subtitle!,
-                            style: AppTypography.caption.copyWith(
-                              color: themeColors.textTertiary,
+                            title,
+                            style: AppTypography.body.copyWith(
+                              color: titleColor,
                             ),
                           ),
-                      ],
+                          if (subtitle != null)
+                            Text(
+                              subtitle!,
+                              style: AppTypography.caption.copyWith(
+                                color: themeColors.textTertiary,
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
-                  ),
-                  AppSpacer.p2,
-                  ?trailing,
-                ],
+                    AppSpacer.p2,
+                    ?trailing,
+                  ],
+                ),
               ),
-            ),
-            if (showDivider)
-              Divider(
-                height: 1,
-                thickness: 1,
-                indent: AppSizes.p16 + AppSizes.iconMedium + AppSizes.p14,
-                endIndent: 0,
-                color: themeColors.borderPrimary,
-              ),
-          ],
+              if (showDivider)
+                Divider(
+                  height: 1,
+                  thickness: 1,
+                  indent: AppSizes.p16 + AppSizes.iconMedium + AppSizes.p14,
+                  endIndent: 0,
+                  color: themeColors.borderPrimary,
+                ),
+            ],
+          ),
         ),
       ),
     );

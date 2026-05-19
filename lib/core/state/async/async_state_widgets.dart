@@ -178,15 +178,15 @@ class _AsyncStateBuilder<C extends AsyncCubit<T>, T> extends StatelessWidget {
       listener: listener ?? (_, _) {},
       builder: (context, state) => switch (state) {
         AsyncInitial() => _wrap(
-            onInitial?.call(context) ?? const SizedBox.shrink(),
-          ),
+          onInitial?.call(context) ?? const SizedBox.shrink(),
+        ),
         AsyncLoading() => _wrap(
-            onLoading?.call(context) ?? const StateLoadingView(),
-          ),
+          onLoading?.call(context) ?? const StateLoadingView(),
+        ),
         AsyncError(:final failure) => _wrap(
-            onError?.call(context, failure) ??
-                StateDefaultErrorView<C>(bloc: bloc, failure: failure),
-          ),
+          onError?.call(context, failure) ??
+              StateDefaultErrorView<C>(bloc: bloc, failure: failure),
+        ),
         AsyncSuccess(:final data, :final isEmpty) =>
           isEmpty && onEmpty != null
               ? onEmpty!(context, data)

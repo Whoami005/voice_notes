@@ -2,8 +2,11 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:voice_notes/core/adaptive/window/adaptive_branch.dart';
 import 'package:voice_notes/core/adaptive/window/adaptive_content_width.dart';
-import 'package:voice_notes/core/adaptive/window/app_adaptive_policy.dart';
+import 'package:voice_notes/core/adaptive/window/app_window_class.dart';
 import 'package:voice_notes/core/adaptive/window/app_window_size_enum.dart';
+import 'package:voice_notes/core/constants/app_sizes.dart';
+import 'package:voice_notes/feature/presentation/pages/folder_detail/folder_detail_adaptive.dart';
+import 'package:voice_notes/feature/presentation/pages/folders/screens/folders_adaptive_scaffold.dart';
 
 void main() {
   group('AppWindowSizeEnum', () {
@@ -137,32 +140,45 @@ void main() {
   });
 
   group('window size extensions', () {
-    test('BoxConstraints exposes windowSize', () {
+    test('BoxConstraints exposes windowWidthSize', () {
       const constraints = BoxConstraints(maxWidth: 700);
 
-      expect(constraints.windowSize, AppWindowSizeEnum.medium);
+      expect(constraints.windowWidthSize, AppWindowSizeEnum.medium);
     });
 
-    testWidgets('BuildContext exposes windowSize from MediaQuery', (
+    test('BoxConstraints exposes windowClass', () {
+      const constraints = BoxConstraints(maxWidth: 844, maxHeight: 390);
+
+      expect(constraints.windowClass.widthSize, AppWindowSizeEnum.expanded);
+      expect(constraints.windowClass.heightSize, AppWindowSizeEnum.compact);
+    });
+
+    testWidgets('BuildContext exposes windowWidthSize from MediaQuery', (
       tester,
     ) async {
-      late AppWindowSizeEnum windowSize;
+      late AppWindowSizeEnum windowWidthSize;
+      late AppWindowClass windowClass;
 
       await tester.pumpWidget(
         _adaptiveApp(
           width: 841,
+          height: 390,
           child: Builder(
             builder: (context) {
-              windowSize = context.windowSize;
+              windowWidthSize = context.windowWidthSize;
+              windowClass = context.windowClass;
 
-              return Text(windowSize.name);
+              return Text(
+                '${windowWidthSize.name}/${windowClass.heightSize.name}',
+              );
             },
           ),
         ),
       );
 
-      expect(windowSize, AppWindowSizeEnum.expanded);
-      expect(find.text('expanded'), findsOneWidget);
+      expect(windowWidthSize, AppWindowSizeEnum.expanded);
+      expect(windowClass.heightSize, AppWindowSizeEnum.compact);
+      expect(find.text('expanded/compact'), findsOneWidget);
     });
   });
 
@@ -171,6 +187,7 @@ void main() {
       await tester.pumpWidget(
         _adaptiveApp(
           width: 1200.1,
+          height: 390,
           child: AdaptiveBranch(
             compact: (context) => const Text('compact'),
             medium: (context) => const Text('medium'),
@@ -189,6 +206,7 @@ void main() {
       await tester.pumpWidget(
         _adaptiveApp(
           width: 900,
+          height: 390,
           child: AdaptiveBranch(
             compact: (context) => const Text('compact'),
             medium: (context) => const Text('medium'),
@@ -208,6 +226,7 @@ void main() {
       await tester.pumpWidget(
         _adaptiveApp(
           width: 700,
+          height: 390,
           child: AdaptiveBranch(
             compact: (context) {
               compactCalls++;
@@ -245,7 +264,7 @@ void main() {
         find.byType(ConstrainedBox),
       );
 
-      expect(constrainedBox.constraints.maxWidth, 960);
+      expect(constrainedBox.constraints.maxWidth, 760);
     });
 
     testWidgets('applies custom max width', (tester) async {
@@ -264,43 +283,53 @@ void main() {
     });
   });
 
-  group('AppAdaptivePolicy', () {
-    test('returns compact-specific navigation policy', () {
-      expect(
-        AppAdaptivePolicy.useBottomNavigation(AppWindowSizeEnum.compact),
-        isTrue,
-      );
-      expect(
-        AppAdaptivePolicy.useNavigationRail(AppWindowSizeEnum.compact),
-        isFalse,
-      );
-      expect(
-        AppAdaptivePolicy.useCenteredContent(AppWindowSizeEnum.compact),
-        isFalse,
-      );
-      expect(
-        AppAdaptivePolicy.useSplitView(AppWindowSizeEnum.compact),
-        isFalse,
-      );
-    });
+  group('FolderDetailAdaptive', () {
+    test('does not center content on compact-height landscape phones', () {
+      final phoneLandscape = AppWindowClass.fromSize(const Size(844, 390));
+      final tabletPortrait = AppWindowClass.fromSize(const Size(700, 960));
 
-    test('returns large-screen policy for expanded and larger widths', () {
+      expect(FolderDetailAdaptive.useCenteredContent(phoneLandscape), isFalse);
+      expect(FolderDetailAdaptive.useCenteredContent(tabletPortrait), isTrue);
+    });
+  });
+
+  group('FoldersAdaptiveScaffold', () {
+    test('requires enough height and pane width for split view', () {
       expect(
-        AppAdaptivePolicy.useNavigationRail(AppWindowSizeEnum.medium),
+        FoldersAdaptiveScaffold.canUseWorkspaceLayout(
+          const BoxConstraints(
+            maxWidth: AppSizes.workspaceMinWidth,
+            maxHeight: 700,
+          ),
+        ),
         isTrue,
       );
       expect(
-        AppAdaptivePolicy.useCenteredContent(AppWindowSizeEnum.expanded),
-        isTrue,
+        FoldersAdaptiveScaffold.canUseWorkspaceLayout(
+          const BoxConstraints(maxWidth: 844, maxHeight: 390),
+        ),
+        isFalse,
       );
-      expect(AppAdaptivePolicy.useSplitView(AppWindowSizeEnum.large), isTrue);
+      expect(
+        FoldersAdaptiveScaffold.canUseWorkspaceLayout(
+          const BoxConstraints(
+            maxWidth: AppSizes.workspaceMinWidth - 1,
+            maxHeight: 700,
+          ),
+        ),
+        isFalse,
+      );
     });
   });
 }
 
-Widget _adaptiveApp({required double width, required Widget child}) {
+Widget _adaptiveApp({
+  required double width,
+  required Widget child,
+  double height = 800,
+}) {
   return MediaQuery(
-    data: MediaQueryData(size: Size(width, 800)),
+    data: MediaQueryData(size: Size(width, height)),
     child: Directionality(textDirection: TextDirection.ltr, child: child),
   );
 }

@@ -4,7 +4,9 @@ import 'package:voice_notes/core/adaptive/window/adaptive_content_width.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
+import 'package:voice_notes/core/packages/app_router/routes/app_pane_route_presentation.dart';
 import 'package:voice_notes/core/packages/app_router/routes/app_routes.dart';
+import 'package:voice_notes/core/packages/app_router/routes/settings_route_presentation.dart';
 import 'package:voice_notes/core/state/async/async_state.dart';
 import 'package:voice_notes/core/state/async/async_state_widgets.dart';
 import 'package:voice_notes/core/theme/app_typography.dart';
@@ -49,40 +51,46 @@ class ModelsSettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AsyncStateBody<ModelsCubit, ModelsState>(
-      buildAlways: true,
-      listener: _handleStateChanges,
-      onSuccess: (context, state) {
-        final l10n = context.l10n;
-        final models = state.models;
+    final presentation = SettingsRoutePresentation.fromContext(context);
+    final backgroundColor = presentation.backgroundColor(context);
 
-        if (models.isEmpty) return Center(child: Text(l10n.stateEmpty));
+    return ColoredBox(
+      color: backgroundColor,
+      child: AsyncStateBody<ModelsCubit, ModelsState>(
+        buildAlways: true,
+        listener: _handleStateChanges,
+        onSuccess: (context, state) {
+          final l10n = context.l10n;
+          final models = state.models;
 
-        final activeModel = state.selectedModel;
-        final otherModels = state.otherModels;
+          if (models.isEmpty) return Center(child: Text(l10n.stateEmpty));
 
-        return AdaptiveContentWidth(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSizes.screenPadding,
-          ),
-          child: CustomScrollView(
-            slivers: [
-              if (activeModel != null)
-                _ModelCardSectionSliver(
-                  title: l10n.settingsActiveModel,
-                  child: ModelsSettingsModelCard(
-                    state: state,
-                    model: activeModel,
+          final activeModel = state.selectedModel;
+          final otherModels = state.otherModels;
+
+          return AdaptiveContentWidth(
+            padding: const EdgeInsets.symmetric(
+              horizontal: AppSizes.screenPadding,
+            ),
+            child: CustomScrollView(
+              slivers: [
+                if (activeModel != null)
+                  _ModelCardSectionSliver(
+                    title: l10n.settingsActiveModel,
+                    child: ModelsSettingsModelCard(
+                      state: state,
+                      model: activeModel,
+                    ),
                   ),
-                ),
 
-              if (otherModels.isNotEmpty)
-                _AvailableModelsSection(models: otherModels, state: state),
-              const SliverToBoxAdapter(child: AppSpacer.p40),
-            ],
-          ),
-        );
-      },
+                if (otherModels.isNotEmpty)
+                  _AvailableModelsSection(models: otherModels, state: state),
+                const SliverToBoxAdapter(child: AppSpacer.p40),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }

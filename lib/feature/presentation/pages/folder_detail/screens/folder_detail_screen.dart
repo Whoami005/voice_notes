@@ -4,7 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:voice_notes/core/adaptive/adaptive.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/packages/app_router/app_route_wrapper.dart';
+import 'package:voice_notes/core/packages/app_router/routes/app_pane_route_presentation.dart';
 import 'package:voice_notes/core/packages/app_router/routes/app_routes.dart';
+import 'package:voice_notes/core/packages/app_router/routes/folders_route_presentation.dart';
 import 'package:voice_notes/core/packages/audio/audio_recording_service.dart';
 import 'package:voice_notes/core/packages/di/injection.dart';
 import 'package:voice_notes/core/packages/note_ingestion/note_ingestion_service.dart';
@@ -24,7 +26,7 @@ import 'package:voice_notes/feature/presentation/widgets/asr_status_banner.dart'
 import 'package:voice_notes/feature/presentation/widgets/dialogs/confirm_dialog.dart';
 import 'package:voice_notes/feature/presentation/widgets/refresh/refreshable_wrapper.dart';
 
-class FolderDetailScreen extends StatefulWidget implements AppRouteWrapper {
+class FolderDetailScreen extends StatelessWidget implements AppRouteWrapper {
   final String folderId;
 
   const FolderDetailScreen({required this.folderId, super.key});
@@ -70,31 +72,7 @@ class FolderDetailScreen extends StatefulWidget implements AppRouteWrapper {
     );
   }
 
-  @override
-  State<FolderDetailScreen> createState() => _FolderDetailScreenState();
-}
-
-class _FolderDetailScreenState extends State<FolderDetailScreen> {
-  final bool _isSearchVisible = false;
-
-  // String _searchQuery = '';
-  // SearchFilter _activeFilter = SearchFilter.all;
-
-  void _toggleSearch() {
-    // setState(() {
-    //   _isSearchVisible = !_isSearchVisible;
-    //   if (!_isSearchVisible) {
-    //     _searchQuery = '';
-    //     _activeFilter = SearchFilter.all;
-    //   }
-    // });
-  }
-
-  void _onEditFolder() {
-    // TODO(W): Open edit folder sheet
-  }
-
-  Future<void> _onDeleteFolder() async {
+  Future<void> _onDeleteFolder(BuildContext context) async {
     final themeColors = context.themeColors;
     final l10n = context.l10n;
 
@@ -106,36 +84,43 @@ class _FolderDetailScreenState extends State<FolderDetailScreen> {
       confirmColor: themeColors.error,
     );
 
-    if ((confirmed ?? false) && mounted) {
+    if ((confirmed ?? false) && context.mounted) {
       final deleted = await context.read<FolderDetailCubit>().deleteFolder();
-      if (deleted && mounted) context.pop();
+      if (deleted && context.mounted) context.pop();
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final windowClass = context.windowClass;
+    final presentation = FoldersRoutePresentation.fromContext(context);
+    final backgroundColor = presentation.backgroundColor(context);
+
     return AsyncStateScaffold<FolderDetailCubit, FolderDetailData>(
-      title: context.l10n.folderDetailTitle,
+      backgroundColor: backgroundColor,
+      appBar: AppBar(
+        automaticallyImplyLeading: presentation.automaticallyImplyLeading,
+        backgroundColor: backgroundColor,
+        title: Text(context.l10n.folderDetailTitle),
+      ),
       onSuccess: (context, _) {
-        return Scaffold(
-          extendBody: true,
-          appBar: FolderDetailAppBar(
-            isSearchVisible: _isSearchVisible,
-            onToggleSearch: _toggleSearch,
-            onEditFolder: _onEditFolder,
-            onDeleteFolder: _onDeleteFolder,
-          ),
-          bottomNavigationBar: const FolderDetailRecordingBar(),
-          body: RefreshableWrapper<FolderDetailCubit>(
-            child: AdaptiveBranch(
-              compact: (_) => const _FolderDetailScrollView(),
-              medium: (_) => const AdaptiveContentWidth(
+        final detailBody =
+            FolderDetailAdaptive.useCenteredContent(windowClass)
+            ? const AdaptiveContentWidth(
                 maxWidth: FolderDetailAdaptive.contentMaxWidth,
                 alignment: Alignment.topCenter,
                 child: _FolderDetailScrollView(),
-              ),
-            ),
+              )
+            : const _FolderDetailScrollView();
+
+        return Scaffold(
+          backgroundColor: backgroundColor,
+          appBar: FolderDetailAppBar(
+            onDeleteFolder: () => _onDeleteFolder(context),
+            showBackButton: presentation.automaticallyImplyLeading,
           ),
+          bottomNavigationBar: const FolderDetailRecordingBar(),
+          body: RefreshableWrapper<FolderDetailCubit>(child: detailBody),
         );
       },
     );
@@ -151,18 +136,6 @@ class _FolderDetailScrollView extends StatelessWidget {
       keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       slivers: [
         AsrStatusBanner.sliver(),
-        // if (hasDescription)
-        //   SliverToBoxAdapter(
-        //     child: Padding(
-        //       padding: const EdgeInsets.fromLTRB(
-        //         AppSizes.screenPadding,
-        //         AppSizes.p12,
-        //         AppSizes.screenPadding,
-        //         AppSizes.p4,
-        //       ),
-        //       child: FolderAboutCard(folder: folder),
-        //     ),
-        //   ),
         NotesListSection(),
       ],
     );

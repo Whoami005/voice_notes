@@ -25,32 +25,32 @@ enum AppWindowSizeEnum {
   bool get isExpandedOrLarger => isExpanded || isLarge;
 
   static AppWindowSizeEnum fromContext(BuildContext context) {
-    final width = MediaQuery.sizeOf(context).width;
-
-    return fromWidth(width);
+    return fromDimension(MediaQuery.sizeOf(context).width);
   }
 
   static AppWindowSizeEnum fromConstraints(BoxConstraints constraints) {
     if (!constraints.hasBoundedWidth) return AppWindowSizeEnum.large;
 
-    return fromWidth(constraints.maxWidth);
+    return fromDimension(constraints.maxWidth);
   }
 
-  static AppWindowSizeEnum fromWidth(double width) {
-    assert(width >= 0, 'width must be non-negative');
+  static AppWindowSizeEnum fromDimension(double dimension) {
+    assert(dimension >= 0, 'dimension must be non-negative');
 
-    if (width <= AppWindowSizeEnum.compact.maxWidth) {
+    if (dimension <= AppWindowSizeEnum.compact.maxWidth) {
       return AppWindowSizeEnum.compact;
     }
-    if (width <= AppWindowSizeEnum.medium.maxWidth) {
+    if (dimension <= AppWindowSizeEnum.medium.maxWidth) {
       return AppWindowSizeEnum.medium;
     }
-    if (width <= AppWindowSizeEnum.expanded.maxWidth) {
+    if (dimension <= AppWindowSizeEnum.expanded.maxWidth) {
       return AppWindowSizeEnum.expanded;
     }
 
     return AppWindowSizeEnum.large;
   }
+
+  static AppWindowSizeEnum fromWidth(double width) => fromDimension(width);
 
   T when<T>(T compact, {T? medium, T? expanded, T? large}) {
     return switch (this) {
@@ -101,9 +101,10 @@ enum AppWindowSizeEnum {
 }
 
 extension AppWindowSizeBuildContextExtension on BuildContext {
-  AppWindowSizeEnum get windowSize => AppWindowSizeEnum.fromContext(this);
+  AppWindowSizeEnum get windowWidthSize => AppWindowSizeEnum.fromContext(this);
 }
 
 extension AppWindowSizeConstraintsExtension on BoxConstraints {
-  AppWindowSizeEnum get windowSize => AppWindowSizeEnum.fromConstraints(this);
+  AppWindowSizeEnum get windowWidthSize =>
+      AppWindowSizeEnum.fromConstraints(this);
 }

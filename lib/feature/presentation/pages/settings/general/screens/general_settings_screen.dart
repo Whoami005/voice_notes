@@ -9,9 +9,11 @@ import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/l10n/locale_cubit.dart';
 import 'package:voice_notes/core/packages/app_router/routes/app_routes.dart';
+import 'package:voice_notes/core/packages/app_router/routes/settings_route_presentation.dart';
 import 'package:voice_notes/core/packages/di/injection.dart';
 import 'package:voice_notes/core/packages/export/app_data_export_service.dart';
 import 'package:voice_notes/core/packages/export/app_data_share_service.dart';
+import 'package:voice_notes/core/state/async/async_state.dart';
 import 'package:voice_notes/core/theme/theme_cubit.dart';
 import 'package:voice_notes/feature/data/local/preferences/recording_preferences.dart';
 import 'package:voice_notes/feature/domain/entities/note_entity.dart';
@@ -21,12 +23,15 @@ import 'package:voice_notes/feature/presentation/pages/settings/general/widgets/
 import 'package:voice_notes/feature/presentation/pages/settings/general/widgets/import_data_sheet/import_data_sheet.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/general/widgets/settings_row.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/general/widgets/settings_section.dart';
+import 'package:voice_notes/feature/presentation/pages/settings/models/logic/models_cubit.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/storage/screens/storage_screen.dart';
 import 'package:voice_notes/feature/presentation/widgets/dialogs/language_dialog.dart';
 import 'package:voice_notes/feature/presentation/widgets/dialogs/theme_dialog.dart';
 
 class GeneralSettingsScreen extends StatefulWidget {
-  const GeneralSettingsScreen({super.key});
+  final bool useWorkspaceStyle;
+
+  const GeneralSettingsScreen({super.key, this.useWorkspaceStyle = false});
 
   static void go(BuildContext context) {
     context.go(AppRoutes.settings.general);
@@ -105,6 +110,9 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
+    final presentation = widget.useWorkspaceStyle
+        ? SettingsRoutePresentation.fromContext(context)
+        : null;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(vertical: AppSizes.screenPadding),
@@ -140,6 +148,40 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
                   ),
                   isEnabled: false,
                   showDivider: false,
+                ),
+              ],
+            ),
+            AppSpacer.p20,
+            SettingsSection(
+              title: l10n.settingsActiveModel,
+              children: [
+                BlocSelector<
+                  ModelsCubit,
+                  AsyncState<ModelsState>,
+                  ModelsState?
+                >(
+                  selector: (state) => state.dataOrNull,
+                  builder: (context, modelsState) {
+                    final selectedModel = modelsState?.selectedModel;
+                    final hasModel = selectedModel != null;
+                    final value = hasModel
+                        ? selectedModel.name
+                        : l10n.stateEmpty;
+                    final isSelected =
+                        widget.useWorkspaceStyle &&
+                        presentation?.selectedSidebarItem ==
+                            SettingsSidebarSelection.models;
+
+                    return SettingsRow(
+                      icon: Icons.smart_toy_outlined,
+                      title: l10n.settingsTabModels,
+                      subtitle: hasModel ? selectedModel.size : null,
+                      trailing: SettingsChevron(value: value),
+                      onTap: () => context.go(AppRoutes.settings.models),
+                      isSelected: isSelected,
+                      showDivider: false,
+                    );
+                  },
                 ),
               ],
             ),
@@ -202,12 +244,17 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
                   builder: (context, snapshot) {
                     final count = snapshot.data ?? 0;
                     final value = count > 0 ? '$count' : null;
+                    final isSelected =
+                        widget.useWorkspaceStyle &&
+                        presentation?.selectedSidebarItem ==
+                            SettingsSidebarSelection.queue;
 
                     return SettingsRow(
                       icon: Icons.queue_outlined,
                       title: l10n.queueSettingsRowTitle,
                       trailing: SettingsChevron(value: value),
                       onTap: () => QueueManagementScreen.go(context),
+                      isSelected: isSelected,
                       showDivider: false,
                     );
                   },
@@ -223,6 +270,10 @@ class _GeneralSettingsScreenState extends State<GeneralSettingsScreen> {
                   title: l10n.settingsStorageEntryTitle,
                   trailing: const SettingsChevron(),
                   onTap: () => StorageScreen.go(context),
+                  isSelected:
+                      widget.useWorkspaceStyle &&
+                      presentation?.selectedSidebarItem ==
+                          SettingsSidebarSelection.storage,
                 ),
                 SettingsRow(
                   icon: Icons.upload_outlined,

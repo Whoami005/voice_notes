@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
+import 'package:voice_notes/core/packages/app_router/routes/app_pane_route_presentation.dart';
+import 'package:voice_notes/core/packages/app_router/routes/folders_route_presentation.dart';
 import 'package:voice_notes/core/state/async/async_state.dart';
 import 'package:voice_notes/feature/presentation/pages/note_detail/logic/note_detail_cubit.dart';
 import 'package:voice_notes/feature/presentation/widgets/base_preferred_app_bar.dart';
@@ -16,6 +18,7 @@ class NoteDetailAppBar extends BasePreferredAppBar {
 class _NoteDetailAppBarState extends State<NoteDetailAppBar> {
   @override
   Widget build(BuildContext context) {
+    final presentation = FoldersRoutePresentation.fromContext(context);
     final themeColors = context.themeColors;
 
     return BlocBuilder<NoteDetailCubit, AsyncState<NoteDetailData>>(
@@ -30,6 +33,10 @@ class _NoteDetailAppBarState extends State<NoteDetailAppBar> {
         final data = state.requireData;
 
         return AppBar(
+          automaticallyImplyLeading: presentation.automaticallyImplyLeading,
+          leading: presentation.buildLeading(context),
+          backgroundColor: presentation.backgroundColor(context),
+          surfaceTintColor: Colors.transparent,
           title: Text(context.l10n.noteDetailTitle),
           actionsPadding: const EdgeInsets.symmetric(horizontal: AppSizes.p8),
           actions: [

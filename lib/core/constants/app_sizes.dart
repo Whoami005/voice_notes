@@ -22,6 +22,19 @@ class AppSizes {
   // Screen
   static const double screenPadding = 20;
   static const double safeAreaBottom = 34;
+  static const double workspaceHorizontalPadding = 16;
+  static const double workspacePaneGap = 16;
+  static const double workspaceLeftPaneMinWidth = 320;
+  static const double workspaceLeftPaneMaxWidth = 420;
+  static const double workspaceRightPaneMinWidth = 560;
+  static const double workspaceComposerHeight = 72;
+  static const double workspaceDockHeight = 72;
+  static const double workspacePaneRadius = 20;
+  static const double workspaceMinWidth =
+      workspaceLeftPaneMinWidth +
+      workspaceRightPaneMinWidth +
+      (workspaceHorizontalPadding * 2) +
+      workspacePaneGap;
 
   // Border Radius
   static const double radiusSmall = 8;

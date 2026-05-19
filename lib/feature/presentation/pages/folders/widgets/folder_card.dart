@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
+import 'package:voice_notes/core/theme/app_colors.dart';
 import 'package:voice_notes/feature/domain/entities/folder_entity.dart';
 import 'package:voice_notes/feature/presentation/widgets/folder_icon_badge.dart';
 import 'package:voice_notes/feature/presentation/widgets/highlighted_text.dart';
@@ -10,12 +11,14 @@ import 'package:voice_notes/l10n/app_localizations.dart';
 
 class FolderCard extends StatelessWidget {
   final FolderEntity folder;
+  final bool useWorkspaceStyle;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
   final String? highlightQuery;
 
   const FolderCard({
     required this.folder,
+    this.useWorkspaceStyle = false,
     super.key,
     this.onTap,
     this.onLongPress,
@@ -25,36 +28,56 @@ class FolderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final themeColors = context.themeColors;
+    final backgroundColor = useWorkspaceStyle
+        ? themeColors.workspaceInset
+        : themeColors.bgSecondary;
+    final borderColor = useWorkspaceStyle
+        ? themeColors.workspaceBorderSoft
+        : themeColors.borderPrimary;
+    final borderRadius = BorderRadius.circular(
+      useWorkspaceStyle ? AppSizes.radiusLarge : AppSizes.cardRadius,
+    );
+    final contentPadding = useWorkspaceStyle
+        ? AppSizes.p14
+        : AppSizes.cardPadding;
 
-    return GestureDetector(
-      onTap: onTap,
-      onLongPress: onLongPress,
-      child: Container(
-        padding: const EdgeInsets.all(AppSizes.cardPadding),
-        decoration: BoxDecoration(
-          color: themeColors.bgSecondary,
-          borderRadius: BorderRadius.circular(AppSizes.cardRadius),
-          border: Border.all(color: themeColors.borderPrimary),
-        ),
-        child: Row(
-          children: [
-            FolderIconBadge(
-              icon: folder.icon,
-              color: folder.color,
-              size: AppSizes.avatarLarge,
-              iconSize: AppSizes.iconLarge,
-              borderRadius: AppSizes.p14,
+    return Material(
+      color: AppColors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        onLongPress: onLongPress,
+        borderRadius: borderRadius,
+        child: Ink(
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            borderRadius: borderRadius,
+            border: Border.all(color: borderColor),
+          ),
+          child: Padding(
+            padding: EdgeInsets.all(contentPadding),
+            child: Row(
+              spacing: AppSizes.p14,
+              children: [
+                FolderIconBadge(
+                  icon: folder.icon,
+                  color: folder.color,
+                  size: AppSizes.avatarLarge,
+                  iconSize: AppSizes.iconLarge,
+                  borderRadius: AppSizes.p14,
+                ),
+                Expanded(
+                  child: _TextContent(
+                    folder: folder,
+                    highlightQuery: highlightQuery,
+                  ),
+                ),
+                _CountPill(
+                  count: folder.notesCount,
+                  useWorkspaceStyle: useWorkspaceStyle,
+                ),
+              ],
             ),
-            AppSpacer.p14,
-            Expanded(
-              child: _TextContent(
-                folder: folder,
-                highlightQuery: highlightQuery,
-              ),
-            ),
-            AppSpacer.p12,
-            _CountPill(count: folder.notesCount),
-          ],
+          ),
         ),
       ),
     );
@@ -135,8 +158,9 @@ class _TextContent extends StatelessWidget {
 
 class _CountPill extends StatelessWidget {
   final int count;
+  final bool useWorkspaceStyle;
 
-  const _CountPill({required this.count});
+  const _CountPill({required this.count, required this.useWorkspaceStyle});
 
   @override
   Widget build(BuildContext context) {
@@ -149,13 +173,17 @@ class _CountPill extends StatelessWidget {
         vertical: AppSizes.p4,
       ),
       decoration: BoxDecoration(
-        color: themeColors.bgTertiary,
+        color: useWorkspaceStyle
+            ? themeColors.workspaceSelectionSoft
+            : themeColors.bgTertiary,
         borderRadius: BorderRadius.circular(AppSizes.radiusFull),
       ),
       child: Text(
         count.toString(),
         style: textTheme.labelMedium?.copyWith(
-          color: themeColors.textPrimary,
+          color: useWorkspaceStyle
+              ? themeColors.accentPrimary
+              : themeColors.textPrimary,
           fontWeight: FontWeight.w600,
         ),
       ),

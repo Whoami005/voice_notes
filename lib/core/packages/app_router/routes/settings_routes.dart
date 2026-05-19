@@ -1,6 +1,9 @@
+import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
+import 'package:voice_notes/core/packages/app_router/app_restoration_ids.dart';
 import 'package:voice_notes/core/packages/app_router/app_router.dart';
 import 'package:voice_notes/core/packages/app_router/route_builder.dart';
+import 'package:voice_notes/core/packages/app_router/routes/app_route_names.dart';
 import 'package:voice_notes/core/packages/app_router/routes/app_routes.dart';
 import 'package:voice_notes/feature/presentation/pages/queue/screens/queue_management_screen.dart';
 import 'package:voice_notes/feature/presentation/pages/settings/general/screens/general_settings_screen.dart';
@@ -14,10 +17,15 @@ class SettingsRouteModule {
   const SettingsRouteModule._();
 
   /// Создаёт ветку навигации для Settings
-  static StatefulShellBranch branch() =>
-      StatefulShellBranch(routes: [_settingsShellRoute]);
+  static StatefulShellBranch branch() => StatefulShellBranch(
+    navigatorKey: AppRouter.settingsBranchNavigatorKey,
+    restorationScopeId: AppRestorationIds.settingsBranch,
+    initialLocation: AppRoutes.settings.general,
+    routes: [_settingsShellRoute],
+  );
 
   static final _settingsShellRoute = StatefulShellRoute(
+    restorationScopeId: AppRestorationIds.settingsShell,
     builder: (context, state, navigationShell) => navigationShell,
     navigatorContainerBuilder: (context, navigationShell, children) =>
         wrapRoute(
@@ -32,15 +40,19 @@ class SettingsRouteModule {
         preload: true,
         routes: [
           GoRoute(
+            name: AppRouteNames.settings.general,
             path: AppRoutes.settings.general,
-            builder: (context, state) => const GeneralSettingsScreen(),
+            pageBuilder: (context, state) =>
+                _page(state, const GeneralSettingsScreen()),
             routes: [
               _storageRoute,
               GoRoute(
+                name: AppRouteNames.settings.queue,
                 path: 'queue',
-                parentNavigatorKey: AppRouter.rootNavigatorKey,
-                builder: (context, state) =>
-                    wrapRoute(context, const QueueManagementScreen()),
+                pageBuilder: (context, state) => _page(
+                  state,
+                  wrapRoute(context, const QueueManagementScreen()),
+                ),
               ),
             ],
           ),
@@ -50,10 +62,32 @@ class SettingsRouteModule {
         preload: true,
         routes: [
           GoRoute(
+            name: AppRouteNames.settings.models,
             path: AppRoutes.settings.models,
-            builder: (context, state) => const ModelsSettingsScreen(),
+            pageBuilder: (context, state) =>
+                _page(state, const ModelsSettingsScreen()),
           ),
         ],
+      ),
+    ],
+  );
+
+  static GoRoute get _storageRoute => GoRoute(
+    name: AppRouteNames.settings.storage,
+    path: 'storage',
+    pageBuilder: (context, state) =>
+        _page(state, wrapRoute(context, const StorageScreen())),
+    routes: [
+      GoRoute(
+        name: AppRouteNames.settings.storageDetail,
+        path: ':folderUid',
+        pageBuilder: (context, state) => _page(
+          state,
+          wrapRoute(
+            context,
+            FolderStorageScreen(folderUid: _getFolderUid(state)),
+          ),
+        ),
       ),
     ],
   );
@@ -66,19 +100,13 @@ class SettingsRouteModule {
     return isNone ? null : raw;
   }
 
-  static GoRoute get _storageRoute => GoRoute(
-    path: 'storage',
-    parentNavigatorKey: AppRouter.rootNavigatorKey,
-    builder: (context, state) => wrapRoute(context, const StorageScreen()),
-    routes: [
-      GoRoute(
-        path: ':folderUid',
-        parentNavigatorKey: AppRouter.rootNavigatorKey,
-        builder: (context, state) => wrapRoute(
-          context,
-          FolderStorageScreen(folderUid: _getFolderUid(state)),
-        ),
+  static Page<void> _page(GoRouterState state, Widget child) {
+    return NoTransitionPage<void>(
+      key: state.pageKey,
+      restorationId: AppRestorationIds.page(
+        state.uri.path.replaceAll('/', '_'),
       ),
-    ],
-  );
+      child: child,
+    );
+  }
 }

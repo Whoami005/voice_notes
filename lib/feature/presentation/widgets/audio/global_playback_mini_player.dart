@@ -5,6 +5,7 @@ import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/packages/app_router/routes/app_routes.dart';
 import 'package:voice_notes/core/packages/di/injection.dart';
 import 'package:voice_notes/core/packages/player/audio_playback_controller.dart';
+import 'package:voice_notes/core/theme/app_colors.dart';
 
 class GlobalPlaybackMiniPlayer extends StatefulWidget {
   final AudioPlaybackController? controller;
@@ -54,24 +55,24 @@ class _GlobalPlaybackMiniPlayerState extends State<GlobalPlaybackMiniPlayer> {
         final displayTitle = _getDisplayTitle(session);
 
         return Material(
-          color: themeColors.bgPrimary,
+          color: AppColors.transparent,
           child: Container(
             key: const Key('global-playback-mini-player'),
             margin: const EdgeInsets.only(
-              bottom: AppSizes.p8,
+              top: AppSizes.p8,
               left: AppSizes.p10,
               right: AppSizes.p10,
             ),
             decoration: BoxDecoration(
-              color: themeColors.bgSecondary,
-              borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
-              border: Border.all(color: themeColors.borderPrimary),
+              color: themeColors.workspacePane,
+              borderRadius: BorderRadius.circular(AppSizes.radiusXL),
+              border: Border.all(color: themeColors.workspaceBorderSoft),
             ),
             child: Row(
               children: [
                 Expanded(
                   child: InkWell(
-                    borderRadius: BorderRadius.circular(AppSizes.radiusLarge),
+                    borderRadius: BorderRadius.circular(AppSizes.radiusXL),
                     onTap: session.folderId == null
                         ? null
                         : () => context.go(
@@ -82,15 +83,25 @@ class _GlobalPlaybackMiniPlayerState extends State<GlobalPlaybackMiniPlayer> {
                           ),
                     child: Padding(
                       padding: const EdgeInsets.symmetric(
-                        vertical: AppSizes.p12,
-                        horizontal: AppSizes.p16,
+                        vertical: AppSizes.p10,
+                        horizontal: AppSizes.p14,
                       ),
                       child: Row(
                         spacing: AppSizes.p12,
                         children: [
-                          Icon(
-                            Icons.graphic_eq_rounded,
-                            color: themeColors.accentPrimary,
+                          Container(
+                            padding: const EdgeInsets.all(AppSizes.p8),
+                            decoration: BoxDecoration(
+                              color: themeColors.workspaceSelectionSoft,
+                              borderRadius: BorderRadius.circular(
+                                AppSizes.radiusMedium,
+                              ),
+                            ),
+                            child: Icon(
+                              Icons.graphic_eq_rounded,
+                              color: themeColors.accentPrimary,
+                              size: AppSizes.iconMedium,
+                            ),
                           ),
                           Expanded(
                             child: Text(
@@ -99,6 +110,7 @@ class _GlobalPlaybackMiniPlayerState extends State<GlobalPlaybackMiniPlayer> {
                               overflow: TextOverflow.ellipsis,
                               style: textTheme.bodyMedium?.copyWith(
                                 color: themeColors.textPrimary,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ),
@@ -107,10 +119,20 @@ class _GlobalPlaybackMiniPlayerState extends State<GlobalPlaybackMiniPlayer> {
                     ),
                   ),
                 ),
-                IconButton(
-                  tooltip: context.l10n.playerPause,
-                  onPressed: _controller.pause,
-                  icon: const Icon(Icons.pause_rounded),
+                Padding(
+                  padding: const EdgeInsets.only(
+                    left: AppSizes.p4,
+                    right: AppSizes.p8,
+                  ),
+                  child: IconButton(
+                    tooltip: context.l10n.playerPause,
+                    style: IconButton.styleFrom(
+                      backgroundColor: themeColors.workspaceSelectionSoft,
+                      foregroundColor: themeColors.accentPrimary,
+                    ),
+                    onPressed: _controller.pause,
+                    icon: const Icon(Icons.pause_rounded),
+                  ),
                 ),
               ],
             ),

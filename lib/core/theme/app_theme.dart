@@ -26,7 +26,7 @@ class AppTheme {
     return ThemeData(
       brightness: brightness,
       fontFamily: AppTypography.fontFamily,
-      scaffoldBackgroundColor: colors.bgPrimary,
+      scaffoldBackgroundColor: colors.workspaceShell,
       colorScheme: ColorScheme(
         brightness: brightness,
         primary: colors.accentPrimary,
@@ -35,13 +35,13 @@ class AppTheme {
         onSecondary: colors.textInverse,
         error: colors.error,
         onError: colors.textInverse,
-        surface: colors.bgSecondary,
+        surface: colors.workspacePane,
         onSurface: colors.textPrimary,
       ),
       extensions: [colors],
       textTheme: textTheme,
       appBarTheme: AppBarTheme(
-        backgroundColor: colors.bgPrimary,
+        backgroundColor: colors.workspaceShell,
         foregroundColor: colors.textPrimary,
         elevation: 0,
         scrolledUnderElevation: 0,
@@ -56,7 +56,7 @@ class AppTheme {
             : SystemUiOverlayStyle.dark,
       ),
       bottomNavigationBarTheme: BottomNavigationBarThemeData(
-        backgroundColor: colors.bgSecondary,
+        backgroundColor: colors.workspacePane,
         selectedItemColor: colors.accentPrimary,
         unselectedItemColor: colors.textSecondary,
         type: BottomNavigationBarType.fixed,
@@ -66,7 +66,7 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: colors.bgTertiary,
+        fillColor: colors.workspaceInset,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: AppSizes.p16,
           vertical: AppSizes.p12,
@@ -97,7 +97,7 @@ class AppTheme {
       ),
       dialogTheme: DialogThemeData(
         barrierColor: colors.overlay,
-        backgroundColor: colors.bgElevated,
+        backgroundColor: colors.workspacePane,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSizes.radiusXXL),
@@ -108,7 +108,7 @@ class AppTheme {
         ),
       ),
       bottomSheetTheme: BottomSheetThemeData(
-        backgroundColor: colors.bgSecondary,
+        backgroundColor: colors.workspacePane,
         surfaceTintColor: Colors.transparent,
         shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(
@@ -120,7 +120,7 @@ class AppTheme {
         showDragHandle: true,
       ),
       chipTheme: ChipThemeData(
-        backgroundColor: colors.accentMuted,
+        backgroundColor: colors.workspaceSelectionSoft,
         labelStyle: AppTypography.micro.copyWith(color: colors.accentPrimary),
         padding: const EdgeInsets.symmetric(horizontal: AppSizes.p8),
         shape: RoundedRectangleBorder(
@@ -141,17 +141,17 @@ class AppTheme {
         ),
       ),
       dividerTheme: DividerThemeData(
-        color: colors.borderPrimary,
+        color: colors.workspaceBorderSoft,
         thickness: 1,
         space: 0,
       ),
       cardTheme: CardThemeData(
-        color: colors.bgSecondary,
+        color: colors.workspacePane,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSizes.cardRadius),
-          side: BorderSide(color: colors.borderPrimary),
+          side: BorderSide(color: colors.workspaceBorderSoft),
         ),
         margin: EdgeInsets.zero,
       ),
@@ -213,12 +213,12 @@ class AppTheme {
         ),
       ),
       popupMenuTheme: PopupMenuThemeData(
-        color: colors.bgElevated,
+        color: colors.workspacePane,
         surfaceTintColor: Colors.transparent,
         elevation: 8,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppSizes.radiusMedium),
-          side: BorderSide(color: colors.borderPrimary),
+          side: BorderSide(color: colors.workspaceBorderSoft),
         ),
         textStyle: AppTypography.body.copyWith(color: colors.textPrimary),
       ),
@@ -263,9 +263,9 @@ class AppTheme {
       ),
       sliderTheme: SliderThemeData(
         activeTrackColor: colors.accentPrimary,
-        inactiveTrackColor: colors.bgTertiary,
+        inactiveTrackColor: colors.workspaceInset,
         thumbColor: colors.accentPrimary,
-        overlayColor: colors.accentMuted,
+        overlayColor: colors.workspaceSelectionSoft,
       ),
       tabBarTheme: TabBarThemeData(
         labelColor: colors.accentPrimary,

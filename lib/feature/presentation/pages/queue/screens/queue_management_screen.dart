@@ -5,7 +5,9 @@ import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/packages/app_router/app_route_wrapper.dart';
+import 'package:voice_notes/core/packages/app_router/routes/app_pane_route_presentation.dart';
 import 'package:voice_notes/core/packages/app_router/routes/app_routes.dart';
+import 'package:voice_notes/core/packages/app_router/routes/settings_route_presentation.dart';
 import 'package:voice_notes/core/packages/di/injection.dart';
 import 'package:voice_notes/core/packages/transcription/transcription_queue_controller.dart';
 import 'package:voice_notes/feature/domain/repositories/note_repository.dart';
@@ -37,12 +39,15 @@ class QueueManagementScreen extends StatelessWidget implements AppRouteWrapper {
 
   @override
   Widget build(BuildContext context) {
-    final themeColors = context.themeColors;
+    final presentation = SettingsRoutePresentation.fromContext(context);
+    final backgroundColor = presentation.backgroundColor(context);
 
     return Scaffold(
-      backgroundColor: themeColors.bgPrimary,
+      backgroundColor: backgroundColor,
       appBar: AppBar(
-        backgroundColor: themeColors.bgPrimary,
+        leading: presentation.buildLeading(context),
+        backgroundColor: backgroundColor,
+        automaticallyImplyLeading: presentation.automaticallyImplyLeading,
         title: Text(context.l10n.queueScreenTitle),
       ),
       body: AdaptiveContentWidth(

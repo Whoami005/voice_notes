@@ -94,6 +94,21 @@ class _DarkColors {
   /// Свечение — focus ring, soft glow
   Color get accentGlow => const Color(0xFFF59E0B).withValues(alpha: 0.30);
 
+  // ── Workspace ───────────────────────────────────────────
+  Color get workspaceShell => bgPrimary;
+
+  Color get workspacePane => bgSecondary;
+
+  Color get workspaceInset => bgTertiary;
+
+  Color get workspaceSelection =>
+      const Color(0xFFF59E0B).withValues(alpha: 0.18);
+
+  Color get workspaceSelectionSoft =>
+      const Color(0xFFF59E0B).withValues(alpha: 0.1);
+
+  Color get workspaceBorderSoft => borderPrimary;
+
   // ── Borders ──────────────────────────────────────────────
   /// Основная граница — разделители, карточки
   Color get borderPrimary => const Color(0xFF2F2F2F);
@@ -181,6 +196,21 @@ class _LightColors {
   Color get borderPrimary => const Color(0xFFE7E5E4);
 
   Color get borderSecondary => const Color(0xFFD6D3D1);
+
+  // Workspace
+  Color get workspaceShell => bgPrimary;
+
+  Color get workspacePane => bgSecondary;
+
+  Color get workspaceInset => bgTertiary;
+
+  Color get workspaceSelection =>
+      const Color(0xFF6366F1).withValues(alpha: 0.14);
+
+  Color get workspaceSelectionSoft =>
+      const Color(0xFF6366F1).withValues(alpha: 0.08);
+
+  Color get workspaceBorderSoft => borderPrimary;
 
   // Status
   Color get success => const Color(0xFF16A34A);

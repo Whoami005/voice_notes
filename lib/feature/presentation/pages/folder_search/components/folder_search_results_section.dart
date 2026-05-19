@@ -43,7 +43,7 @@ class FolderSearchResultsSection extends StatelessWidget {
                 folder: folder,
                 highlightQuery: state.query,
                 onTap: () =>
-                    FolderDetailScreen.push(context, folderId: folder.uid),
+                    FolderDetailScreen.go(context, folderId: folder.uid),
               );
             },
           ),

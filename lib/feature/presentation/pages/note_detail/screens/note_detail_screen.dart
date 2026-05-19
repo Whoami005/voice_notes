@@ -7,7 +7,9 @@ import 'package:voice_notes/core/constants/app_sizes.dart';
 import 'package:voice_notes/core/constants/app_spacer.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/packages/app_router/app_route_wrapper.dart';
+import 'package:voice_notes/core/packages/app_router/routes/app_pane_route_presentation.dart';
 import 'package:voice_notes/core/packages/app_router/routes/app_routes.dart';
+import 'package:voice_notes/core/packages/app_router/routes/folders_route_presentation.dart';
 import 'package:voice_notes/core/packages/di/injection.dart';
 import 'package:voice_notes/core/packages/player/audio_playback_controller.dart';
 import 'package:voice_notes/core/state/async/async_state_widgets.dart';
@@ -106,8 +108,12 @@ class NoteDetailScreen extends StatelessWidget implements AppRouteWrapper {
 
   @override
   Widget build(BuildContext context) {
+    final presentation = FoldersRoutePresentation.fromContext(context);
+    final backgroundColor = presentation.backgroundColor(context);
+
     return AsyncStateScaffold<NoteDetailCubit, NoteDetailData>(
       buildAlways: true,
+      backgroundColor: backgroundColor,
       title: context.l10n.noteDetailTitle,
       onSuccess: (context, data) {
         final cubit = context.read<NoteDetailCubit>();
@@ -119,6 +125,7 @@ class NoteDetailScreen extends StatelessWidget implements AppRouteWrapper {
           canPop: (context) => !data.hasChanges,
           onPopInvokedWithResult: () => _showUnsavedChangesDialog(context),
           child: Scaffold(
+            backgroundColor: backgroundColor,
             appBar: const NoteDetailAppBar(),
             body: AdaptiveContentWidth(
               child: ListView(

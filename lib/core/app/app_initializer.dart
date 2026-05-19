@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:voice_notes/core/extensions/context_extensions.dart';
 import 'package:voice_notes/core/l10n/locale_cubit.dart';
+import 'package:voice_notes/core/packages/app_router/app_restoration_ids.dart';
 import 'package:voice_notes/core/packages/app_router/app_router.dart';
 import 'package:voice_notes/core/packages/asr/asr_cubit.dart';
 import 'package:voice_notes/core/packages/asr/asr_service.dart';
@@ -161,6 +162,7 @@ class _VoiceNotesAppState extends State<VoiceNotesApp>
               theme: AppTheme.light,
               darkTheme: AppTheme.dark,
               themeMode: theme.themeMode,
+              restorationScopeId: AppRestorationIds.app,
               routerConfig: widget.router,
               locale: locale,
               supportedLocales: AppLocalizations.supportedLocales,

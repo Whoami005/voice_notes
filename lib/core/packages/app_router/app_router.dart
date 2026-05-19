@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:injectable/injectable.dart';
-import 'package:voice_notes/core/packages/app_router/root_screen.dart';
+import 'package:voice_notes/core/packages/app_router/app_restoration_ids.dart';
+import 'package:voice_notes/core/packages/app_router/main_shell.dart';
 import 'package:voice_notes/core/packages/app_router/routes/app_routes.dart';
 import 'package:voice_notes/core/packages/app_router/routes/folders_routes.dart';
 import 'package:voice_notes/core/packages/app_router/routes/settings_routes.dart';
@@ -16,33 +17,48 @@ class AppRouter {
   /// Ключ для доступа к корневому навигатору приложения
   static final rootNavigatorKey = GlobalKey<NavigatorState>(debugLabel: 'root');
 
+  static final foldersBranchNavigatorKey = GlobalKey<NavigatorState>(
+    debugLabel: 'foldersBranch',
+  );
+
+  static final settingsBranchNavigatorKey = GlobalKey<NavigatorState>(
+    debugLabel: 'settingsBranch',
+  );
+
+  static final detailPaneNavigatorKey = GlobalKey<NavigatorState>(
+    debugLabel: 'foldersDetailPane',
+  );
+
   /// Экземпляр GoRouter
   late final GoRouter router = _createRouter();
 
   /// Метод для создания экземпляра GoRouter
   GoRouter _createRouter({NavigatorObserver? observer}) {
     return GoRouter(
+      restorationScopeId: AppRestorationIds.router,
       navigatorKey: rootNavigatorKey,
       initialLocation: AppRoutes.folders.root,
       debugLogDiagnostics: true,
       observers: observer != null ? [observer] : null,
       // Обработка ошибок навигации - редирект на корень ветки
       onException: (context, state, router) {
-        final path = state.matchedLocation;
-        final isSettings = path.startsWith('/settings');
+        final path = state.uri.path;
 
-        isSettings
-            ? router.go(AppRoutes.settings.general)
-            : router.go(AppRoutes.folders.root);
+        router.go(
+          path.startsWith(AppRoutes.settings.pattern)
+              ? AppRoutes.settings.general
+              : AppRoutes.folders.root,
+        );
       },
       // Редирект для невалидных путей
       redirect: (context, state) {
-        final path = state.matchedLocation;
+        final path = state.uri.path;
 
-        if (path == '/settings') return AppRoutes.settings.general;
+        if (path == AppRoutes.settings.root) return AppRoutes.settings.general;
 
         // Проверка параметров для folder detail
-        if (path.startsWith('/folders/') && path != '/folders') {
+        if (path.startsWith(AppRoutes.folders.pattern) &&
+            path != AppRoutes.folders.root) {
           final segments = path.split('/');
 
           if (segments.length >= 3) {
@@ -57,9 +73,10 @@ class AppRouter {
       },
       routes: [
         StatefulShellRoute.indexedStack(
+          restorationScopeId: AppRestorationIds.rootShell,
           parentNavigatorKey: rootNavigatorKey,
           builder: (context, state, navigationShell) =>
-              RootScreen(navigationShell: navigationShell),
+              MainShell(navigationShell: navigationShell),
           branches: [FoldersRouteModule.branch(), SettingsRouteModule.branch()],
         ),
       ],
