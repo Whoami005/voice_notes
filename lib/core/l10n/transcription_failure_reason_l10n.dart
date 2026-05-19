@@ -7,8 +7,7 @@ extension TranscriptionFailureReasonL10n on TranscriptionFailureReason {
     TranscriptionFailureReason.modelLoadFailed => l10n.noteFailureModelLoad,
     TranscriptionFailureReason.transcriptionFailed =>
       l10n.noteFailureTranscription,
-    TranscriptionFailureReason.audioFileMissing =>
-      l10n.noteFailureAudioMissing,
+    TranscriptionFailureReason.audioFileMissing => l10n.noteFailureAudioMissing,
     TranscriptionFailureReason.audioFileCorrupted =>
       l10n.noteFailureAudioCorrupted,
     TranscriptionFailureReason.transcriptionTimedOut =>

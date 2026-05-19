@@ -234,33 +234,27 @@ void main() {
 
   group('AdaptiveContentWidth', () {
     testWidgets('applies default max width', (tester) async {
-      await tester.pumpWidget(
-        _adaptiveApp(
-          width: 1400,
-          child: const AdaptiveContentWidth(child: SizedBox()),
-        ),
-      );
+      const widget = AdaptiveContentWidth(child: SizedBox());
+
+      await tester.pumpWidget(_adaptiveApp(width: 1400, child: widget));
 
       final constrainedBox = tester.widget<ConstrainedBox>(
         find.byType(ConstrainedBox),
       );
 
-      expect(constrainedBox.constraints.maxWidth, 960);
+      expect(constrainedBox.constraints.maxWidth, widget.maxWidth);
     });
 
     testWidgets('applies custom max width', (tester) async {
-      await tester.pumpWidget(
-        _adaptiveApp(
-          width: 1400,
-          child: const AdaptiveContentWidth(maxWidth: 720, child: SizedBox()),
-        ),
-      );
+      const widget = AdaptiveContentWidth(maxWidth: 720, child: SizedBox());
+
+      await tester.pumpWidget(_adaptiveApp(width: 1400, child: widget));
 
       final constrainedBox = tester.widget<ConstrainedBox>(
         find.byType(ConstrainedBox),
       );
 
-      expect(constrainedBox.constraints.maxWidth, 720);
+      expect(constrainedBox.constraints.maxWidth, widget.maxWidth);
     });
   });
 

@@ -78,27 +78,28 @@ class SearchHighlighter {
     for (final match in matches) {
       // Add text before match
       if (match.start > lastEnd) {
-        spans.add(TextSpan(
-          text: text.substring(lastEnd, match.start),
-          style: normalStyle,
-        ));
+        spans.add(
+          TextSpan(
+            text: text.substring(lastEnd, match.start),
+            style: normalStyle,
+          ),
+        );
       }
 
       // Add highlighted match
-      spans.add(TextSpan(
-        text: text.substring(match.start, match.end),
-        style: highlightStyle,
-      ));
+      spans.add(
+        TextSpan(
+          text: text.substring(match.start, match.end),
+          style: highlightStyle,
+        ),
+      );
 
       lastEnd = match.end;
     }
 
     // Add remaining text after last match
     if (lastEnd < text.length) {
-      spans.add(TextSpan(
-        text: text.substring(lastEnd),
-        style: normalStyle,
-      ));
+      spans.add(TextSpan(text: text.substring(lastEnd), style: normalStyle));
     }
 
     return spans;

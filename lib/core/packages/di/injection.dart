@@ -1,3 +1,5 @@
+import 'dart:developer' as developer;
+
 import 'package:get_it/get_it.dart';
 import 'package:injectable/injectable.dart';
 import 'package:voice_notes/core/packages/asr/asr_vad_asset_installer.dart';
@@ -19,7 +21,12 @@ Future<AppInitializationResult> configureDependencies({
 
     return const AppInitializationSuccess();
   } catch (e, s) {
-    print('configureDependencies: $e\n$s');
+    developer.log(
+      'configureDependencies failed',
+      name: 'configureDependencies',
+      error: e,
+      stackTrace: s,
+    );
 
     await getIt.reset();
     return AppInitializationFailure(error: e, stackTrace: s);

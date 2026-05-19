@@ -10,14 +10,13 @@ class FolderDetailData extends Equatable {
     required String todayLabel,
     required String yesterdayLabel,
     required String localeCode,
-  }) =>
-      DateGroup.groupByDate(
-        notes,
-        (note) => note.createdAt,
-        todayLabel: todayLabel,
-        yesterdayLabel: yesterdayLabel,
-        localeCode: localeCode,
-      );
+  }) => DateGroup.groupByDate(
+    notes,
+    (note) => note.createdAt,
+    todayLabel: todayLabel,
+    yesterdayLabel: yesterdayLabel,
+    localeCode: localeCode,
+  );
 
   FolderDetailData copyWith({FolderEntity? folder, List<NoteEntity>? notes}) {
     return FolderDetailData(

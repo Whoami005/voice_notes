@@ -133,6 +133,7 @@ class DownloadManager {
 
     try {
       final success = await FileDownloader().enqueue(task);
+      // ignore: only_throw_errors
       if (!success) throw const DownloadFailure.enqueue();
     } catch (_) {
       _modelIdToTaskId.remove(modelId);
