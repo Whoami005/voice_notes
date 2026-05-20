@@ -15,6 +15,9 @@
 
 # Voice Notes
 
+[![Latest release](https://img.shields.io/github/v/release/Whoami005/voice_notes?display_name=tag)](https://github.com/Whoami005/voice_notes/releases/latest)
+[![Download latest APK](https://img.shields.io/badge/Download-latest%20APK-191919?logo=android&logoColor=white)](https://github.com/Whoami005/voice_notes/releases/latest/download/voice-notes-latest.apk)
+
 [English](#english) | [Русский](#русский)
 
 ---
@@ -22,6 +25,13 @@
 ## English
 
 A mobile application for recording and transcribing voice notes with on-device speech recognition. All transcription runs locally after the required ASR model is downloaded.
+
+### Download
+
+- [Latest release notes](https://github.com/Whoami005/voice_notes/releases/latest)
+- [Download latest APK](https://github.com/Whoami005/voice_notes/releases/latest/download/voice-notes-latest.apk)
+
+The direct APK link always points to the newest GitHub Release asset with the stable name `voice-notes-latest.apk`.
 
 ### Features
 
@@ -165,6 +175,13 @@ flutter analyze
 ## Русский
 
 Мобильное приложение для записи и транскрибации голосовых заметок с распознаванием речи на устройстве. Вся транскрибация выполняется локально после загрузки нужной ASR-модели.
+
+### Скачать
+
+- [Последний релиз](https://github.com/Whoami005/voice_notes/releases/latest)
+- [Скачать последний APK](https://github.com/Whoami005/voice_notes/releases/latest/download/voice-notes-latest.apk)
+
+Прямая ссылка на APK всегда ведет на asset `voice-notes-latest.apk` из самого свежего GitHub Release.
 
 ### Возможности
 
