@@ -261,7 +261,7 @@ void main() {
         repo.emitQueued([queued]);
 
         final result = await priorityFuture;
-        await Future<void>.delayed(const Duration(milliseconds: 30));
+        await _waitUntil(() => repo.completeCalls.contains('q1'));
 
         expect(result.text, 'quick');
         expect(calls.first, '/tmp/quick.wav');
@@ -1066,6 +1066,22 @@ void main() {
 
 /// Short microtask flush.
 Future<void> _pump() => Future<void>.delayed(Duration.zero);
+
+Future<void> _waitUntil(
+  bool Function() condition, {
+  Duration timeout = const Duration(seconds: 1),
+  Duration pollInterval = const Duration(milliseconds: 10),
+}) async {
+  final deadline = DateTime.now().add(timeout);
+
+  while (!condition()) {
+    if (DateTime.now().isAfter(deadline)) {
+      throw TimeoutException('Condition was not met within $timeout');
+    }
+
+    await Future<void>.delayed(pollInterval);
+  }
+}
 
 NoteEntity _makeNote(
   String uid, {
