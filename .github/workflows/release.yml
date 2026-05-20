@@ -71,11 +71,20 @@ jobs:
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
+        id: flutter
         with:
           channel: stable
           flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
           pub-cache: true
+
+      - name: Print SDK versions
+        shell: bash
+        run: |
+          echo "flutter-action version=${{ steps.flutter.outputs.VERSION }}"
+          echo "flutter-action channel=${{ steps.flutter.outputs.CHANNEL }}"
+          flutter --version
+          dart --version
 
       - name: Install dependencies
         run: make get
