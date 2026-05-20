@@ -100,12 +100,19 @@ Release assets use deterministic names based on `pubspec.yaml` version metadata:
 
 - `voice-notes-android-vX.Y.Z-bN.apk`
 - `voice-notes-android-vX.Y.Z-bN.aab`
+- `voice-notes-latest.apk`
 
 Example:
 
 - `voice-notes-android-v1.2.3-b45.apk`
 - `voice-notes-android-v1.2.3-b45.aab`
 - `voice-notes-android-v2.1.0-rc.1-b7.apk`
+
+The versioned asset names remain useful for auditability and manual downloads. In addition, every release uploads a stable alias named `voice-notes-latest.apk`, which makes it safe to link the newest APK from `README.md`:
+
+```text
+https://github.com/Whoami005/voice_notes/releases/latest/download/voice-notes-latest.apk
+```
 
 ## Local verification commands
 

@@ -142,6 +142,7 @@ jobs:
         run: |
           mkdir -p dist
           cp build/app/outputs/flutter-apk/app-release.apk "dist/${{ steps.asset_names.outputs.apk_name }}"
+          cp build/app/outputs/flutter-apk/app-release.apk "dist/voice-notes-latest.apk"
           cp build/app/outputs/bundle/release/app-release.aab "dist/${{ steps.asset_names.outputs.aab_name }}"
 
       - name: Upload workflow artifacts
