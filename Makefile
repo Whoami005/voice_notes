@@ -2,14 +2,23 @@ SHELL := /bin/sh
 
 .DEFAULT_GOAL := help
 
+# Example: make apk-name APP_SLUG=voice-notes
 APP_SLUG ?= voice-notes
+# Example: make apk-name BUILD_CHANNEL=test
 BUILD_CHANNEL ?= test
+# Example: make aab-release BUILD_NAME=1.0.0 BUILD_NUMBER=2
 BUILD_NAME ?=
+# Example: make aab-release BUILD_NAME=1.0.0 BUILD_NUMBER=2
 BUILD_NUMBER ?=
+# Example: make apk-test BUILD_NAME=1.0.1 BUILD_NUMBER=2 TEST_ID=qa-smoke
 TEST_ID ?=
+# Example: make apk-name GIT_SHA_SHORT=abc1234
 GIT_SHA_SHORT ?=
+# Example: make apk-name APK_TIMESTAMP=20260526-1530
 APK_TIMESTAMP ?=
+# Example: make apk-test APK_OUTPUT_DIR=dist/apk
 APK_OUTPUT_DIR ?= build/apk
+# Example: make apk-test APK_SOURCE=build/app/outputs/flutter-apk/app-release.apk
 APK_SOURCE ?= build/app/outputs/flutter-apk/app-release.apk
 
 APK_NAME := $(shell APP_SLUG="$(APP_SLUG)" BUILD_CHANNEL="$(BUILD_CHANNEL)" BUILD_NAME="$(BUILD_NAME)" BUILD_NUMBER="$(BUILD_NUMBER)" TEST_ID="$(TEST_ID)" GIT_SHA_SHORT="$(GIT_SHA_SHORT)" APK_TIMESTAMP="$(APK_TIMESTAMP)" /bin/sh ./scripts/apk_name.sh)
@@ -93,21 +102,24 @@ run:
 apk-debug:
 	flutter build apk --debug $(BUILD_FLAGS)
 
+# Example: make apk-release BUILD_NAME=1.0.0 BUILD_NUMBER=2
 apk-release:
 	flutter build apk --release $(BUILD_FLAGS)
 
+# Example: make aab-release BUILD_NAME=1.0.0 BUILD_NUMBER=2
 aab-release:
 	flutter build appbundle --release $(BUILD_FLAGS)
 
 apk-name:
 	@printf '%s\n' "$(APK_NAME)"
 
-# make apk-test BUILD_NAME=1.0.1 BUILD_NUMBER=2 TEST_ID=qa-smoke
+# Example: make apk-test BUILD_NAME=1.0.1 BUILD_NUMBER=2 TEST_ID=qa-smoke
 apk-test:
 	@mkdir -p "$(APK_OUTPUT_DIR)"
 	flutter build apk --release $(BUILD_FLAGS)
 	cp "$(APK_SOURCE)" "$(APK_OUTPUT_PATH)"
 	@printf 'Created %s\n' "$(APK_OUTPUT_PATH)"
 
+# Example: make release-validate RELEASE_TAG=v1.0.0
 release-validate:
 	sh ./scripts/validate_release_tag.sh "$(RELEASE_TAG)"
